@@ -128,3 +128,6 @@
 - [x] Remove fabricated Manager delegate rows and show only live role-scoped delegate records
 - [x] Replace the static Messages badge with a live unread-count or no-unread state
 - [x] Verify empty states and live rendering for delegates and messages
+
+- [x] Remove remaining fabricated dashboard task activity, summary totals, and map markers; show live values or explicit unavailable states
+- [x] Verify dashboard, Delegates, and Messages render live data or honest empty states
