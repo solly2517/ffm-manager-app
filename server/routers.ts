@@ -5,7 +5,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
-import { acceptInvitation, addAuditEvent, addEvidence, createClient, createInvitation, createTask, getClientById, getInvitationByHash, getTaskById, getUserById, listAllTasks, listClients, listTasksForDelegate, listUsers, removeUser, updateTaskStatus, updateUserRole, upsertUser, upsertVisit } from "./db";
+import { acceptInvitation, addAuditEvent, addEvidence, createClient, createInvitation, createTask, getClientById, getInvitationByHash, getOperationalSummary, getTaskById, getUserById, listAllTasks, listAuditEvents, listClients, listTasksForDelegate, listUsers, removeUser, updateTaskStatus, updateUserRole, upsertUser, upsertVisit } from "./db";
 import { storagePut } from "./storage";
 
 const ADMIN_EMAIL = "dr.seleam@gmail.com";
@@ -31,6 +31,10 @@ export const appRouter = router({
     addUser: adminOnly.input(z.object({ email: z.string().email(), name: z.string().trim().min(1).max(120).optional() })).mutation(async ({ input, ctx }) => { const existing = await listUsers(); if (existing.some((item) => item.email?.toLowerCase() === input.email.toLowerCase())) throw new TRPCError({ code: "CONFLICT", message: "A user with this email already exists" }); return createInvitation({ email: input.email.toLowerCase(), role: "delegate", invitedBy: ctx.user.id, tokenHash: tokenHash(randomBytes(32).toString("hex")), expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 72) }); }),
     setRole: adminOnly.input(z.object({ id: z.number().int().positive(), role: z.enum(["user", "manager", "delegate", "admin"]) })).mutation(async ({ input, ctx }) => { const target = await getUserById(input.id); if (!target) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" }); if (target.email?.toLowerCase() === ADMIN_EMAIL || target.openId === ctx.user.openId) throw new TRPCError({ code: "FORBIDDEN", message: "The protected administrator role cannot be changed" }); const result = await updateUserRole(input.id, input.role as "user" | "admin"); await addAuditEvent({ actorId: ctx.user.id, action: "user.role_changed", entityType: "user", entityId: input.id, metadata: JSON.stringify({ role: input.role }) }); return result; }),
     removeUser: adminOnly.input(z.object({ id: z.number().int().positive() })).mutation(async ({ input, ctx }) => { const target = await getUserById(input.id); if (!target) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" }); if (target.email?.toLowerCase() === ADMIN_EMAIL || target.openId === ctx.user.openId) throw new TRPCError({ code: "FORBIDDEN", message: "The protected administrator account cannot be removed" }); await removeUser(input.id); await addAuditEvent({ actorId: ctx.user.id, action: "user.removed", entityType: "user", entityId: input.id }); return { success: true } as const; }),
+  }),
+  reports: router({
+    summary: managerOnly.query(() => getOperationalSummary()),
+    audit: adminOnly.input(z.object({ limit: z.number().int().min(1).max(200).default(100) }).optional()).query(({ input }) => listAuditEvents(input?.limit ?? 100)),
   }),
   operations: router({
     clients: protectedProcedure.query(() => listClients()),
