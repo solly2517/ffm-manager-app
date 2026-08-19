@@ -133,7 +133,7 @@
 - [x] Verify dashboard, Delegates, and Messages render live data or honest empty states
 
 - [x] Remove remaining Delegate demonstration tasks, messages, and planning records
-- [ ] Show live Delegate loading, empty, and operational states for tasks, visits, plans, and messages
+- [x] Show live Delegate loading, empty, and operational states for tasks, visits, plans, and messages
 
 - [x] Fix Manager tRPC API JSON parsing error where an API request receives an HTML response
 - [x] Validate the corrected Manager route, API responses, tests, and production build

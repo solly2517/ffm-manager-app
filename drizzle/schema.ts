@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, index, uniqueIndex } from "drizzle-orm/mysql-core";
+import { boolean, int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, index, uniqueIndex } from "drizzle-orm/mysql-core";
 
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
@@ -10,6 +10,8 @@ export const users = mysqlTable("users", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+  pushNotifications: boolean("pushNotifications").default(true).notNull(),
+  emailNotifications: boolean("emailNotifications").default(true).notNull(),
 }, (table) => ({ emailIdx: index("users_email_idx").on(table.email) }));
 
 export const managerDelegateAssignments = mysqlTable("manager_delegate_assignments", {

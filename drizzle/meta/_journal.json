@@ -29,6 +29,13 @@
       "when": 1787171470389,
       "tag": "0003_motionless_shadow_king",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1787183369214,
+      "tag": "0004_jazzy_shadowcat",
+      "breakpoints": true
     }
   ]
 }

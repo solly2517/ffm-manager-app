@@ -112,4 +112,16 @@ describe("expanded FFM permissions", () => {
     await expect(caller.operations.addDoctor({ clientId: 1, name: "Dr. Example" })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller.operations.addGeography({ kind: "province", name: "Example Province" })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
+  it("returns persisted notification preferences and updates only the requested setting", async () => {
+    vi.spyOn(db, "getUserById").mockResolvedValue({ pushNotifications: false, emailNotifications: true } as any);
+    const update = vi.spyOn(db, "updateNotificationPreferences").mockResolvedValue({ pushNotifications: true, emailNotifications: true } as any);
+    const caller = appRouter.createCaller(createContext("delegate"));
+    await expect(caller.preferences.get()).resolves.toEqual({ pushNotifications: false, emailNotifications: true });
+    await expect(caller.preferences.update({ pushNotifications: true })).resolves.toEqual({ pushNotifications: true, emailNotifications: true });
+    expect(update).toHaveBeenCalledWith(999999, { pushNotifications: true });
+  });
+  it("rejects an empty notification preference update", async () => {
+    const caller = appRouter.createCaller(createContext("delegate"));
+    await expect(caller.preferences.update({})).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
 });

@@ -49,6 +49,13 @@ export async function getUserById(id: number) {
   return result[0];
 }
 
+export async function updateNotificationPreferences(userId: number, input: { pushNotifications?: boolean; emailNotifications?: boolean }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.update(users).set(input).where(eq(users.id, userId));
+  return getUserById(userId);
+}
+
 export async function listInvitations() { const db = await getDb(); if (!db) return []; return db.select().from(invitations).orderBy(invitations.createdAt); }
 
 export async function listDelegates() { const db = await getDb(); if (!db) return []; return db.select().from(users).where(eq(users.role, "delegate")).orderBy(users.name); }
