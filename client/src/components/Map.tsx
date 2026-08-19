@@ -109,10 +109,17 @@ function loadMapScript() {
   });
 }
 
+interface MapMarker {
+  id: string | number;
+  position: google.maps.LatLngLiteral;
+  title?: string;
+}
+
 interface MapViewProps {
   className?: string;
   initialCenter?: google.maps.LatLngLiteral;
   initialZoom?: number;
+  markers?: MapMarker[];
   onMapReady?: (map: google.maps.Map) => void;
 }
 
@@ -120,10 +127,16 @@ export function MapView({
   className,
   initialCenter = { lat: 37.7749, lng: -122.4194 },
   initialZoom = 12,
+  markers = [],
   onMapReady,
 }: MapViewProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<google.maps.Map | null>(null);
+  const markerInstances = useRef<google.maps.Marker[]>([]);
+  const renderMarkers = usePersistFn((mapInstance: google.maps.Map) => {
+    markerInstances.current.forEach((marker) => marker.setMap(null));
+    markerInstances.current = markers.map((marker) => new window.google!.maps.Marker({ map: mapInstance, position: marker.position, title: marker.title }));
+  });
 
   const init = usePersistFn(async () => {
     await loadMapScript();
@@ -140,6 +153,7 @@ export function MapView({
       streetViewControl: true,
       mapId: "DEMO_MAP_ID",
     });
+    renderMarkers(map.current);
     if (onMapReady) {
       onMapReady(map.current);
     }
@@ -148,6 +162,10 @@ export function MapView({
   useEffect(() => {
     init();
   }, [init]);
+
+  useEffect(() => {
+    if (map.current) renderMarkers(map.current);
+  }, [markers, renderMarkers]);
 
   return (
     <div ref={mapContainer} className={cn("w-full h-[500px]", className)} />
