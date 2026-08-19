@@ -63,7 +63,7 @@
 - [x] Add explicit UI verification for Manager onboarding, Delegate onboarding, and the Help/Privacy route
 
 - [ ] Compare reports.exportCsv output across different date ranges and assert exported metric values change accordingly
-- [ ] Perform authenticated browser verification of Manager, Delegate, and Help routes after login and record the evidence
+- [x] Perform authenticated browser verification of Manager, Delegate, and Help routes after login and record the evidence
 
 - [x] Diagnose the reported failure when adding a Delegate by email from Administration
 - [x] Fix Delegate invitation creation and preserve Manager removal/protected-admin behavior

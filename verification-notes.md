@@ -6,3 +6,6 @@ The latest desktop preview shows the authenticated FFM Manager route with the fi
 The latest authenticated desktop preview rendered both FFM routes successfully. The Manager route at `/` displayed the royal-blue blueprint dashboard, authenticated user footer, live-system indicator, onboarding banner, live task/client summary cards, and operational navigation. The Delegate route at `/delegate` displayed the FFM Delegate header, onboarding banner, GPS-ready state, today's route panel, and mobile-style bottom navigation with My Tasks, Visit, Messages, Surgeries, Plan, and Profile.
 
 No authentication redirect or runtime rendering failure was observed in the captured previews. The dashboard currently shows zero live clients and visits when the database has no records, which is an expected empty operational state rather than a hardcoded failure.
+
+
+The authenticated `/help` route also rendered successfully. It showed the FFM operations guide, Getting started guidance, Evidence & privacy guidance, Access support, and a return link to the Manager dashboard. This completes screenshot verification of `/`, `/delegate`, and `/help` in the authenticated preview session.
