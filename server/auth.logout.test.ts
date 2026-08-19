@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { appRouter } from "./routers";
 import { COOKIE_NAME } from "../shared/const";
+import { isAuthContextTimeout } from "./_core/context";
 import type { TrpcContext } from "./_core/context";
 
 type CookieCall = {
@@ -27,6 +28,7 @@ function createAuthContext(): { ctx: TrpcContext; clearedCookies: CookieCall[] }
 
   const ctx: TrpcContext = {
     user,
+    authTimedOut: false,
     req: {
       protocol: "https",
       headers: {},
@@ -40,6 +42,14 @@ function createAuthContext(): { ctx: TrpcContext; clearedCookies: CookieCall[] }
 
   return { ctx, clearedCookies };
 }
+
+describe("auth context recovery", () => {
+  it("recognizes the bounded authentication timeout without misclassifying other errors", () => {
+    expect(isAuthContextTimeout(new Error("Authentication context timed out"))).toBe(true);
+    expect(isAuthContextTimeout(new Error("Invalid session cookie"))).toBe(false);
+    expect(isAuthContextTimeout("Authentication context timed out")).toBe(false);
+  });
+});
 
 describe("auth.logout", () => {
   it("clears the session cookie and reports success", async () => {

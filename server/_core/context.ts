@@ -10,6 +10,7 @@ export type TrpcContext = {
 };
 
 const AUTH_CONTEXT_TIMEOUT_MS = 10_000;
+export const isAuthContextTimeout = (error: unknown): boolean => error instanceof Error && error.message === "Authentication context timed out";
 
 export async function createContext(
   opts: CreateExpressContextOptions
@@ -27,7 +28,7 @@ export async function createContext(
   } catch (error) {
     // Authentication is optional for public procedures. A bounded timeout keeps
     // the tRPC endpoint JSON-shaped instead of allowing the gateway to emit HTML.
-    authTimedOut = error instanceof Error && error.message === "Authentication context timed out";
+    authTimedOut = isAuthContextTimeout(error);
     console.warn("[Auth] Request authentication unavailable:", error instanceof Error ? error.message : error);
     user = null;
   }
