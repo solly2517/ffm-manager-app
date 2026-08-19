@@ -62,7 +62,7 @@
 - [x] Add assertions proving report date filters change task counts and CSV values for selected ranges
 - [x] Add explicit UI verification for Manager onboarding, Delegate onboarding, and the Help/Privacy route
 
-- [ ] Compare reports.exportCsv output across different date ranges and assert exported metric values change accordingly
+- [x] Compare reports.exportCsv output across different date ranges and assert exported metric values change accordingly
 - [x] Perform authenticated browser verification of Manager, Delegate, and Help routes after login and record the evidence
 
 - [x] Diagnose the reported failure when adding a Delegate by email from Administration

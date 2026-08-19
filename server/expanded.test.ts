@@ -44,6 +44,18 @@ describe("expanded FFM permissions", () => {
     expect(csv).toContain("metric,value");
   });
 
+  it("compares reports.exportCsv output across different filtered summaries", async () => {
+    vi.spyOn(db, "getOperationalSummary")
+      .mockResolvedValueOnce({ clients: 2, tasks: 3, completedTasks: 1, pendingTasks: 2 })
+      .mockResolvedValueOnce({ clients: 4, tasks: 7, completedTasks: 5, pendingTasks: 2 });
+    const caller = appRouter.createCaller(createContext("manager"));
+    const early = await caller.reports.exportCsv({ from: "2026-08-01", to: "2026-08-01" });
+    const late = await caller.reports.exportCsv({ from: "2026-08-20", to: "2026-08-20" });
+    expect(early).not.toBe(late);
+    expect(early).toContain("tasks,3");
+    expect(late).toContain("tasks,7");
+  });
+
   it("changes CSV metric values when filtered report summaries change", () => {
     const early = operationalSummaryCsv({ clients: 2, tasks: 3, completedTasks: 1, pendingTasks: 2 });
     const late = operationalSummaryCsv({ clients: 4, tasks: 7, completedTasks: 5, pendingTasks: 2 });
