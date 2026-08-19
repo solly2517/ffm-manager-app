@@ -71,3 +71,7 @@
 
 - [x] Add a regression test for re-inviting an email with an existing pending invitation and assert role/token/link updates
 - [ ] Verify the authenticated Administration flow by creating a Delegate invitation after the earlier Manager removal scenario
+
+- [x] Diagnose the administrator Copy link failure
+- [x] Implement clipboard fallback and visible copy success/error feedback
+- [ ] Test the repaired Copy link action and save a recovery checkpoint
