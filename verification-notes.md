@@ -47,3 +47,11 @@ Authenticated `/delegate` preview now renders the live Delegate shell with the o
 The Delegate preview remained on My Tasks after two sandbox click attempts against the bottom Messages control because the Google Maps overlay and preview chrome intercepted the click. The visible state remains live and honest: 0 assigned visits, 0 live tasks, no assigned tasks, and real map tiles. Further tab-specific verification should be done in a normal user browser if needed.
 
 Authentication recovery coverage now includes a fixture-free regression for the timeout predicate: only the exact bounded timeout is classified as timeout, while ordinary invalid-session errors and non-Error values are not misclassified. The suite passes with 29 tests, type checking is clean, and the production build succeeds.
+
+## Post-fix workspace verification — 2026-08-19/20
+
+Authenticated screenshots after the tRPC recovery hardening show Manager Dashboard with live zero totals and no fabricated activity, Manager Delegates with `0 shown` and the Administrator assignment notice, Manager Tasks with client/delegate/date controls and `No live tasks yet.`, and Delegate My Tasks with `0 assigned visits · live records`, GPS ready, and the real map surface. The four direct workspace previews rendered without the prior HTML/JSON parse error.
+
+## Direct Delegate workspace routing — 2026-08-19/20
+
+The new `workspace` query routing was verified for `/delegate?workspace=messages`, `/delegate?workspace=surgery`, and `/delegate?workspace=plan`. Messages rendered the authenticated live empty state, `No messages from your manager yet.` Surgeries and Plan captures remained at the authentication loading screen in the screenshot service, so those two workspaces remain pending authenticated visual confirmation rather than being treated as verified.

@@ -17,11 +17,16 @@ const tabs = [
   { id: "surgery", label: "Surgeries", icon: Stethoscope },
   { id: "plan", label: "Plan", icon: CalendarPlus },
   { id: "profile", label: "Profile", icon: UserRound },
-];
+] as const;
+type DelegateTabId = (typeof tabs)[number]["id"];
+const getInitialDelegateTab = (): DelegateTabId => {
+  const workspace = new URLSearchParams(window.location.search).get("workspace");
+  return tabs.some((tab) => tab.id === workspace) ? (workspace as DelegateTabId) : "tasks";
+};
 
 export default function Delegate() {
   const { user, loading, isAuthenticated, logout } = useAuth();
-  const [active, setActive] = useState("tasks");
+  const [active, setActive] = useState<DelegateTabId>(getInitialDelegateTab);
   const [menuOpen, setMenuOpen] = useState(false);
   const [notes, setNotes] = useState(() => localStorage.getItem("ffm-visit-draft") || "");
   const [gpsStatus, setGpsStatus] = useState("");
