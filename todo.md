@@ -100,7 +100,7 @@
 
 - [x] Show live visit check-in/check-out state in the Delegate visit header summary
 - [x] Resolve and display visit-plan reviewer identity when reviewedBy is available
-- [ ] Add a successful normalized saveVisitReport router test without persistent fixtures
+- [x] Add a successful normalized saveVisitReport router test without persistent fixtures
 - [x] Add a router-contract test for visit-plan status output beyond the helper function
 
 - [x] Add protected live doctor and geography directory queries and Manager-only creation procedures with audit events

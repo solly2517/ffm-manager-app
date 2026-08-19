@@ -8,6 +8,7 @@ const ADMIN_EMAIL = "dr.seleam@gmail.com";
 export function isProtectedAdminTarget(target: { email?: string | null; openId: string }, actorOpenId: string) { return target.email?.toLowerCase() === ADMIN_EMAIL || target.openId === actorOpenId; }
 export function canUserUpdateTask(userRole: string, userId: number, delegateId: number) { return userRole !== "delegate" || userId === delegateId; }
 export function normalizeVisitReport(report: string) { return report.trim(); }
+export function prepareVisitReport(report: string) { return { report: normalizeVisitReport(report) }; }
 export function visitPlanStatusLabel(status: "pending" | "approved" | "rejected") { return status === "approved" ? "Approved" : status === "rejected" ? "Rejected" : "Pending review"; }
 
 export async function getDb() {
