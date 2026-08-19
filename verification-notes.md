@@ -29,3 +29,7 @@ Authenticated Manager desktop preview after the change shows the FFM sidebar wit
 ## Direct Manager workspace verification — 2026-08-19
 
 The new `?workspace=delegates` preview opens the authenticated Delegates workspace directly. It shows the delegate directory, search, status, visits, and Open actions, while the former Add delegate button is absent and replaced by “Delegates are assigned by the Administrator.” The new `?workspace=tasks` preview opens the authenticated Tasks workspace directly. It shows client and delegate selectors, scheduled date/time input, Create task, and existing task Review/status actions. This confirms the Manager UI change without removing operational task workflows.
+
+## Demo-data cleanup verification — 2026-08-19
+
+Authenticated direct workspace previews now show zero delegates for the current Manager when no Administrator assignments exist, with the message “No delegates are assigned to this Manager yet.” The Messages workspace shows “No messages yet.” and the sidebar has no static notification badge. This confirms the three prior demo delegate rows and the hard-coded Messages count of 3 are no longer rendered.

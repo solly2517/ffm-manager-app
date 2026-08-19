@@ -124,3 +124,7 @@
 
 - [x] Remove Manager-side delegate-addition and assignment controls; keep delegate assignment Administrator-only
 - [x] Verify Manager visibility and task workflows remain available without assignment controls
+
+- [x] Remove fabricated Manager delegate rows and show only live role-scoped delegate records
+- [x] Replace the static Messages badge with a live unread-count or no-unread state
+- [x] Verify empty states and live rendering for delegates and messages
