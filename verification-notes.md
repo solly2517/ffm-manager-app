@@ -9,3 +9,7 @@ No authentication redirect or runtime rendering failure was observed in the capt
 
 
 The authenticated `/help` route also rendered successfully. It showed the FFM operations guide, Getting started guidance, Evidence & privacy guidance, Access support, and a return link to the Manager dashboard. This completes screenshot verification of `/`, `/delegate`, and `/help` in the authenticated preview session.
+
+## Assignment-control visual verification — 2026-08-19
+
+Authenticated screenshots of `/`, `/delegate`, and `/help` rendered successfully after the manager–delegate assignment update. The Manager dashboard retains the FFM blueprint grid, royal-blue palette, sidebar, live-system indicator, and operational cards. The Delegate route retains the mobile-first field shell, GPS-ready status, route map panel, and bottom navigation. Help & Privacy retains the authenticated operations guide, evidence/privacy guidance, and return navigation. The new assignment controls are implemented in the Administration workspace and are backed by the migrated assignment table and protected router procedures; direct visual interaction with the Administration controls should be exercised in the authenticated session when testing assignment creation and unassignment.
