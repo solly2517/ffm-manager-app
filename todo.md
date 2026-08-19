@@ -102,3 +102,6 @@
 - [x] Resolve and display visit-plan reviewer identity when reviewedBy is available
 - [ ] Add a successful normalized saveVisitReport router test without persistent fixtures
 - [x] Add a router-contract test for visit-plan status output beyond the helper function
+
+- [x] Add protected live doctor and geography directory queries and Manager-only creation procedures with audit events
+- [x] Add regression coverage for directory creation permissions

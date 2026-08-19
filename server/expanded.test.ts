@@ -72,4 +72,10 @@ describe("expanded FFM permissions", () => {
     const caller = appRouter.createCaller(createContext("delegate"));
     await expect(caller.operations.addTask({ delegateId: 1, clientId: 1, scheduledAt: new Date() })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
+
+  it("blocks delegates from doctor and geography creation", async () => {
+    const caller = appRouter.createCaller(createContext("delegate"));
+    await expect(caller.operations.addDoctor({ clientId: 1, name: "Dr. Example" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.operations.addGeography({ kind: "province", name: "Example Province" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
 });

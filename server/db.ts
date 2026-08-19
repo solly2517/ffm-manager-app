@@ -1,6 +1,6 @@
 import { and, eq, ne, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, invitations, clients, tasks, visits, evidence, auditEvents, messages, surgeries, visitPlans } from "../drizzle/schema";
+import { InsertUser, users, invitations, clients, doctors, tasks, visits, evidence, auditEvents, messages, surgeries, visitPlans, geography } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -111,6 +111,11 @@ export async function updateSurgery(id: number, input: Partial<typeof surgeries.
 
 export async function listMessages(userId: number) { const db = await getDb(); if (!db) return []; return db.select().from(messages).where(or(eq(messages.senderId, userId), eq(messages.recipientId, userId))).orderBy(messages.createdAt); }
 export async function createMessage(input: typeof messages.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database is not available"); const result = await db.insert(messages).values(input); return db.select().from(messages).where(eq(messages.id, Number(result[0].insertId))).limit(1).then((rows) => rows[0]); }
+
+export async function listDoctors() { const db = await getDb(); if (!db) return []; return db.select().from(doctors).orderBy(doctors.name); }
+export async function listGeography() { const db = await getDb(); if (!db) return []; return db.select().from(geography).orderBy(geography.kind, geography.name); }
+export async function createDoctor(input: typeof doctors.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database is not available"); const result = await db.insert(doctors).values(input); return db.select().from(doctors).where(eq(doctors.id, Number(result[0].insertId))).limit(1).then((rows) => rows[0]); }
+export async function createGeography(input: typeof geography.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database is not available"); const result = await db.insert(geography).values(input); return db.select().from(geography).where(eq(geography.id, Number(result[0].insertId))).limit(1).then((rows) => rows[0]); }
 
 export async function listClients() { const db = await getDb(); if (!db) return []; return db.select().from(clients).orderBy(clients.name); }
 export async function createClient(input: typeof clients.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database is not available"); const result = await db.insert(clients).values(input); return getClientById(Number(result[0].insertId)); }
