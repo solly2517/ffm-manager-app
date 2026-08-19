@@ -5,7 +5,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
-import { acceptInvitation, addAuditEvent, addEvidence, createClient, createDoctor, createGeography, createInvitation, canUserUpdateTask, normalizeVisitReport, createTask, getClientById, getInvitationByHash, getOperationalSummary, getTaskById, getUserById, getVisitByTaskId, listAllTasks, listAuditEvents, listClients, listDelegates, listDoctors, listGeography, listInvitations, listMessages, listSurgeriesForDelegate, listTasksForDelegate, listUsers, listVisitPlansForDelegate, listAllVisitPlans, createMessage, createSurgery, createVisitPlan, updateSurgery, updateVisitPlan, removeUser, updateTaskStatus, updateUserRole, upsertUser, upsertVisit, isProtectedAdminTarget, prepareVisitReport } from "./db";
+import { acceptInvitation, addAuditEvent, addEvidence, createClient, createDoctor, createGeography, createInvitation, canUserUpdateTask, normalizeVisitReport, createTask, getClientById, getInvitationByHash, getOperationalSummary, getTaskById, getUserById, getVisitByTaskId, listAllTasks, listAuditEvents, listClients, listDelegates, listDoctors, listGeography, listInvitations, listMessages, listSurgeriesForDelegate, listTasksForDelegate, listUsers, listVisitPlansForDelegate, listAllVisitPlans, createMessage, createSurgery, createVisitPlan, updateSurgery, updateVisitPlan, removeUser, updateTaskStatus, updateUserRole, upsertUser, upsertVisit, isProtectedAdminTarget, operationalSummaryCsv, prepareVisitReport } from "./db";
 import { storagePut } from "./storage";
 
 const ADMIN_EMAIL = "dr.seleam@gmail.com";
@@ -35,7 +35,7 @@ export const appRouter = router({
   }),
   reports: router({
     summary: managerOnly.input(z.object({ from: z.string().optional(), to: z.string().optional() }).optional()).query(({ input }) => getOperationalSummary(input)),
-    exportCsv: managerOnly.input(z.object({ from: z.string().optional(), to: z.string().optional() }).optional()).query(async ({ input }) => { const summary = await getOperationalSummary(input); return `metric,value\nclients,${summary.clients}\ntasks,${summary.tasks}\ncompleted_tasks,${summary.completedTasks}\npending_tasks,${summary.pendingTasks}\n`; }),
+    exportCsv: managerOnly.input(z.object({ from: z.string().optional(), to: z.string().optional() }).optional()).query(async ({ input }) => { const summary = await getOperationalSummary(input); return operationalSummaryCsv(summary); }),
     audit: adminOnly.input(z.object({ limit: z.number().int().min(1).max(200).default(100) }).optional()).query(({ input }) => listAuditEvents(input?.limit ?? 100)),
   }),
   operations: router({

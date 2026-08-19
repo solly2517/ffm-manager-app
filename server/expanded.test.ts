@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { appRouter } from "./routers";
-import { filterTasksByDateRange, mergePendingInvitation, visitPlanStatusLabel } from "./db";
+import { filterTasksByDateRange, mergePendingInvitation, operationalSummaryCsv, visitPlanStatusLabel } from "./db";
 import type { TrpcContext } from "./_core/context";
 
 function createContext(role: "user" | "manager" | "delegate" | "admin" = "user"): TrpcContext {
@@ -40,6 +40,14 @@ describe("expanded FFM permissions", () => {
     const csv = await caller.reports.exportCsv({ from: "2026-01-01", to: "2026-12-31" });
     expect(summary).toHaveProperty("tasks");
     expect(csv).toContain("metric,value");
+  });
+
+  it("changes CSV metric values when filtered report summaries change", () => {
+    const early = operationalSummaryCsv({ clients: 2, tasks: 3, completedTasks: 1, pendingTasks: 2 });
+    const late = operationalSummaryCsv({ clients: 4, tasks: 7, completedTasks: 5, pendingTasks: 2 });
+    expect(early).not.toBe(late);
+    expect(early).toContain("tasks,3");
+    expect(late).toContain("tasks,7");
   });
 
   it("supports filtered operational summaries and CSV export", async () => {

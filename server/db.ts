@@ -10,6 +10,7 @@ export function canUserUpdateTask(userRole: string, userId: number, delegateId: 
 export function normalizeVisitReport(report: string) { return report.trim(); }
 export function prepareVisitReport(report: string) { return { report: normalizeVisitReport(report) }; }
 export function visitPlanStatusLabel(status: "pending" | "approved" | "rejected") { return status === "approved" ? "Approved" : status === "rejected" ? "Rejected" : "Pending review"; }
+export function operationalSummaryCsv(summary: { clients: number; tasks: number; completedTasks: number; pendingTasks: number }) { return `metric,value\nclients,${summary.clients}\ntasks,${summary.tasks}\ncompleted_tasks,${summary.completedTasks}\npending_tasks,${summary.pendingTasks}\n`; }
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
