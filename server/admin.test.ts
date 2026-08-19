@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 import { isProtectedAdminTarget } from "./db";
+import * as db from "./db";
 
 function contextFor(user: NonNullable<TrpcContext["user"]>): TrpcContext {
   return {
@@ -24,6 +25,7 @@ const baseUser = {
 };
 
 describe("admin access control", () => {
+  afterEach(() => vi.restoreAllMocks());
   it("rejects regular users from the user directory", async () => {
     const caller = appRouter.createCaller(contextFor(baseUser));
     await expect(caller.admin.users()).rejects.toMatchObject({ code: "FORBIDDEN" });
@@ -46,6 +48,26 @@ describe("admin access control", () => {
     expect(isProtectedAdminTarget({ email: "DR.SELEAM@GMAIL.COM", openId: "other" }, "actor")).toBe(true);
     expect(isProtectedAdminTarget({ email: "other@example.com", openId: "actor" }, "actor")).toBe(true);
     expect(isProtectedAdminTarget({ email: "other@example.com", openId: "other" }, "actor")).toBe(false);
+  });
+
+  it("assigns and unassigns a manager–delegate pair through the admin router", async () => {
+    const manager = { ...baseUser, id: 11, role: "manager" as const, email: "manager@example.com" };
+    const delegate = { ...baseUser, id: 22, role: "delegate" as const, email: "delegate@example.com" };
+    vi.spyOn(db, "getUserById").mockImplementation(async (id) => id === 11 ? manager : delegate);
+    vi.spyOn(db, "isDelegateAssignedToManager").mockResolvedValue(false);
+    vi.spyOn(db, "createManagerDelegateAssignment").mockResolvedValue({ id: 77, managerId: 11, delegateId: 22, assignedBy: 1, createdAt: new Date() } as never);
+    vi.spyOn(db, "removeManagerDelegateAssignment").mockResolvedValue({ success: true });
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const caller = appRouter.createCaller(contextFor({ ...baseUser, role: "admin", email: "dr.seleam@gmail.com" }));
+    await expect(caller.admin.assignDelegate({ managerId: 11, delegateId: 22 })).resolves.toMatchObject({ id: 77, managerId: 11, delegateId: 22 });
+    await expect(caller.admin.unassignDelegate({ id: 77 })).resolves.toEqual({ success: true });
+  });
+
+  it("blocks duplicate manager–delegate assignments", async () => {
+    vi.spyOn(db, "getUserById").mockResolvedValue({ ...baseUser, role: "delegate" } as never);
+    vi.spyOn(db, "isDelegateAssignedToManager").mockResolvedValue(true);
+    const caller = appRouter.createCaller(contextFor({ ...baseUser, role: "admin", email: "dr.seleam@gmail.com" }));
+    await expect(caller.admin.assignDelegate({ managerId: 11, delegateId: 22 })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
   it("rejects admin mutation targets that are not valid positive user ids", async () => {

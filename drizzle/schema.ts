@@ -12,6 +12,13 @@ export const users = mysqlTable("users", {
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
 }, (table) => ({ emailIdx: index("users_email_idx").on(table.email) }));
 
+export const managerDelegateAssignments = mysqlTable("manager_delegate_assignments", {
+  id: int("id").autoincrement().primaryKey(),
+  managerId: int("managerId").notNull(),
+  delegateId: int("delegateId").notNull(),
+  assignedBy: int("assignedBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({ managerIdx: index("manager_delegate_manager_idx").on(table.managerId), delegateIdx: index("manager_delegate_delegate_idx").on(table.delegateId), pairUnique: uniqueIndex("manager_delegate_pair_unique").on(table.managerId, table.delegateId) }));
 export const invitations = mysqlTable("invitations", {
   id: int("id").autoincrement().primaryKey(),
   email: varchar("email", { length: 320 }).notNull(),

@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { appRouter } from "./routers";
-import { filterTasksByDateRange, mergePendingInvitation, operationalSummaryCsv, visitPlanStatusLabel } from "./db";
+import { canManagerAccessDelegate, filterTasksByDateRange, mergePendingInvitation, operationalSummaryCsv, visitPlanStatusLabel } from "./db";
 import type { TrpcContext } from "./_core/context";
+import * as db from "./db";
 
 function createContext(role: "user" | "manager" | "delegate" | "admin" = "user"): TrpcContext {
   return {
@@ -12,6 +13,7 @@ function createContext(role: "user" | "manager" | "delegate" | "admin" = "user")
 }
 
 describe("expanded FFM permissions", () => {
+  afterEach(() => vi.restoreAllMocks());
   it("blocks non-admin invitation creation", async () => {
     const caller = appRouter.createCaller(createContext("user"));
     await expect(caller.admin.createInvitation({ email: "new@example.com", role: "delegate" })).rejects.toMatchObject({ code: "FORBIDDEN" });
@@ -74,6 +76,18 @@ describe("expanded FFM permissions", () => {
     expect(visitPlanStatusLabel("pending")).toBe("Pending review");
     expect(visitPlanStatusLabel("approved")).toBe("Approved");
     expect(visitPlanStatusLabel("rejected")).toBe("Rejected");
+  });
+
+  it("returns no delegates for an unassigned manager through the router", async () => {
+    vi.spyOn(db, "listDelegatesForManager").mockResolvedValue([]);
+    const caller = appRouter.createCaller(createContext("manager"));
+    await expect(caller.operations.delegates()).resolves.toEqual([]);
+  });
+
+  it("allows managers to access only assigned delegates", () => {
+    expect(canManagerAccessDelegate("manager", 10, 20, [20, 21])).toBe(true);
+    expect(canManagerAccessDelegate("manager", 10, 22, [20, 21])).toBe(false);
+    expect(canManagerAccessDelegate("admin", 10, 22, [])).toBe(true);
   });
 
   it("blocks delegates from manager-only task creation", async () => {

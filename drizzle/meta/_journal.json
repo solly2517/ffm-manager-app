@@ -22,6 +22,13 @@
       "when": 1787169734495,
       "tag": "0002_lowly_jack_flag",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1787171470389,
+      "tag": "0003_motionless_shadow_king",
+      "breakpoints": true
     }
   ]
 }

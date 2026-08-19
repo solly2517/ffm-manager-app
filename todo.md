@@ -108,3 +108,8 @@
 
 - [x] Add protected live delegate directory query for authenticated task assignment
 - [x] Replace Manager task delegate ID entry with a live delegate selector
+
+- [x] Add administrator-controlled manager–delegate assignment records with uniqueness and audit history
+- [x] Add administrator UI to assign and unassign delegates for managers
+- [x] Restrict manager delegate lists, task assignment, reports, and operational records to assigned delegates
+- [x] Add regression coverage for assignment permissions, reassignment, and unassigned-manager access
