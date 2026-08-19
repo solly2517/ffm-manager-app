@@ -131,3 +131,6 @@
 
 - [x] Remove remaining fabricated dashboard task activity, summary totals, and map markers; show live values or explicit unavailable states
 - [x] Verify dashboard, Delegates, and Messages render live data or honest empty states
+
+- [x] Remove remaining Delegate demonstration tasks, messages, and planning records
+- [ ] Show live Delegate loading, empty, and operational states for tasks, visits, plans, and messages
