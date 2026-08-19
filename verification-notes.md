@@ -13,3 +13,7 @@ The authenticated `/help` route also rendered successfully. It showed the FFM op
 ## Assignment-control visual verification — 2026-08-19
 
 Authenticated screenshots of `/`, `/delegate`, and `/help` rendered successfully after the manager–delegate assignment update. The Manager dashboard retains the FFM blueprint grid, royal-blue palette, sidebar, live-system indicator, and operational cards. The Delegate route retains the mobile-first field shell, GPS-ready status, route map panel, and bottom navigation. Help & Privacy retains the authenticated operations guide, evidence/privacy guidance, and return navigation. The new assignment controls are implemented in the Administration workspace and are backed by the migrated assignment table and protected router procedures; direct visual interaction with the Administration controls should be exercised in the authenticated session when testing assignment creation and unassignment.
+
+## Stock Review integration inspection — 2026-08-19
+
+The provided stock-management URL returns an HTTP 302 redirect to the Manus application login flow (`/app-auth`) with a stock-app OAuth callback. No public stock payload or unauthenticated read-only endpoint was exposed by the public response. FFM therefore keeps the Stock Review frame non-interactive and does not fabricate stock values; a verified authenticated read-only API or user-provided data contract is still required to render actual current inventory inside FFM.
