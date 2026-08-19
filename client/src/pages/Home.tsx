@@ -45,7 +45,7 @@ function initials(name: string) { return name.split(" ").map((part) => part[0]).
 
 export default function Home() {
   const { user, loading, isAuthenticated, logout } = useAuth();
-  const [active, setActive] = useState("dashboard");
+  const [active, setActive] = useState(() => { const requested = new URLSearchParams(window.location.search).get("workspace"); return nav.some((item) => item.id === requested) ? requested! : "dashboard"; });
   const [mobileOpen, setMobileOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState("");

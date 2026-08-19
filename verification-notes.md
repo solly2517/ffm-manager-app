@@ -25,3 +25,7 @@ At a 390×844 viewport, the authenticated Manager dashboard retained its compact
 ## Manager delegate-addition removal verification — 2026-08-19
 
 Authenticated Manager desktop preview after the change shows the FFM sidebar with Delegates, Tasks, Administration, and the other operational workspaces still present. The Dashboard retains its Create task action. The Delegates workspace code now presents the administrator-assignment notice instead of an Add delegate button, while the live delegate directory, search, and Open actions remain. The Tasks workspace retains client/delegate/date task creation and status controls. Type checking, 28 tests, and production build pass.
+
+## Direct Manager workspace verification — 2026-08-19
+
+The new `?workspace=delegates` preview opens the authenticated Delegates workspace directly. It shows the delegate directory, search, status, visits, and Open actions, while the former Add delegate button is absent and replaced by “Delegates are assigned by the Administrator.” The new `?workspace=tasks` preview opens the authenticated Tasks workspace directly. It shows client and delegate selectors, scheduled date/time input, Create task, and existing task Review/status actions. This confirms the Manager UI change without removing operational task workflows.

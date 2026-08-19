@@ -123,4 +123,4 @@
 - [x] Create a Manager and Delegate presentation version of the user manual, excluding Administrator procedures
 
 - [x] Remove Manager-side delegate-addition and assignment controls; keep delegate assignment Administrator-only
-- [ ] Verify Manager visibility and task workflows remain available without assignment controls
+- [x] Verify Manager visibility and task workflows remain available without assignment controls
