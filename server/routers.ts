@@ -5,7 +5,7 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
-import { acceptInvitation, addAuditEvent, addEvidence, createClient, createDoctor, createGeography, createInvitation, canUserUpdateTask, normalizeVisitReport, createTask, getClientById, getInvitationByHash, getOperationalSummary, getTaskById, getUserById, getVisitByTaskId, listAllTasks, listAuditEvents, listClients, listDoctors, listGeography, listInvitations, listMessages, listSurgeriesForDelegate, listTasksForDelegate, listUsers, listVisitPlansForDelegate, listAllVisitPlans, createMessage, createSurgery, createVisitPlan, updateSurgery, updateVisitPlan, removeUser, updateTaskStatus, updateUserRole, upsertUser, upsertVisit } from "./db";
+import { acceptInvitation, addAuditEvent, addEvidence, createClient, createDoctor, createGeography, createInvitation, canUserUpdateTask, normalizeVisitReport, createTask, getClientById, getInvitationByHash, getOperationalSummary, getTaskById, getUserById, getVisitByTaskId, listAllTasks, listAuditEvents, listClients, listDelegates, listDoctors, listGeography, listInvitations, listMessages, listSurgeriesForDelegate, listTasksForDelegate, listUsers, listVisitPlansForDelegate, listAllVisitPlans, createMessage, createSurgery, createVisitPlan, updateSurgery, updateVisitPlan, removeUser, updateTaskStatus, updateUserRole, upsertUser, upsertVisit } from "./db";
 import { storagePut } from "./storage";
 
 const ADMIN_EMAIL = "dr.seleam@gmail.com";
@@ -40,6 +40,7 @@ export const appRouter = router({
   }),
   operations: router({
     clients: protectedProcedure.query(() => listClients()),
+    delegates: protectedProcedure.query(() => listDelegates()),
     doctors: protectedProcedure.query(() => listDoctors()),
     geography: protectedProcedure.query(() => listGeography()),
     messages: protectedProcedure.query(({ ctx }) => listMessages(ctx.user.id)),

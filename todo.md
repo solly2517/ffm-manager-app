@@ -105,3 +105,6 @@
 
 - [x] Add protected live doctor and geography directory queries and Manager-only creation procedures with audit events
 - [x] Add regression coverage for directory creation permissions
+
+- [x] Add protected live delegate directory query for authenticated task assignment
+- [x] Replace Manager task delegate ID entry with a live delegate selector
