@@ -34,6 +34,7 @@ export const appRouter = router({
   }),
   reports: router({
     summary: managerOnly.query(() => getOperationalSummary()),
+    exportCsv: managerOnly.query(async () => { const summary = await getOperationalSummary(); return `metric,value\nclients,${summary.clients}\ntasks,${summary.tasks}\ncompleted_tasks,${summary.completedTasks}\npending_tasks,${summary.pendingTasks}\n`; }),
     audit: adminOnly.input(z.object({ limit: z.number().int().min(1).max(200).default(100) }).optional()).query(({ input }) => listAuditEvents(input?.limit ?? 100)),
   }),
   operations: router({
