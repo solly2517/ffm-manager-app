@@ -49,8 +49,25 @@
 - [x] Implement photo, audio, and signature evidence capture with secure file storage
 - [ ] Replace map placeholders with real map and route data
 - [ ] Add offline-friendly delegate behavior and retry handling
-- [ ] Add operational reports, exports, and configurable date filters
-- [ ] Add onboarding, help documentation, privacy terms, and branded empty states
+- [x] Add operational reports, exports, and configurable date filters
+- [x] Add onboarding, help documentation, privacy terms, and branded empty states
 - [ ] Add monitoring, error reporting, activity history, and notification preferences
 - [ ] Add end-to-end coverage for authentication, roles, task completion, evidence capture, and responsive navigation
 - [ ] Configure final deployment polish including favicon, custom domain readiness, and branded email templates
+
+- [x] Add configurable date-range filters to reports and make CSV export respect the selected range
+- [x] Add a first-login onboarding experience connected to authenticated Manager and Delegate entry points
+- [x] Add tests or verification for filtered report export and onboarding/help flows
+
+- [x] Add assertions proving report date filters change task counts and CSV values for selected ranges
+- [x] Add explicit UI verification for Manager onboarding, Delegate onboarding, and the Help/Privacy route
+
+- [ ] Compare reports.exportCsv output across different date ranges and assert exported metric values change accordingly
+- [ ] Perform authenticated browser verification of Manager, Delegate, and Help routes after login and record the evidence
+
+- [x] Diagnose the reported failure when adding a Delegate by email from Administration
+- [x] Fix Delegate invitation creation and preserve Manager removal/protected-admin behavior
+- [x] Add regression coverage for creating a delegate invitation and verify the generated invite link through the invitation update contract
+
+- [x] Add a regression test for re-inviting an email with an existing pending invitation and assert role/token/link updates
+- [ ] Verify the authenticated Administration flow by creating a Delegate invitation after the earlier Manager removal scenario

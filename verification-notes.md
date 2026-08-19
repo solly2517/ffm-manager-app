@@ -1,0 +1,3 @@
+# Verification Notes
+
+The latest desktop preview shows the authenticated FFM Manager route with the first-login welcome banner, blueprint grid styling, live operational cards, and visible sidebar navigation. The authenticated FFM Delegate route shows the welcome banner, GPS-ready status, and the real-map container with a blueprint grid fallback surface while map tiles load. The protected Help & Privacy route renders the operational guide, evidence/privacy guidance, access support, and return navigation. Type checks and the expanded Vitest suite pass; further end-to-end interaction verification remains pending for invitation acceptance, report export, onboarding dismissal, and evidence linkage.

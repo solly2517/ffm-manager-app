@@ -42,6 +42,8 @@ export async function getUserById(id: number) {
   return result[0];
 }
 
+export async function listInvitations() { const db = await getDb(); if (!db) return []; return db.select().from(invitations).orderBy(invitations.createdAt); }
+
 export async function listUsers() {
   const db = await getDb(); if (!db) return [];
   return db.select().from(users).orderBy(users.createdAt);
@@ -69,10 +71,16 @@ export async function removeUser(id: number) {
 }
 
 
+export function mergePendingInvitation<T extends { id: number; acceptedAt: Date | null; expiresAt: Date; role: "user" | "manager" | "delegate"; tokenHash: string; invitedBy: number }>(existing: T, input: { role: T["role"]; tokenHash: string; invitedBy: number; expiresAt: Date }) { return existing.acceptedAt === null && existing.expiresAt > new Date() ? { ...existing, ...input } : null; }
+
 export async function createInvitation(input: { email: string; role: "user" | "manager" | "delegate"; invitedBy: number; tokenHash: string; expiresAt: Date }) {
   const db = await getDb(); if (!db) throw new Error("Database is not available");
   const existing = await db.select().from(invitations).where(eq(invitations.email, input.email)).limit(1);
-  if (existing[0] && !existing[0].acceptedAt && existing[0].expiresAt > new Date()) return existing[0];
+  const merged = existing[0] && mergePendingInvitation(existing[0], input);
+  if (merged) {
+    await db.update(invitations).set({ role: merged.role, tokenHash: merged.tokenHash, invitedBy: merged.invitedBy, expiresAt: merged.expiresAt }).where(eq(invitations.id, existing[0].id));
+    return (await db.select().from(invitations).where(eq(invitations.id, existing[0].id)).limit(1))[0];
+  }
   await db.insert(invitations).values(input);
   const created = await db.select().from(invitations).where(eq(invitations.tokenHash, input.tokenHash)).limit(1);
   return created[0];
@@ -92,8 +100,8 @@ export async function acceptInvitation(id: number) {
 export async function listClients() { const db = await getDb(); if (!db) return []; return db.select().from(clients).orderBy(clients.name); }
 export async function createClient(input: typeof clients.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database is not available"); const result = await db.insert(clients).values(input); return getClientById(Number(result[0].insertId)); }
 export async function getClientById(id: number) { const db = await getDb(); if (!db) return undefined; const rows = await db.select().from(clients).where(eq(clients.id, id)).limit(1); return rows[0]; }
-export async function listTasksForDelegate(delegateId: number) { const db = await getDb(); if (!db) return []; return db.select().from(tasks).where(eq(tasks.delegateId, delegateId)).orderBy(tasks.scheduledAt); }
-export async function listAllTasks() { const db = await getDb(); if (!db) return []; return db.select().from(tasks).orderBy(tasks.scheduledAt); }
+export async function listTasksForDelegate(delegateId: number) { const db = await getDb(); if (!db) return []; const [rows, clientRows] = await Promise.all([db.select().from(tasks).where(eq(tasks.delegateId, delegateId)).orderBy(tasks.scheduledAt), db.select().from(clients)]); const names = new Map(clientRows.map((client) => [client.id, client.name])); return rows.map((task) => ({ ...task, clientName: names.get(task.clientId) ?? "Unassigned client" })); }
+export async function listAllTasks() { const db = await getDb(); if (!db) return []; const [rows, clientRows] = await Promise.all([db.select().from(tasks).orderBy(tasks.scheduledAt), db.select().from(clients)]); const names = new Map(clientRows.map((client) => [client.id, client.name])); return rows.map((task) => ({ ...task, clientName: names.get(task.clientId) ?? "Unassigned client" })); }
 export async function createTask(input: typeof tasks.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database is not available"); const result = await db.insert(tasks).values(input); return getTaskById(Number(result[0].insertId)); }
 export async function getTaskById(id: number) { const db = await getDb(); if (!db) return undefined; const rows = await db.select().from(tasks).where(eq(tasks.id, id)).limit(1); return rows[0]; }
 export async function updateTaskStatus(id: number, status: "pending" | "in_progress" | "completed" | "cancelled") { const db = await getDb(); if (!db) throw new Error("Database is not available"); await db.update(tasks).set({ status }).where(eq(tasks.id, id)); return getTaskById(id); }
@@ -103,4 +111,5 @@ export async function addEvidence(input: typeof evidence.$inferInsert) { const d
 export async function addAuditEvent(input: typeof auditEvents.$inferInsert) { const db = await getDb(); if (!db) return; await db.insert(auditEvents).values(input); }
 
 export async function listAuditEvents(limit = 100) { const db = await getDb(); if (!db) return []; return db.select().from(auditEvents).limit(limit); }
-export async function getOperationalSummary() { const db = await getDb(); if (!db) return { clients: 0, tasks: 0, completedTasks: 0, pendingTasks: 0 }; const [clientRows, taskRows] = await Promise.all([db.select().from(clients), db.select().from(tasks)]); return { clients: clientRows.length, tasks: taskRows.length, completedTasks: taskRows.filter((task) => task.status === "completed").length, pendingTasks: taskRows.filter((task) => task.status === "pending").length }; }
+export function filterTasksByDateRange<T extends { scheduledAt: Date }>(rows: T[], filters?: { from?: string; to?: string }) { const from = filters?.from ? new Date(filters.from) : undefined; const to = filters?.to ? new Date(`${filters.to}T23:59:59.999Z`) : undefined; return rows.filter((task) => (!from || task.scheduledAt >= from) && (!to || task.scheduledAt <= to)); }
+export async function getOperationalSummary(filters?: { from?: string; to?: string }) { const db = await getDb(); if (!db) return { clients: 0, tasks: 0, completedTasks: 0, pendingTasks: 0 }; const [clientRows, taskRows] = await Promise.all([db.select().from(clients), db.select().from(tasks)]); const filteredTasks = filterTasksByDateRange(taskRows, filters); return { clients: clientRows.length, tasks: filteredTasks.length, completedTasks: filteredTasks.filter((task) => task.status === "completed").length, pendingTasks: filteredTasks.filter((task) => task.status === "pending").length }; }
