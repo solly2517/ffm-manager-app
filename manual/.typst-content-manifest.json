@@ -1,0 +1,13 @@
+{
+  "task_kind": "new-document",
+  "output": "pdf",
+  "signals": ["native-report"],
+  "hard_constraints": ["manager-and-delegate-only", "exclude-administrator-procedures"],
+  "content_features": {
+    "code_blocks": 0,
+    "defined_terms": 8,
+    "portrait_images": 0,
+    "tables": 3,
+    "callout_boxes": 6
+  }
+}

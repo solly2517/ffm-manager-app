@@ -117,3 +117,10 @@
 - [x] Add a Stock Review sidebar item and read-only workspace in FFM
 - [ ] Connect Stock Review to the provided stock-management app through a verified server-side read-only data path
 - [x] Validate Stock Review loading, authentication-required, embed-error, and role-safe view-only states; live stock values remain pending API access
+
+- [x] Create a Manager and Delegate user manual PDF that excludes Administrator procedures
+
+- [x] Create a Manager and Delegate presentation version of the user manual, excluding Administrator procedures
+
+- [x] Remove Manager-side delegate-addition and assignment controls; keep delegate assignment Administrator-only
+- [ ] Verify Manager visibility and task workflows remain available without assignment controls

@@ -21,3 +21,7 @@ The provided stock-management URL returns an HTTP 302 redirect to the Manus appl
 ## Stock Review mobile regression verification — 2026-08-19
 
 At a 390×844 viewport, the authenticated Manager dashboard retained its compact header, mobile menu trigger, responsive metric grid, and blueprint styling. Delegate retained the mobile header, GPS-ready status, route panel, and bottom navigation. Help & Privacy remained readable with stacked guidance cards and return navigation. The Stock Review sidebar is part of the Manager mobile menu; actual stock values remain dependent on the external app’s authenticated read-only data interface.
+
+## Manager delegate-addition removal verification — 2026-08-19
+
+Authenticated Manager desktop preview after the change shows the FFM sidebar with Delegates, Tasks, Administration, and the other operational workspaces still present. The Dashboard retains its Create task action. The Delegates workspace code now presents the administrator-assignment notice instead of an Add delegate button, while the live delegate directory, search, and Open actions remain. The Tasks workspace retains client/delegate/date task creation and status controls. Type checking, 28 tests, and production build pass.
