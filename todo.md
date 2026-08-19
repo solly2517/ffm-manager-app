@@ -21,7 +21,7 @@
 - [x] Provide the one-site live delivery path and administrator login instructions
 
 - [ ] Implement the missing manager workflows from the reference app with real interactive behavior instead of placeholder sections
-- [ ] Implement the missing delegate workflows from the reference app, including evidence capture, signature, media, GPS, and surgery/planning details
+- [x] Implement the missing delegate workflows from the reference app, including evidence capture, signature, media, GPS, and surgery/planning details
 - [x] Add loading, error, and empty states for admin user queries and all admin mutations
 - [x] Replace the placeholder email-add flow with a real invite/linking design that safely links invited emails to future logins and prevents duplicates
 - [x] Confirm no additional invitation/admin-management schema migration is required for the current user-table implementation
@@ -88,3 +88,17 @@
 - [ ] Add report exports with operational filters and production-ready empty/loading/error states
 - [ ] Add end-to-end coverage for authentication, admin operations, tasks, evidence, maps, invitations, and mobile navigation
 - [ ] Complete deployment polish: favicon, metadata, custom-domain readiness, branded email templates, privacy terms, and onboarding
+
+- [x] Persist Delegate visit reports with a real mutation and visible loading/error/success states
+- [x] Replace the Delegate visit screen static location and assignment display with live visit/client data and real map details
+- [x] Surface visit-plan approval/rejection status details in the Delegate Plan tab
+- [x] Add regression coverage for visit reports and visit-plan status display
+
+- [x] Replace the Delegate visit header’s hardcoded time and city with live task and visit metadata
+- [x] Show human-readable visit-plan review status with reviewer/time details when available
+- [x] Add router-level regression coverage for saveVisitReport and visit-plan status output
+
+- [x] Show live visit check-in/check-out state in the Delegate visit header summary
+- [x] Resolve and display visit-plan reviewer identity when reviewedBy is available
+- [ ] Add a successful normalized saveVisitReport router test without persistent fixtures
+- [x] Add a router-contract test for visit-plan status output beyond the helper function

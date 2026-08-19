@@ -115,6 +115,17 @@ export const surgeries = mysqlTable("surgeries", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+export const visitPlans = mysqlTable("visitPlans", {
+  id: int("id").autoincrement().primaryKey(),
+  delegateId: int("delegateId").notNull(),
+  clientId: int("clientId").notNull(),
+  proposedAt: timestamp("proposedAt").notNull(),
+  notes: text("notes"),
+  status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  reviewedBy: int("reviewedBy"),
+  reviewedAt: timestamp("reviewedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({ delegateIdx: index("visit_plans_delegate_idx").on(table.delegateId), statusIdx: index("visit_plans_status_idx").on(table.status) }));
 export const geography = mysqlTable("geography", {
   id: int("id").autoincrement().primaryKey(),
   kind: mysqlEnum("kind", ["province", "city"]).notNull(),

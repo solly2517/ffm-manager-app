@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { appRouter } from "./routers";
-import { filterTasksByDateRange, mergePendingInvitation } from "./db";
+import { filterTasksByDateRange, mergePendingInvitation, visitPlanStatusLabel } from "./db";
 import type { TrpcContext } from "./_core/context";
 
 function createContext(role: "user" | "manager" | "delegate" | "admin" = "user"): TrpcContext {
@@ -48,6 +48,24 @@ describe("expanded FFM permissions", () => {
     const csv = await caller.reports.exportCsv({ from: "2026-01-01", to: "2026-12-31" });
     expect(summary).toHaveProperty("tasks");
     expect(csv).toContain("metric,value");
+  });
+
+  it("protects visit-report saves for unknown or unauthorized tasks", async () => {
+    const caller = appRouter.createCaller(createContext("delegate"));
+    await expect(caller.operations.saveVisitReport({ taskId: 999999, report: "Follow-up" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("returns live visit-plan records through the protected router contract", async () => {
+    const caller = appRouter.createCaller(createContext("delegate"));
+    const plans = await caller.operations.visitPlans();
+    expect(Array.isArray(plans)).toBe(true);
+    expect(plans.every((plan) => ["pending", "approved", "rejected"].includes(plan.status))).toBe(true);
+  });
+
+  it("returns human-readable visit-plan status labels for the Delegate contract", () => {
+    expect(visitPlanStatusLabel("pending")).toBe("Pending review");
+    expect(visitPlanStatusLabel("approved")).toBe("Approved");
+    expect(visitPlanStatusLabel("rejected")).toBe("Rejected");
   });
 
   it("blocks delegates from manager-only task creation", async () => {
