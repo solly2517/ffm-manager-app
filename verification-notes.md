@@ -17,3 +17,7 @@ Authenticated screenshots of `/`, `/delegate`, and `/help` rendered successfully
 ## Stock Review integration inspection — 2026-08-19
 
 The provided stock-management URL returns an HTTP 302 redirect to the Manus application login flow (`/app-auth`) with a stock-app OAuth callback. No public stock payload or unauthenticated read-only endpoint was exposed by the public response. FFM therefore keeps the Stock Review frame non-interactive and does not fabricate stock values; a verified authenticated read-only API or user-provided data contract is still required to render actual current inventory inside FFM.
+
+## Stock Review mobile regression verification — 2026-08-19
+
+At a 390×844 viewport, the authenticated Manager dashboard retained its compact header, mobile menu trigger, responsive metric grid, and blueprint styling. Delegate retained the mobile header, GPS-ready status, route panel, and bottom navigation. Help & Privacy remained readable with stacked guidance cards and return navigation. The Stock Review sidebar is part of the Manager mobile menu; actual stock values remain dependent on the external app’s authenticated read-only data interface.
