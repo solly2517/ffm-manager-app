@@ -134,3 +134,9 @@
 
 - [x] Remove remaining Delegate demonstration tasks, messages, and planning records
 - [ ] Show live Delegate loading, empty, and operational states for tasks, visits, plans, and messages
+
+- [x] Fix Manager tRPC API JSON parsing error where an API request receives an HTML response
+- [x] Validate the corrected Manager route, API responses, tests, and production build
+- [x] Reproduce the original authenticated `/?from_webdev=1` failure and confirm `/api/trpc/auth.me` returns JSON through the proxied path
+- [x] Verify the authenticated Manager route after the fix and record browser evidence without the tRPC parse error
+- [x] Add explicit user-visible recovery behavior for authentication timeout/service failure through the existing unauthenticated login recovery path

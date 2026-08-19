@@ -18,7 +18,7 @@ const tokenHash = (token: string) => createHash("sha256").update(token).digest("
 export const appRouter = router({
   system: systemRouter,
   auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
+    me: publicProcedure.query(({ ctx }) => { if (ctx.authTimedOut) throw new TRPCError({ code: "UNAUTHORIZED", message: "Session verification timed out. Please sign in again." }); return ctx.user; }),
     logout: publicProcedure.mutation(({ ctx }) => { const cookieOptions = getSessionCookieOptions(ctx.req); ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 }); return { success: true } as const; }),
   }),
   invitations: router({

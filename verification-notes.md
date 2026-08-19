@@ -33,3 +33,9 @@ The new `?workspace=delegates` preview opens the authenticated Delegates workspa
 ## Demo-data cleanup verification — 2026-08-19
 
 Authenticated direct workspace previews now show zero delegates for the current Manager when no Administrator assignments exist, with the message “No delegates are assigned to this Manager yet.” The Messages workspace shows “No messages yet.” and the sidebar has no static notification badge. This confirms the three prior demo delegate rows and the hard-coded Messages count of 3 are no longer rendered.
+
+## Manager tRPC HTML-response fix — 2026-08-19/20
+
+The reported `/?from_webdev=1` Manager route was reproduced through the authenticated proxied browser session after the fix. The Manager dashboard loaded successfully. Network logs showed the `auth.me` and batched operations request returning HTTP 200 with `content-type: application/json`; no new `Unexpected token '<'` error appeared. The server now bounds authentication-context resolution to 10 seconds and falls back to the existing authentication recovery path rather than allowing the proxy to emit an HTML 504 response.
+
+The post-fix authenticated reproduction was repeated at `/?from_webdev=1` after explicit timeout recovery was added. The Manager dashboard loaded with the authenticated user and no new browser parse error. The latest proxied network records show `/api/trpc/auth.me` returning HTTP 200 with `content-type: application/json`; the only `Unexpected token '<'` entry remains the original 22:55 failure. Authentication timeout now produces a JSON `UNAUTHORIZED` tRPC response with a sign-in recovery message, and the global query error handler routes that condition back through `startLogin()`.
