@@ -74,4 +74,17 @@
 
 - [x] Diagnose the administrator Copy link failure
 - [x] Implement clipboard fallback and visible copy success/error feedback
-- [ ] Test the repaired Copy link action and save a recovery checkpoint
+- [x] Test the repaired Copy link action and save a recovery checkpoint
+
+# Confirmed Full Improvement Roadmap
+
+- [ ] Complete database-backed CRUD for delegates, clients, doctors, tasks, messages, visits, surgery records, geography, and visit plans
+- [ ] Add task assignment and status-update forms for Manager and Delegate users
+- [ ] Add client, doctor, province, city, surgery, and visit-plan forms with approval states
+- [ ] Complete photo, audio, signature, GPS, timestamps, and secure evidence linkage for visits
+- [ ] Add real map pins, route planning, delegate location updates, and configurable location privacy
+- [ ] Add secure invitation acceptance, duplicate prevention, role separation, and protected-admin safeguards
+- [ ] Add audit history, error reporting, activity monitoring, notification preferences, and backup guidance
+- [ ] Add report exports with operational filters and production-ready empty/loading/error states
+- [ ] Add end-to-end coverage for authentication, admin operations, tasks, evidence, maps, invitations, and mobile navigation
+- [ ] Complete deployment polish: favicon, metadata, custom-domain readiness, branded email templates, privacy terms, and onboarding

@@ -1,6 +1,6 @@
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq, ne, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, invitations, clients, tasks, visits, evidence, auditEvents } from "../drizzle/schema";
+import { InsertUser, users, invitations, clients, tasks, visits, evidence, auditEvents, messages } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -59,7 +59,7 @@ export async function upsertInvitedUser(input: { email: string; name?: string | 
   return created[0];
 }
 
-export async function updateUserRole(id: number, role: "user" | "admin") {
+export async function updateUserRole(id: number, role: "user" | "manager" | "delegate" | "admin") {
   const db = await getDb(); if (!db) throw new Error("Database is not available");
   await db.update(users).set({ role }).where(eq(users.id, id));
   return getUserById(id);
@@ -96,6 +96,9 @@ export async function acceptInvitation(id: number) {
   const db = await getDb(); if (!db) throw new Error("Database is not available");
   await db.update(invitations).set({ acceptedAt: new Date() }).where(eq(invitations.id, id));
 }
+
+export async function listMessages(userId: number) { const db = await getDb(); if (!db) return []; return db.select().from(messages).where(or(eq(messages.senderId, userId), eq(messages.recipientId, userId))).orderBy(messages.createdAt); }
+export async function createMessage(input: typeof messages.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database is not available"); const result = await db.insert(messages).values(input); return db.select().from(messages).where(eq(messages.id, Number(result[0].insertId))).limit(1).then((rows) => rows[0]); }
 
 export async function listClients() { const db = await getDb(); if (!db) return []; return db.select().from(clients).orderBy(clients.name); }
 export async function createClient(input: typeof clients.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database is not available"); const result = await db.insert(clients).values(input); return getClientById(Number(result[0].insertId)); }
