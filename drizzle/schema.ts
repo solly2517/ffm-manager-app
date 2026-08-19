@@ -1,28 +1,144 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, decimal, index, uniqueIndex } from "drizzle-orm/mysql-core";
 
-/**
- * Core user table backing auth flow.
- * Extend this file with additional tables as your product grows.
- * Columns use camelCase to match both database fields and generated types.
- */
 export const users = mysqlTable("users", {
-  /**
-   * Surrogate primary key. Auto-incremented numeric value managed by the database.
-   * Use this for relations between tables.
-   */
   id: int("id").autoincrement().primaryKey(),
-  /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
-  openId: varchar("openId", { length: 64 }).notNull().unique(),
+  openId: varchar("openId", { length: 128 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
+  role: mysqlEnum("role", ["user", "manager", "delegate", "admin"]).default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+}, (table) => ({ emailIdx: index("users_email_idx").on(table.email) }));
+
+export const invitations = mysqlTable("invitations", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull(),
+  tokenHash: varchar("tokenHash", { length: 128 }).notNull().unique(),
+  role: mysqlEnum("role", ["user", "manager", "delegate"]).default("delegate").notNull(),
+  invitedBy: int("invitedBy").notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  acceptedAt: timestamp("acceptedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({ emailIdx: index("invitations_email_idx").on(table.email), expiresIdx: index("invitations_expires_idx").on(table.expiresAt) }));
+
+export const clients = mysqlTable("clients", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 220 }).notNull(),
+  province: varchar("province", { length: 120 }),
+  city: varchar("city", { length: 120 }),
+  address: text("address"),
+  contactPerson: varchar("contactPerson", { length: 160 }),
+  phone: varchar("phone", { length: 50 }),
+  latitude: decimal("latitude", { precision: 10, scale: 7 }),
+  longitude: decimal("longitude", { precision: 10, scale: 7 }),
+  createdBy: int("createdBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({ nameIdx: index("clients_name_idx").on(table.name), cityIdx: index("clients_city_idx").on(table.city) }));
+
+export const doctors = mysqlTable("doctors", {
+  id: int("id").autoincrement().primaryKey(),
+  clientId: int("clientId").notNull(),
+  name: varchar("name", { length: 180 }).notNull(),
+  specialty: varchar("specialty", { length: 140 }),
+  department: varchar("department", { length: 140 }),
+  phone: varchar("phone", { length: 50 }),
+  email: varchar("email", { length: 320 }),
+  relationship: mysqlEnum("relationship", ["new", "warm", "kol", "cold"]).default("new").notNull(),
+  notes: text("notes"),
+  createdBy: int("createdBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({ clientIdx: index("doctors_client_idx").on(table.clientId) }));
+
+export const tasks = mysqlTable("tasks", {
+  id: int("id").autoincrement().primaryKey(),
+  delegateId: int("delegateId").notNull(),
+  clientId: int("clientId").notNull(),
+  scheduledAt: timestamp("scheduledAt").notNull(),
+  status: mysqlEnum("status", ["pending", "in_progress", "completed", "cancelled"]).default("pending").notNull(),
+  notes: text("notes"),
+  createdBy: int("createdBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({ delegateIdx: index("tasks_delegate_idx").on(table.delegateId), scheduleIdx: index("tasks_schedule_idx").on(table.scheduledAt) }));
+
+export const visits = mysqlTable("visits", {
+  id: int("id").autoincrement().primaryKey(),
+  taskId: int("taskId").notNull(),
+  checkInAt: timestamp("checkInAt"),
+  checkOutAt: timestamp("checkOutAt"),
+  checkInLat: decimal("checkInLat", { precision: 10, scale: 7 }),
+  checkInLng: decimal("checkInLng", { precision: 10, scale: 7 }),
+  checkOutLat: decimal("checkOutLat", { precision: 10, scale: 7 }),
+  checkOutLng: decimal("checkOutLng", { precision: 10, scale: 7 }),
+  report: text("report"),
+  clientSignatureUrl: text("clientSignatureUrl"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({ taskIdx: uniqueIndex("visits_task_unique").on(table.taskId) }));
+
+export const evidence = mysqlTable("evidence", {
+  id: int("id").autoincrement().primaryKey(),
+  visitId: int("visitId").notNull(),
+  kind: mysqlEnum("kind", ["photo", "audio", "signature", "document"]).notNull(),
+  storageKey: varchar("storageKey", { length: 500 }).notNull(),
+  mimeType: varchar("mimeType", { length: 120 }),
+  sizeBytes: int("sizeBytes"),
+  uploadedBy: int("uploadedBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({ visitIdx: index("evidence_visit_idx").on(table.visitId) }));
+
+export const messages = mysqlTable("messages", {
+  id: int("id").autoincrement().primaryKey(),
+  senderId: int("senderId").notNull(),
+  recipientId: int("recipientId"),
+  body: text("body").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  readAt: timestamp("readAt"),
+}, (table) => ({ recipientIdx: index("messages_recipient_idx").on(table.recipientId), createdIdx: index("messages_created_idx").on(table.createdAt) }));
+
+export const surgeries = mysqlTable("surgeries", {
+  id: int("id").autoincrement().primaryKey(),
+  clientId: int("clientId").notNull(),
+  delegateId: int("delegateId").notNull(),
+  surgeryDate: timestamp("surgeryDate").notNull(),
+  hospital: varchar("hospital", { length: 220 }),
+  surgeon: varchar("surgeon", { length: 180 }),
+  procedureName: varchar("procedureName", { length: 220 }),
+  status: mysqlEnum("status", ["pending", "partial", "collected"]).default("pending").notNull(),
+  quotation: decimal("quotation", { precision: 12, scale: 2 }),
+  invoice: decimal("invoice", { precision: 12, scale: 2 }),
+  notes: text("notes"),
+  createdBy: int("createdBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
+
+export const geography = mysqlTable("geography", {
+  id: int("id").autoincrement().primaryKey(),
+  kind: mysqlEnum("kind", ["province", "city"]).notNull(),
+  name: varchar("name", { length: 140 }).notNull(),
+  parentId: int("parentId"),
+  createdBy: int("createdBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({ parentIdx: index("geography_parent_idx").on(table.parentId) }));
+
+export const auditEvents = mysqlTable("auditEvents", {
+  id: int("id").autoincrement().primaryKey(),
+  actorId: int("actorId").notNull(),
+  action: varchar("action", { length: 120 }).notNull(),
+  entityType: varchar("entityType", { length: 80 }),
+  entityId: int("entityId"),
+  metadata: text("metadata"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({ actorIdx: index("audit_actor_idx").on(table.actorId), createdIdx: index("audit_created_idx").on(table.createdAt) }));
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
-
-// TODO: Add your tables here
+export type Invitation = typeof invitations.$inferSelect;
+export type Client = typeof clients.$inferSelect;
+export type Doctor = typeof doctors.$inferSelect;
+export type Task = typeof tasks.$inferSelect;
+export type Visit = typeof visits.$inferSelect;
+export type Evidence = typeof evidence.$inferSelect;

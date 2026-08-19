@@ -1,50 +1,47 @@
+import { createHash, randomBytes } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
-import { getUserById, listUsers, removeUser, updateUserRole, upsertInvitedUser } from "./db";
+import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import { acceptInvitation, addAuditEvent, addEvidence, createClient, createInvitation, createTask, getClientById, getInvitationByHash, getTaskById, getUserById, listAllTasks, listClients, listTasksForDelegate, listUsers, removeUser, updateTaskStatus, updateUserRole, upsertUser, upsertVisit } from "./db";
+import { storagePut } from "./storage";
 
-const adminEmail = "dr.seleam@gmail.com";
-const ensureAdmin = (email?: string | null, role?: string) => email?.toLowerCase() === adminEmail || role === "admin";
-const adminOnly = protectedProcedure.use(({ ctx, next }) => {
-  if (!ensureAdmin(ctx.user.email, ctx.user.role)) throw new TRPCError({ code: "FORBIDDEN", message: "Administrator access required" });
-  return next({ ctx });
-});
+const ADMIN_EMAIL = "dr.seleam@gmail.com";
+const isAdmin = (user: { email?: string | null; role?: string }) => user.email?.toLowerCase() === ADMIN_EMAIL || user.role === "admin";
+const canManage = (user: { email?: string | null; role?: string }) => isAdmin(user) || user.role === "manager";
+const adminOnly = protectedProcedure.use(({ ctx, next }) => { if (!isAdmin(ctx.user)) throw new TRPCError({ code: "FORBIDDEN", message: "Administrator access required" }); return next({ ctx }); });
+const managerOnly = protectedProcedure.use(({ ctx, next }) => { if (!canManage(ctx.user)) throw new TRPCError({ code: "FORBIDDEN", message: "Manager access required" }); return next({ ctx }); });
+const tokenHash = (token: string) => createHash("sha256").update(token).digest("hex");
 
 export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
-    logout: publicProcedure.mutation(({ ctx }) => {
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return { success: true } as const;
-    }),
+    logout: publicProcedure.mutation(({ ctx }) => { const cookieOptions = getSessionCookieOptions(ctx.req); ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 }); return { success: true } as const; }),
+  }),
+  invitations: router({
+    preview: publicProcedure.input(z.object({ token: z.string().min(20) })).query(async ({ input }) => { const invitation = await getInvitationByHash(tokenHash(input.token)); if (!invitation || invitation.acceptedAt || invitation.expiresAt < new Date()) throw new TRPCError({ code: "NOT_FOUND", message: "Invitation is invalid or expired" }); return { email: invitation.email, role: invitation.role, expiresAt: invitation.expiresAt }; }),
+    accept: protectedProcedure.input(z.object({ token: z.string().min(20) })).mutation(async ({ input, ctx }) => { const invitation = await getInvitationByHash(tokenHash(input.token)); if (!invitation || invitation.acceptedAt || invitation.expiresAt < new Date()) throw new TRPCError({ code: "BAD_REQUEST", message: "Invitation is invalid or expired" }); if (ctx.user.email?.toLowerCase() !== invitation.email.toLowerCase()) throw new TRPCError({ code: "FORBIDDEN", message: "This invitation belongs to a different email address" }); await upsertUser({ openId: ctx.user.openId, email: ctx.user.email, name: ctx.user.name, role: invitation.role, loginMethod: ctx.user.loginMethod }); await acceptInvitation(invitation.id); await addAuditEvent({ actorId: ctx.user.id, action: "invitation.accepted", entityType: "invitation", entityId: invitation.id }); return { success: true, role: invitation.role } as const; }),
   }),
   admin: router({
     users: adminOnly.query(async () => listUsers()),
-    addUser: adminOnly.input(z.object({ email: z.string().email(), name: z.string().trim().min(1).max(120).optional() })).mutation(async ({ input }) => {
-      const email = input.email.toLowerCase();
-      if (email === adminEmail) throw new TRPCError({ code: "BAD_REQUEST", message: "The protected administrator account already exists." });
-      return upsertInvitedUser({ email, name: input.name || null });
-    }),
-    setRole: adminOnly.input(z.object({ id: z.number().int().positive(), role: z.enum(["user", "admin"]) })).mutation(async ({ input, ctx }) => {
-      const target = await getUserById(input.id);
-      if (!target) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
-      if (target.email?.toLowerCase() === adminEmail || target.openId === ctx.user.openId) throw new TRPCError({ code: "FORBIDDEN", message: "The protected administrator role cannot be changed." });
-      return updateUserRole(input.id, input.role);
-    }),
-    removeUser: adminOnly.input(z.object({ id: z.number().int().positive() })).mutation(async ({ input, ctx }) => {
-      const target = await getUserById(input.id);
-      if (!target) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
-      if (target.email?.toLowerCase() === adminEmail || target.openId === ctx.user.openId) throw new TRPCError({ code: "FORBIDDEN", message: "The protected administrator account cannot be removed." });
-      await removeUser(input.id);
-      return { success: true } as const;
-    }),
+    createInvitation: adminOnly.input(z.object({ email: z.string().email(), role: z.enum(["user", "manager", "delegate"]).default("delegate") })).mutation(async ({ input, ctx }) => { const token = randomBytes(32).toString("hex"); const invitation = await createInvitation({ email: input.email.toLowerCase(), role: input.role, invitedBy: ctx.user.id, tokenHash: tokenHash(token), expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 72) }); await addAuditEvent({ actorId: ctx.user.id, action: "invitation.created", entityType: "invitation", entityId: invitation?.id }); return { invitation, token, inviteUrl: `/invite/${token}` }; }),
+    addUser: adminOnly.input(z.object({ email: z.string().email(), name: z.string().trim().min(1).max(120).optional() })).mutation(async ({ input, ctx }) => { const existing = await listUsers(); if (existing.some((item) => item.email?.toLowerCase() === input.email.toLowerCase())) throw new TRPCError({ code: "CONFLICT", message: "A user with this email already exists" }); return createInvitation({ email: input.email.toLowerCase(), role: "delegate", invitedBy: ctx.user.id, tokenHash: tokenHash(randomBytes(32).toString("hex")), expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 72) }); }),
+    setRole: adminOnly.input(z.object({ id: z.number().int().positive(), role: z.enum(["user", "manager", "delegate", "admin"]) })).mutation(async ({ input, ctx }) => { const target = await getUserById(input.id); if (!target) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" }); if (target.email?.toLowerCase() === ADMIN_EMAIL || target.openId === ctx.user.openId) throw new TRPCError({ code: "FORBIDDEN", message: "The protected administrator role cannot be changed" }); const result = await updateUserRole(input.id, input.role as "user" | "admin"); await addAuditEvent({ actorId: ctx.user.id, action: "user.role_changed", entityType: "user", entityId: input.id, metadata: JSON.stringify({ role: input.role }) }); return result; }),
+    removeUser: adminOnly.input(z.object({ id: z.number().int().positive() })).mutation(async ({ input, ctx }) => { const target = await getUserById(input.id); if (!target) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" }); if (target.email?.toLowerCase() === ADMIN_EMAIL || target.openId === ctx.user.openId) throw new TRPCError({ code: "FORBIDDEN", message: "The protected administrator account cannot be removed" }); await removeUser(input.id); await addAuditEvent({ actorId: ctx.user.id, action: "user.removed", entityType: "user", entityId: input.id }); return { success: true } as const; }),
+  }),
+  operations: router({
+    clients: protectedProcedure.query(() => listClients()),
+    addClient: managerOnly.input(z.object({ name: z.string().min(2), city: z.string().optional(), province: z.string().optional(), address: z.string().optional(), contactPerson: z.string().optional(), phone: z.string().optional(), latitude: z.string().optional(), longitude: z.string().optional() })).mutation(async ({ input, ctx }) => { const result = await createClient({ ...input, createdBy: ctx.user.id }); await addAuditEvent({ actorId: ctx.user.id, action: "client.created", entityType: "client", entityId: result?.id }); return result; }),
+    tasks: protectedProcedure.query(({ ctx }) => ctx.user.role === "delegate" ? listTasksForDelegate(ctx.user.id) : listAllTasks()),
+    addTask: managerOnly.input(z.object({ delegateId: z.number().int().positive(), clientId: z.number().int().positive(), scheduledAt: z.date(), notes: z.string().optional() })).mutation(async ({ input, ctx }) => { const client = await getClientById(input.clientId); if (!client) throw new TRPCError({ code: "BAD_REQUEST", message: "Client not found" }); const result = await createTask({ ...input, createdBy: ctx.user.id }); await addAuditEvent({ actorId: ctx.user.id, action: "task.created", entityType: "task", entityId: result?.id }); return result; }),
+    updateTaskStatus: protectedProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["pending", "in_progress", "completed", "cancelled"]) })).mutation(async ({ input, ctx }) => { const task = await getTaskById(input.id); if (!task || (ctx.user.role === "delegate" && task.delegateId !== ctx.user.id)) throw new TRPCError({ code: "FORBIDDEN", message: "You cannot update this task" }); const result = await updateTaskStatus(input.id, input.status); await addAuditEvent({ actorId: ctx.user.id, action: "task.status_changed", entityType: "task", entityId: input.id, metadata: JSON.stringify({ status: input.status }) }); return result; }),
+    checkIn: protectedProcedure.input(z.object({ taskId: z.number().int().positive(), latitude: z.string(), longitude: z.string() })).mutation(async ({ input, ctx }) => { const task = await getTaskById(input.taskId); if (!task || (ctx.user.role === "delegate" && task.delegateId !== ctx.user.id)) throw new TRPCError({ code: "FORBIDDEN", message: "You cannot check in to this task" }); const result = await upsertVisit({ taskId: input.taskId, checkInAt: new Date(), checkInLat: input.latitude, checkInLng: input.longitude }); await updateTaskStatus(input.taskId, "in_progress"); await addAuditEvent({ actorId: ctx.user.id, action: "visit.checked_in", entityType: "task", entityId: input.taskId }); return result; }),
+    checkOut: protectedProcedure.input(z.object({ taskId: z.number().int().positive(), latitude: z.string(), longitude: z.string(), report: z.string().optional() })).mutation(async ({ input, ctx }) => { const task = await getTaskById(input.taskId); if (!task || (ctx.user.role === "delegate" && task.delegateId !== ctx.user.id)) throw new TRPCError({ code: "FORBIDDEN", message: "You cannot check out of this task" }); const result = await upsertVisit({ taskId: input.taskId, checkOutAt: new Date(), checkOutLat: input.latitude, checkOutLng: input.longitude, report: input.report }); await updateTaskStatus(input.taskId, "completed"); await addAuditEvent({ actorId: ctx.user.id, action: "visit.checked_out", entityType: "task", entityId: input.taskId }); return result; }),
+    uploadEvidence: protectedProcedure.input(z.object({ visitId: z.number().int().positive(), kind: z.enum(["photo", "audio", "signature", "document"]), fileName: z.string().min(1).max(180), mimeType: z.string().max(120), base64: z.string().min(20).max(15_000_000) })).mutation(async ({ input, ctx }) => { const buffer = Buffer.from(input.base64.replace(/^data:[^;]+;base64,/, ""), "base64"); const uploaded = await storagePut(`evidence/${ctx.user.id}/${input.fileName}`, buffer, input.mimeType); const evidenceId = await addEvidence({ visitId: input.visitId, kind: input.kind, storageKey: uploaded.key, mimeType: input.mimeType, sizeBytes: buffer.byteLength, uploadedBy: ctx.user.id }); await addAuditEvent({ actorId: ctx.user.id, action: "evidence.uploaded", entityType: "visit", entityId: input.visitId, metadata: JSON.stringify({ kind: input.kind, evidenceId }) }); return { evidenceId, url: uploaded.url } as const; }),
   }),
 });
-
 
 export type AppRouter = typeof appRouter;
