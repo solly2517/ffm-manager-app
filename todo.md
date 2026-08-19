@@ -15,15 +15,24 @@
 - [x] Add admin capability to remove users
 - [x] Add database schema and server procedures for user administration
 - [x] Add Vitest coverage for admin authorization and user-management procedures
-- [ ] Run type checks, tests, and production builds for both apps
+- [x] Run type checks, tests, and production builds for both apps
 - [x] Verify desktop and mobile layouts and authenticated access flows
 - [ ] Save final checkpoints for both apps
 - [ ] Provide live-app delivery paths and administrator login instructions
 
 - [ ] Implement the missing manager workflows from the reference app with real interactive behavior instead of placeholder sections
 - [ ] Implement the missing delegate workflows from the reference app, including evidence capture, signature, media, GPS, and surgery/planning details
-- [ ] Add loading, error, and empty states for admin user queries and all admin mutations
-- [ ] Replace the placeholder email-add flow with a real invite/linking design that safely links invited emails to future logins and prevents duplicates
+- [x] Add loading, error, and empty states for admin user queries and all admin mutations
+- [x] Replace the placeholder email-add flow with a real invite/linking design that safely links invited emails to future logins and prevents duplicates
 - [ ] Add invitation/admin-management schema changes if required, generate and apply migrations
 - [ ] Add Vitest coverage for addUser, setRole, removeUser, and protected-account edge cases
-- [ ] Verify mobile layouts and authenticated flows with explicit evidence for both manager and delegate routes
+- [x] Verify mobile layouts and authenticated flows with explicit evidence for both manager and delegate routes
+
+- [x] Add explicit pending, success, and error feedback for setRole and removeUser mutations
+- [ ] Implement a real invitation token/link flow for administrator-added users
+- [x] Verify authenticated Manager and Delegate flows after login on mobile and desktop
+
+- [x] Finalize the confirmed one-site architecture with Manager at / and Delegate at /delegate
+- [x] Verify shared authentication and administrator access across both routes
+- [ ] Save the final one-site checkpoint
+- [ ] Provide the one-site live delivery path and administrator login instructions
