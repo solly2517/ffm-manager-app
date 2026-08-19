@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
+import { isProtectedAdminTarget } from "./db";
 
 function contextFor(user: NonNullable<TrpcContext["user"]>): TrpcContext {
   return {
@@ -34,4 +35,22 @@ describe("admin access control", () => {
     expect(Array.isArray(result)).toBe(true);
   });
 
+  it("rejects non-admin addUser, setRole, and removeUser attempts", async () => {
+    const caller = appRouter.createCaller(contextFor(baseUser));
+    await expect(caller.admin.addUser({ email: "new@example.com", role: "delegate" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.admin.setRole({ id: 2, role: "manager" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.admin.removeUser({ id: 2 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("protects the designated administrator and the acting administrator account", () => {
+    expect(isProtectedAdminTarget({ email: "DR.SELEAM@GMAIL.COM", openId: "other" }, "actor")).toBe(true);
+    expect(isProtectedAdminTarget({ email: "other@example.com", openId: "actor" }, "actor")).toBe(true);
+    expect(isProtectedAdminTarget({ email: "other@example.com", openId: "other" }, "actor")).toBe(false);
+  });
+
+  it("rejects admin mutation targets that are not valid positive user ids", async () => {
+    const caller = appRouter.createCaller(contextFor({ ...baseUser, email: "dr.seleam@gmail.com" }));
+    await expect(caller.admin.setRole({ id: 0, role: "manager" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(caller.admin.removeUser({ id: 0 })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
 });

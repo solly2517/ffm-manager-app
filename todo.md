@@ -25,7 +25,7 @@
 - [x] Add loading, error, and empty states for admin user queries and all admin mutations
 - [x] Replace the placeholder email-add flow with a real invite/linking design that safely links invited emails to future logins and prevents duplicates
 - [x] Confirm no additional invitation/admin-management schema migration is required for the current user-table implementation
-- [ ] Add Vitest coverage for addUser, setRole, removeUser, and protected-account edge cases
+- [x] Add Vitest coverage for addUser, setRole, removeUser, and protected-account edge cases
 - [x] Verify mobile layouts and authenticated flows with explicit evidence for both manager and delegate routes
 
 - [x] Add explicit pending, success, and error feedback for setRole and removeUser mutations
