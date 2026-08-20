@@ -301,3 +301,8 @@
 - [x] Remove Lot and Serial fields from the surgery implant-registration user interface and submission payload
 - [x] Add regression coverage for full-catalogue search access and simplified implant registration
 - [x] Verify and publish the simplified full-catalogue surgery workflow
+- [x] Add Administrator-only deletion procedures for clients (hospitals), doctors, and surgeries with audit events
+- [x] Protect deletion when dependent operational records would be orphaned and provide a clear Administrator-facing explanation
+- [x] Add confirmed Administrator deletion controls to Clients, Doctors, Surgeries, and Surgery Calendar workspaces
+- [x] Add regression coverage for deletion authorization, dependency protection, and audit records
+- [x] Verify and publish Administrator deletion controls across the requested workspaces

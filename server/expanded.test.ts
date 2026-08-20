@@ -216,14 +216,17 @@ describe("FFM monitoring diagnostics", () => {
 describe("FFM Manager client CRUD", () => {
   afterEach(() => vi.restoreAllMocks());
 
-  it("allows managers to update and remove an existing client through protected procedures", async () => {
+  it("allows managers to update an existing client while reserving deletion for Administrators", async () => {
     vi.spyOn(db, "getClientById").mockResolvedValue({ id: 42, name: "Old Hospital" } as any);
     const update = vi.spyOn(db, "updateClient").mockResolvedValue({ id: 42, name: "New Hospital" } as any);
     const remove = vi.spyOn(db, "removeClient").mockResolvedValue({ success: true });
+    vi.spyOn(db, "getClientDeletionDependencies").mockResolvedValue({ doctors: 0, tasks: 0, surgeries: 0, visitPlans: 0 });
     vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined);
-    const caller = appRouter.createCaller(createContext("manager"));
-    await expect(caller.operations.updateClient({ id: 42, name: "New Hospital" })).resolves.toEqual({ id: 42, name: "New Hospital" });
-    await expect(caller.operations.removeClient({ id: 42 })).resolves.toEqual({ success: true });
+    const manager = appRouter.createCaller(createContext("manager"));
+    const admin = appRouter.createCaller(createContext("admin"));
+    await expect(manager.operations.updateClient({ id: 42, name: "New Hospital" })).resolves.toEqual({ id: 42, name: "New Hospital" });
+    await expect(manager.operations.removeClient({ id: 42 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(admin.operations.removeClient({ id: 42 })).resolves.toEqual({ success: true });
     expect(update).toHaveBeenCalledWith(42, { name: "New Hospital" });
     expect(remove).toHaveBeenCalledWith(42);
   });
@@ -241,19 +244,22 @@ describe("FFM Manager client CRUD", () => {
 describe("FFM Manager directory CRUD", () => {
   afterEach(() => vi.restoreAllMocks());
 
-  it("allows managers to update and remove doctors and geography records", async () => {
-    vi.spyOn(db, "getDoctorById").mockResolvedValue({ id: 12, name: "Old Doctor", relationship: "warm" } as any);
+  it("allows managers to update doctors and geography while reserving doctor deletion for Administrators", async () => {
+    vi.spyOn(db, "getDoctorById").mockResolvedValue({ id: 12, clientId: 2, name: "Old Doctor", relationship: "warm" } as any);
     vi.spyOn(db, "getGeographyById").mockResolvedValue({ id: 13, kind: "province", name: "Old Region" } as any);
     const updateDoctor = vi.spyOn(db, "updateDoctor").mockResolvedValue({ id: 12, name: "New Doctor" } as any);
     const removeDoctor = vi.spyOn(db, "removeDoctor").mockResolvedValue({ success: true });
+    vi.spyOn(db, "getDoctorDeletionDependencies").mockResolvedValue({ surgeries: 0 });
     const updateGeography = vi.spyOn(db, "updateGeography").mockResolvedValue({ id: 13, kind: "province", name: "New Region" } as any);
     const removeGeography = vi.spyOn(db, "removeGeography").mockResolvedValue({ success: true });
     vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined);
-    const caller = appRouter.createCaller(createContext("manager"));
-    await expect(caller.operations.updateDoctor({ id: 12, clientId: 2, name: "New Doctor", relationship: "warm" })).resolves.toEqual({ id: 12, name: "New Doctor" });
-    await expect(caller.operations.removeDoctor({ id: 12 })).resolves.toEqual({ success: true });
-    await expect(caller.operations.updateGeography({ id: 13, kind: "province", name: "New Region" })).resolves.toEqual({ id: 13, kind: "province", name: "New Region" });
-    await expect(caller.operations.removeGeography({ id: 13 })).resolves.toEqual({ success: true });
+    const manager = appRouter.createCaller(createContext("manager"));
+    const admin = appRouter.createCaller(createContext("admin"));
+    await expect(manager.operations.updateDoctor({ id: 12, clientId: 2, name: "New Doctor", relationship: "warm" })).resolves.toEqual({ id: 12, name: "New Doctor" });
+    await expect(manager.operations.removeDoctor({ id: 12 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(admin.operations.removeDoctor({ id: 12 })).resolves.toEqual({ success: true });
+    await expect(manager.operations.updateGeography({ id: 13, kind: "province", name: "New Region" })).resolves.toEqual({ id: 13, kind: "province", name: "New Region" });
+    await expect(manager.operations.removeGeography({ id: 13 })).resolves.toEqual({ success: true });
     expect(updateDoctor).toHaveBeenCalledWith(12, expect.objectContaining({ name: "New Doctor", relationship: "warm" }));
     expect(removeDoctor).toHaveBeenCalledWith(12);
     expect(updateGeography).toHaveBeenCalledWith(13, expect.objectContaining({ name: "New Region" }));

@@ -65,6 +65,36 @@ describe("admin access control", () => {
     await expect(adminCaller.operations.updateSurgery({ id: 61, status: "collected" })).resolves.toMatchObject({ id: 61, status: "collected" });
   });
 
+  it("reserves client, doctor, and surgery deletion for Administrators", async () => {
+    const manager = appRouter.createCaller(contextFor({ ...baseUser, id: 11, role: "manager", email: "manager@example.com" }));
+    await expect(manager.operations.removeClient({ id: 1 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(manager.operations.removeDoctor({ id: 1 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(manager.operations.removeSurgery({ id: 1 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("blocks an Administrator from deleting a hospital or doctor with linked surgery work", async () => {
+    const admin = appRouter.createCaller(contextFor({ ...baseUser, role: "admin", email: "dr.seleam@gmail.com" }));
+    vi.spyOn(db, "getClientById").mockResolvedValue({ id: 5, name: "City Hospital" } as never);
+    vi.spyOn(db, "getClientDeletionDependencies").mockResolvedValue({ doctors: 1, tasks: 2, surgeries: 1, visitPlans: 0 });
+    vi.spyOn(db, "getDoctorById").mockResolvedValue({ id: 8, clientId: 5, name: "Dr. Example" } as never);
+    vi.spyOn(db, "getDoctorDeletionDependencies").mockResolvedValue({ surgeries: 1 });
+    const removeClient = vi.spyOn(db, "removeClient");
+    const removeDoctor = vi.spyOn(db, "removeDoctor");
+    await expect(admin.operations.removeClient({ id: 5 })).rejects.toMatchObject({ code: "CONFLICT" });
+    await expect(admin.operations.removeDoctor({ id: 8 })).rejects.toMatchObject({ code: "CONFLICT" });
+    expect(removeClient).not.toHaveBeenCalled();
+    expect(removeDoctor).not.toHaveBeenCalled();
+  });
+
+  it("lets an Administrator delete a surgery and records the associated clinical-resource cleanup", async () => {
+    const admin = appRouter.createCaller(contextFor({ ...baseUser, role: "admin", email: "dr.seleam@gmail.com" }));
+    vi.spyOn(db, "getSurgeryById").mockResolvedValue({ id: 41, clientId: 5, delegateId: 9 } as never);
+    vi.spyOn(db, "removeSurgeryWithResources").mockResolvedValue({ success: true, implantsRemoved: 2, deliveryProofsRemoved: 1 });
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    await expect(admin.operations.removeSurgery({ id: 41 })).resolves.toEqual({ success: true, implantsRemoved: 2, deliveryProofsRemoved: 1 });
+    expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "surgery.removed", entityId: 41, metadata: expect.stringContaining("implantsRemoved") }));
+  });
+
   it("rejects non-admin addUser, setRole, and removeUser attempts", async () => {
     const caller = appRouter.createCaller(contextFor(baseUser));
     await expect(caller.admin.addUser({ email: "new@example.com", role: "delegate" })).rejects.toMatchObject({ code: "FORBIDDEN" });
