@@ -169,3 +169,5 @@
 - [x] Add a UI form-state regression proving Manager doctor edit preserves non-new relationships
 
 - [x] Add Geography parent-region selection for city records in the Manager workflow
+
+- [x] Add Manager surgery and visit-plan live review workspaces with assignment-scoped queries, approval controls, and empty/error states

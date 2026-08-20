@@ -210,3 +210,26 @@ describe("FFM Manager directory CRUD", () => {
     await expect(managerCaller.operations.updateDoctor({ id: 12, clientId: 2, name: "Missing Doctor", relationship: "new" })).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 });
+
+
+describe("FFM Manager surgery and visit-plan workspaces", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("allows review only for visit plans belonging to assigned delegates", async () => {
+    vi.spyOn(db, "listDelegateIdsForManager").mockResolvedValue([20]);
+    vi.spyOn(db, "getVisitPlanById").mockResolvedValue({ id: 7, delegateId: 20, status: "pending" } as any);
+    vi.spyOn(db, "updateVisitPlan").mockResolvedValue({ id: 7, delegateId: 20, status: "approved" } as any);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined);
+    const caller = appRouter.createCaller(createContext("manager"));
+    await expect(caller.operations.reviewVisitPlan({ id: 7, status: "approved" })).resolves.toEqual({ id: 7, delegateId: 20, status: "approved" });
+
+    vi.spyOn(db, "getVisitPlanById").mockResolvedValue({ id: 8, delegateId: 21, status: "pending" } as any);
+    await expect(caller.operations.reviewVisitPlan({ id: 8, status: "approved" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("rejects review of a missing visit plan", async () => {
+    vi.spyOn(db, "getVisitPlanById").mockResolvedValue(undefined);
+    const caller = appRouter.createCaller(createContext("manager"));
+    await expect(caller.operations.reviewVisitPlan({ id: 999, status: "approved" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+});
