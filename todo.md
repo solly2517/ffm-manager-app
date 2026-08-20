@@ -306,3 +306,8 @@
 - [x] Add confirmed Administrator deletion controls to Clients, Doctors, Surgeries, and Surgery Calendar workspaces
 - [x] Add regression coverage for deletion authorization, dependency protection, and audit records
 - [x] Verify and publish Administrator deletion controls across the requested workspaces
+- [x] Rename delivery preparation to Warehouse preparation and add a fifth Hospital delivery readiness confirmation
+- [x] Correct surgery calendar visibility so every scheduled surgery is discoverable and validate the two reported surgery records
+- [x] Replace remaining Manager, Delegate, and Warehouse Hero numeric identifiers with registered names or email fallbacks across FFM workspaces
+- [x] Add regression coverage for five-step readiness, calendar discoverability, and identity-label resolution
+- [x] Verify and publish the readiness, calendar, and identity-label corrections

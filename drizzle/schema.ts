@@ -161,6 +161,7 @@ export const surgeries = mysqlTable("surgeries", {
   implantsAvailable: boolean("implantsAvailable").default(false).notNull(),
   delegateReady: boolean("delegateReady").default(false).notNull(),
   deliveryPrepared: boolean("deliveryPrepared").default(false).notNull(),
+  hospitalDelivered: boolean("hospitalDelivered").default(false).notNull(),
   readinessUpdatedAt: timestamp("readinessUpdatedAt"),
   readinessUpdatedBy: int("readinessUpdatedBy"),
   hospital: varchar("hospital", { length: 220 }),

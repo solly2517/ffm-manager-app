@@ -159,14 +159,14 @@ describe("expanded FFM permissions", () => {
     await expect(caller.preferences.update({})).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
-  it("records all four preoperative readiness checks only within the caller's surgery scope", async () => {
+  it("records all five preoperative readiness checks, including Hospital delivery, only within the caller's surgery scope", async () => {
     const surgery = { id: 501, delegateId: 999999, surgeryDate: new Date("2026-08-27"), calendarStatus: "confirmed" };
     vi.spyOn(db, "getSurgeryById").mockResolvedValue(surgery as never);
-    const update = vi.spyOn(db, "updateSurgery").mockResolvedValue({ ...surgery, hospitalConfirmed: true, implantsAvailable: true, delegateReady: true, deliveryPrepared: true } as never);
+    const update = vi.spyOn(db, "updateSurgery").mockResolvedValue({ ...surgery, hospitalConfirmed: true, implantsAvailable: true, delegateReady: true, deliveryPrepared: true, hospitalDelivered: true } as never);
     vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined);
     const caller = appRouter.createCaller(createContext("delegate"));
-    await expect(caller.operations.updateSurgeryReadiness({ id: 501, hospitalConfirmed: true, implantsAvailable: true, delegateReady: true, deliveryPrepared: true })).resolves.toMatchObject({ id: 501, deliveryPrepared: true });
-    expect(update).toHaveBeenCalledWith(501, expect.objectContaining({ hospitalConfirmed: true, implantsAvailable: true, delegateReady: true, deliveryPrepared: true, readinessUpdatedBy: 999999 }));
+    await expect(caller.operations.updateSurgeryReadiness({ id: 501, hospitalConfirmed: true, implantsAvailable: true, delegateReady: true, deliveryPrepared: true, hospitalDelivered: true })).resolves.toMatchObject({ id: 501, hospitalDelivered: true });
+    expect(update).toHaveBeenCalledWith(501, expect.objectContaining({ hospitalConfirmed: true, implantsAvailable: true, delegateReady: true, deliveryPrepared: true, hospitalDelivered: true, readinessUpdatedBy: 999999 }));
   });
 });
 
