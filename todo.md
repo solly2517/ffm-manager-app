@@ -268,3 +268,7 @@
 - [x] Resolve generic Warehouse Hero map labels to a registered name or email, including current live location records
 
 - [x] Show each live Delegate GPS position with the registered Delegate name or email on the dashboard map
+
+- [x] Diagnose and restore the intended Delegate planning access for solly2517@gmail.com without disrupting Warehouse Hero operations
+
+- [x] Create the supplied EMC client in Jeddah, add Dr. Eslam Fahmy, and assign solly2517@gmail.com to m.m.selim1977@gmail.com for Delegate plan review
