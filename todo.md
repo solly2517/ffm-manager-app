@@ -262,3 +262,5 @@
 - [x] Replace numeric Manager, Delegate, and Warehouse Hero labels with registered names and email fallbacks throughout logistics workspaces
 - [x] Remove the obsolete Warehouse Hero assignment management controls from Administration
 - [x] Add authorization and identity-rendering regression coverage for shared Warehouse Hero access
+
+- [x] Show each Warehouse Hero’s registered identity directly from the live GPS map marker and adjacent location summary

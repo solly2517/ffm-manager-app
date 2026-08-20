@@ -122,6 +122,7 @@ interface MapViewProps {
   initialCenter?: google.maps.LatLngLiteral;
   initialZoom?: number;
   markers?: MapMarker[];
+  showMarkerLabels?: boolean;
   route?: MapRoute;
   onMapReady?: (map: google.maps.Map) => void;
 }
@@ -131,18 +132,31 @@ export function MapView({
   initialCenter = { lat: 37.7749, lng: -122.4194 },
   initialZoom = 12,
   markers = [],
+  showMarkerLabels,
   route,
   onMapReady,
 }: MapViewProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<google.maps.Map | null>(null);
-  const markerInstances = useRef<google.maps.Marker[]>([]);
+  const markerCleanups = useRef<Array<() => void>>([]);
   const routeRenderer = useRef<google.maps.DirectionsRenderer | null>(null);
   const [routeStatus, setRouteStatus] = useState<"idle" | "loading" | "ready" | "unavailable">("idle");
   const routeKey = route ? JSON.stringify([route.origin, route.destination, route.waypoints ?? []]) : "";
   const renderMarkers = usePersistFn((mapInstance: google.maps.Map) => {
-    markerInstances.current.forEach((marker) => marker.setMap(null));
-    markerInstances.current = markers.map((marker) => new window.google!.maps.Marker({ map: mapInstance, position: marker.position, title: marker.title }));
+    markerCleanups.current.forEach((cleanup) => cleanup());
+    const labelWarehouseHeroes = showMarkerLabels ?? markers.some((marker) => String(marker.id).startsWith("warehouse-hero-"));
+    markerCleanups.current = markers.map((marker) => {
+      if (labelWarehouseHeroes && marker.title && window.google?.maps.marker?.AdvancedMarkerElement) {
+        const label = document.createElement("div");
+        label.textContent = marker.title;
+        label.setAttribute("aria-label", `Live location: ${marker.title}`);
+        label.style.cssText = "background:#0b3f9b;border:2px solid #ffffff;border-radius:999px;color:#ffffff;font:600 12px Arial,sans-serif;letter-spacing:.01em;padding:7px 10px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.35);";
+        const advancedMarker = new window.google.maps.marker.AdvancedMarkerElement({ map: mapInstance, position: marker.position, title: marker.title, content: label });
+        return () => { advancedMarker.map = null; };
+      }
+      const legacyMarker = new window.google!.maps.Marker({ map: mapInstance, position: marker.position, title: marker.title });
+      return () => legacyMarker.setMap(null);
+    });
   });
 
   const init = usePersistFn(async () => {
