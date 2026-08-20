@@ -1,5 +1,5 @@
 import React from "react";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -48,5 +48,14 @@ describe("WarehouseHeroesWorkspace delivery-proof export", () => {
 
     await waitFor(() => expect(screen.getByText("Export service is temporarily unavailable")).toBeTruthy());
     expect(mocks.exportRefetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses the supplied navigation handler when returning from the logistics workspace", () => {
+    const onBack = vi.fn();
+    const view = render(<WarehouseHeroesWorkspace isAdmin={false} onBack={onBack} />);
+
+    fireEvent.click(within(view.container).getByRole("button", { name: "Back to dashboard" }));
+
+    expect(onBack).toHaveBeenCalledTimes(1);
   });
 });

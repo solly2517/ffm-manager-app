@@ -13,6 +13,7 @@ const dbMock = vi.hoisted(() => ({
   getOperationalSummary: vi.fn(),
   getTaskById: vi.fn(),
   getUserById: vi.fn(),
+  getVisitById: vi.fn(),
   getVisitByTaskId: vi.fn(),
   listAllTasks: vi.fn(),
   listAuditEvents: vi.fn(),

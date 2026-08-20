@@ -128,6 +128,10 @@
 - [x] Add client, doctor, province, city, surgery, and visit-plan forms with approval states
 - [x] Verify or add the remaining surgery-creation and complete visit-plan approval form flows required by the roadmap wording
 - [x] Add explicit Delegate visit-plan submission regression coverage alongside Manager approval coverage
+- [x] Expand direct automated coverage for authentication, task-operation, evidence-ownership, and workspace-navigation boundaries
+- [x] Enforce visit-evidence uploads only for visits belonging to the signed-in Delegate and add rejection-path coverage
+- [x] Add focused automated authentication and task-operation boundary tests
+- [x] Add component-level responsive or navigation regression coverage beyond visual screenshots
 - [x] Add an assignment-scoped Manager surgery-creation form with selected Delegate, client, and procedure details
 - [x] Complete photo, audio, signature, GPS, timestamps, and secure evidence linkage for visits
 - [x] Add real map pins, route planning, delegate location updates, and configurable location privacy

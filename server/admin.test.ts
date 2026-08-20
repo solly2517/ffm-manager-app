@@ -35,6 +35,7 @@ describe("admin access control", () => {
   });
 
   it("recognizes the designated email as an administrator", async () => {
+    vi.spyOn(db, "listUsers").mockResolvedValue([]);
     const caller = appRouter.createCaller(contextFor({ ...baseUser, email: "dr.seleam@gmail.com" }));
     const result = await caller.admin.users();
     expect(Array.isArray(result)).toBe(true);

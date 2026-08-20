@@ -52,6 +52,16 @@ describe("auth context recovery", () => {
 });
 
 describe("auth.logout", () => {
+  it("returns no identity through auth.me when the request has no authenticated session", async () => {
+    const caller = appRouter.createCaller({
+      user: null,
+      req: { protocol: "https", headers: {} } as TrpcContext["req"],
+      res: { clearCookie: () => undefined } as TrpcContext["res"],
+    });
+
+    await expect(caller.auth.me()).resolves.toBeNull();
+  });
+
   it("clears the session cookie and reports success", async () => {
     const { ctx, clearedCookies } = createAuthContext();
     const caller = appRouter.createCaller(ctx);

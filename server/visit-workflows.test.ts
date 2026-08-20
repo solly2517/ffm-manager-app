@@ -3,6 +3,9 @@ import { appRouter } from "./routers";
 import { canUserUpdateTask, normalizeVisitReport, prepareVisitReport, visitPlanStatusLabel } from "./db";
 import * as db from "./db";
 import type { TrpcContext } from "./_core/context";
+import { storagePut } from "./storage";
+
+vi.mock("./storage", () => ({ storagePut: vi.fn() }));
 
 function delegateContext(): TrpcContext { return { user: { id: 7, openId: "delegate-7", name: "Delegate", email: "delegate@example.com", loginMethod: "test", role: "delegate", createdAt: new Date(), updatedAt: new Date(), lastSignedIn: new Date() }, req: { protocol: "https", headers: {} } as TrpcContext["req"], res: { clearCookie: () => undefined } as TrpcContext["res"] }; }
 
@@ -30,6 +33,44 @@ describe("Delegate visit workflows", () => {
     const caller = appRouter.createCaller(delegateContext());
     await expect(caller.operations.submitVisitPlan({ clientId: 41, proposedAt: new Date("2026-09-05T09:00:00.000Z"), notes: "Morning follow-up" })).resolves.toMatchObject({ id: 22, delegateId: 7, status: "pending" });
     expect(db.createVisitPlan).toHaveBeenCalledWith(expect.objectContaining({ delegateId: 7, clientId: 41, notes: "Morning follow-up" }));
+  });
+
+  it("stores evidence only when the visit belongs to the signed-in Delegate", async () => {
+    vi.spyOn(db, "getVisitById").mockResolvedValue({ id: 88, taskId: 91 } as never);
+    vi.spyOn(db, "getTaskById").mockResolvedValue({ id: 91, delegateId: 7 } as never);
+    vi.mocked(storagePut).mockResolvedValue({ key: "evidence/7/photo.jpg", url: "/manus-storage/evidence/7/photo.jpg" });
+    vi.spyOn(db, "addEvidence").mockResolvedValue(31 as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const caller = appRouter.createCaller(delegateContext());
+    await expect(caller.operations.uploadEvidence({ visitId: 88, kind: "photo", fileName: "photo.jpg", mimeType: "image/jpeg", base64: "data:image/jpeg;base64,QUJDREVGR0hJSktMTU5PUA==" })).resolves.toEqual({ evidenceId: 31, url: "/manus-storage/evidence/7/photo.jpg" });
+    expect(db.addEvidence).toHaveBeenCalledWith(expect.objectContaining({ visitId: 88, uploadedBy: 7, storageKey: "evidence/7/photo.jpg" }));
+  });
+
+  it("rejects evidence upload for another Delegate's visit before storage writes", async () => {
+    vi.spyOn(db, "getVisitById").mockResolvedValue({ id: 89, taskId: 92 } as never);
+    vi.spyOn(db, "getTaskById").mockResolvedValue({ id: 92, delegateId: 8 } as never);
+    const evidence = vi.spyOn(db, "addEvidence");
+    const caller = appRouter.createCaller(delegateContext());
+    await expect(caller.operations.uploadEvidence({ visitId: 89, kind: "photo", fileName: "other.jpg", mimeType: "image/jpeg", base64: "data:image/jpeg;base64,QUJDREVGR0hJSktMTU5PUA==" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(storagePut).not.toHaveBeenCalled();
+    expect(evidence).not.toHaveBeenCalled();
+  });
+
+  it("allows a Delegate to update the status of their own task and records the audit event", async () => {
+    vi.spyOn(db, "getTaskById").mockResolvedValue({ id: 93, delegateId: 7, status: "pending" } as never);
+    vi.spyOn(db, "updateTaskStatus").mockResolvedValue({ id: 93, delegateId: 7, status: "completed" } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const caller = appRouter.createCaller(delegateContext());
+    await expect(caller.operations.updateTaskStatus({ id: 93, status: "completed" })).resolves.toMatchObject({ id: 93, status: "completed" });
+    expect(db.updateTaskStatus).toHaveBeenCalledWith(93, "completed");
+  });
+
+  it("rejects a Delegate task-status update for another Delegate's task", async () => {
+    vi.spyOn(db, "getTaskById").mockResolvedValue({ id: 94, delegateId: 8, status: "pending" } as never);
+    const update = vi.spyOn(db, "updateTaskStatus");
+    const caller = appRouter.createCaller(delegateContext());
+    await expect(caller.operations.updateTaskStatus({ id: 94, status: "completed" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(update).not.toHaveBeenCalled();
   });
 
   it("allows delegates to update only their own tasks", () => {
