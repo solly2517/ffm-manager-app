@@ -3,6 +3,7 @@ import { appRouter } from "./routers";
 import { canManagerAccessDelegate, filterTasksByDateRange, mergePendingInvitation, operationalSummaryCsv, visitPlanStatusLabel } from "./db";
 import type { TrpcContext } from "./_core/context";
 import * as db from "./db";
+import { getDoctorEditState } from "../client/src/lib/doctorForm";
 
 function createContext(role: "user" | "manager" | "delegate" | "admin" = "user"): TrpcContext {
   return {
@@ -170,5 +171,42 @@ describe("FFM Manager client CRUD", () => {
     vi.spyOn(db, "getClientById").mockResolvedValue(undefined);
     const managerCaller = appRouter.createCaller(createContext("manager"));
     await expect(managerCaller.operations.updateClient({ id: 42, name: "Missing Hospital" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+});
+
+
+describe("FFM Manager directory CRUD", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("allows managers to update and remove doctors and geography records", async () => {
+    vi.spyOn(db, "getDoctorById").mockResolvedValue({ id: 12, name: "Old Doctor", relationship: "warm" } as any);
+    vi.spyOn(db, "getGeographyById").mockResolvedValue({ id: 13, kind: "province", name: "Old Region" } as any);
+    const updateDoctor = vi.spyOn(db, "updateDoctor").mockResolvedValue({ id: 12, name: "New Doctor" } as any);
+    const removeDoctor = vi.spyOn(db, "removeDoctor").mockResolvedValue({ success: true });
+    const updateGeography = vi.spyOn(db, "updateGeography").mockResolvedValue({ id: 13, kind: "province", name: "New Region" } as any);
+    const removeGeography = vi.spyOn(db, "removeGeography").mockResolvedValue({ success: true });
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined);
+    const caller = appRouter.createCaller(createContext("manager"));
+    await expect(caller.operations.updateDoctor({ id: 12, clientId: 2, name: "New Doctor", relationship: "warm" })).resolves.toEqual({ id: 12, name: "New Doctor" });
+    await expect(caller.operations.removeDoctor({ id: 12 })).resolves.toEqual({ success: true });
+    await expect(caller.operations.updateGeography({ id: 13, kind: "province", name: "New Region" })).resolves.toEqual({ id: 13, kind: "province", name: "New Region" });
+    await expect(caller.operations.removeGeography({ id: 13 })).resolves.toEqual({ success: true });
+    expect(updateDoctor).toHaveBeenCalledWith(12, expect.objectContaining({ name: "New Doctor", relationship: "warm" }));
+    expect(removeDoctor).toHaveBeenCalledWith(12);
+    expect(updateGeography).toHaveBeenCalledWith(13, expect.objectContaining({ name: "New Region" }));
+    expect(removeGeography).toHaveBeenCalledWith(13);
+  });
+
+  it("preserves a non-new doctor relationship when Manager edit form state is prepared", () => {
+    expect(getDoctorEditState({ id: 12, clientId: 2, name: "Dr. Warm", specialty: "Cardiology", relationship: "warm" })).toEqual({ id: 12, clientId: "2", name: "Dr. Warm", specialty: "Cardiology", relationship: "warm" });
+  });
+
+  it("blocks delegates from doctor/geography mutations and rejects missing records", async () => {
+    const delegateCaller = appRouter.createCaller(createContext("delegate"));
+    await expect(delegateCaller.operations.removeDoctor({ id: 12 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(delegateCaller.operations.removeGeography({ id: 13 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    vi.spyOn(db, "getDoctorById").mockResolvedValue(undefined);
+    const managerCaller = appRouter.createCaller(createContext("manager"));
+    await expect(managerCaller.operations.updateDoctor({ id: 12, clientId: 2, name: "Missing Doctor", relationship: "new" })).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 });

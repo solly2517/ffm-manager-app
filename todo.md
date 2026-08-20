@@ -162,3 +162,8 @@
 - [ ] Configure automated database/object-storage backup operations when the hosting backup policy is supplied
 
 - [x] Add Manager client edit/delete CRUD with protected procedures, confirmation feedback, and regression coverage
+
+- [x] Add Manager doctor and geography edit/delete CRUD with protected procedures, confirmation feedback, and regression coverage
+- [x] Preserve existing doctor relationship metadata during Manager edits via relationship selector and edit-state helper
+- [x] Add regression coverage proving doctor edits do not reset relationship metadata
+- [x] Add a UI form-state regression proving Manager doctor edit preserves non-new relationships
