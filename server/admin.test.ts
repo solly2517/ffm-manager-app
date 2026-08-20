@@ -52,6 +52,19 @@ describe("admin access control", () => {
     await expect(adminCaller.operations.surgeries()).resolves.toMatchObject([{ id: 61 }]);
   });
 
+  it("blocks Warehouse Heroes from clinical record mutations while preserving Administrator surgery updates", async () => {
+    const heroCaller = appRouter.createCaller(contextFor({ ...baseUser, id: 89, role: "warehouse_hero", email: "hero@example.com" }));
+    await expect(heroCaller.operations.submitVisitPlan({ clientId: 5, proposedAt: new Date("2026-09-01") })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(heroCaller.operations.addSurgery({ clientId: 5, surgeryDate: new Date("2026-09-01"), procedureName: "Knee replacement" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(heroCaller.operations.updateSurgery({ id: 61, status: "collected" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    vi.spyOn(db, "getSurgeryById").mockResolvedValue({ id: 61, delegateId: 7, status: "pending" } as never);
+    vi.spyOn(db, "updateSurgery").mockResolvedValue({ id: 61, delegateId: 7, status: "collected" } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const adminCaller = appRouter.createCaller(contextFor({ ...baseUser, id: 1, role: "admin", email: "dr.seleam@gmail.com" }));
+    await expect(adminCaller.operations.updateSurgery({ id: 61, status: "collected" })).resolves.toMatchObject({ id: 61, status: "collected" });
+  });
+
   it("rejects non-admin addUser, setRole, and removeUser attempts", async () => {
     const caller = appRouter.createCaller(contextFor(baseUser));
     await expect(caller.admin.addUser({ email: "new@example.com", role: "delegate" })).rejects.toMatchObject({ code: "FORBIDDEN" });

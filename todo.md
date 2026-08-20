@@ -133,6 +133,7 @@
 - [x] Enforce assignment-scoped access to individual visit records and add Delegate, Manager, and Administrator regression coverage
 - [x] Restrict core field-operation queries to field roles and restore Administrator oversight of all surgery records
 - [x] Enforce Manager assignment scope for task status, check-in, visit report, and check-out mutations
+- [x] Restrict clinical surgery and visit-plan mutations to the appropriate Delegate, Manager, and Administrator roles
 - [x] Add focused automated authentication and task-operation boundary tests
 - [x] Add component-level responsive or navigation regression coverage beyond visual screenshots
 - [x] Add an assignment-scoped Manager surgery-creation form with selected Delegate, client, and procedure details
