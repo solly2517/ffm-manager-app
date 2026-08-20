@@ -62,6 +62,7 @@
 - [x] Add production-backed authenticated-client diagnostics storage, Administrator visibility, and operational health summary
 - [ ] Add end-to-end coverage for authentication, roles, task completion, evidence capture, and responsive navigation
 - [ ] Configure final deployment polish including favicon, custom domain readiness, and branded email templates
+- [x] Finalize FFM title, description, theme color, Open Graph metadata, mobile web-app metadata, and favicon link
 
 - [x] Add configurable date-range filters to reports and make CSV export respect the selected range
 - [x] Add a first-login onboarding experience connected to authenticated Manager and Delegate entry points
