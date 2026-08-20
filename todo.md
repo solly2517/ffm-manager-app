@@ -239,7 +239,7 @@
 - [x] Add surgery implant registration with item details, quantities, batch or serial references, and audit history
 - [x] Add secure patient-sheet upload as hospital delivery proof for the associated surgery
 - [x] Add a shared surgery calendar with read access for all authenticated roles
-- [x] Restrict surgery calendar creation and updates to Delegates and assigned Managers with assignment-scope validation; Administrators retain oversight-only access
+- [x] Restrict surgery calendar creation and updates to Delegates, assigned Managers, and Administrators; Managers remain assignment-scoped and Administrators retain system-wide oversight
 - [x] Add 2–7 day surgery-notification planning guidance, calendar status states, and operational validation coverage
 
 - [x] Allow the Administrator to create surgery records and update shared surgery calendar appointments with audit coverage
