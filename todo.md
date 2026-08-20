@@ -285,3 +285,8 @@
 - [x] Remove the Administrator-only implant approval requirement from clinical implant selection and creation
 - [x] Allow Administrators, Managers, and Delegates to add a new implant directly during a surgery with audit history
 - [x] Add regression coverage for imported catalogue visibility and direct implant creation by clinical roles
+- [x] Inspect the supplied Al Tamam stock-management project files and identify the authoritative implant master-data source
+- [x] Map and validate stock-management implant records for FFM clinical catalogue import without stock quantities or prices
+- [x] Replace invalid or duplicate prior imported catalogue records with an idempotent stock-sourced import and provenance metadata
+- [x] Add regression coverage for stock-sourced catalogue normalization, search visibility, and clinical authorization
+- [x] Verify the corrected catalogue data in the Surgery Calendar and publish the replacement import
