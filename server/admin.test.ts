@@ -3,6 +3,9 @@ import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 import { isProtectedAdminTarget } from "./db";
 import * as db from "./db";
+import { storagePut } from "./storage";
+
+vi.mock("./storage", () => ({ storagePut: vi.fn() }));
 
 function contextFor(user: NonNullable<TrpcContext["user"]>): TrpcContext {
   return {
@@ -74,6 +77,34 @@ describe("admin access control", () => {
     const caller = appRouter.createCaller(contextFor({ ...baseUser, role: "admin", email: "dr.seleam@gmail.com" }));
     await expect(caller.admin.assignWarehouseHero({ managerId: 31, warehouseHeroId: 32 })).resolves.toMatchObject({ id: 78, managerId: 31, warehouseHeroId: 32 });
     await expect(caller.admin.unassignWarehouseHero({ id: 78 })).resolves.toEqual({ success: true });
+  });
+
+  it("allows a Warehouse Hero with location consent to publish the latest GPS point", async () => {
+    const warehouseHero = { ...baseUser, id: 52, openId: "warehouse-hero-52", role: "warehouse_hero" as const, locationSharing: true };
+    vi.spyOn(db, "getUserById").mockResolvedValue(warehouseHero);
+    vi.spyOn(db, "upsertWarehouseHeroLocation").mockResolvedValue({ id: 92, warehouseHeroId: 52, latitude: "24.7136000", longitude: "46.6753000", capturedAt: new Date(), updatedAt: new Date() } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const caller = appRouter.createCaller(contextFor(warehouseHero));
+    await expect(caller.operations.updateWarehouseHeroLocation({ latitude: "24.7136000", longitude: "46.6753000" })).resolves.toMatchObject({ id: 92, warehouseHeroId: 52 });
+  });
+
+  it("returns Warehouse delivery proofs through the Manager-only assignment-scoped query", async () => {
+    const manager = { ...baseUser, id: 63, role: "manager" as const, email: "manager@example.com" };
+    vi.spyOn(db, "listWarehouseDeliveryProofsForManager").mockResolvedValue([{ id: 93, warehouseHeroId: 52, warehouseHeroName: "Hero", warehouseHeroEmail: "hero@example.com", note: "Delivered", storageKey: "warehouse-delivery-proofs/52/proof.jpg", mimeType: "image/jpeg", sizeBytes: 1200, capturedAt: new Date(), url: "/manus-storage/warehouse-delivery-proofs/52/proof.jpg" }] as never);
+    const caller = appRouter.createCaller(contextFor(manager));
+    await expect(caller.operations.warehouseDeliveryProofs()).resolves.toHaveLength(1);
+    expect(db.listWarehouseDeliveryProofsForManager).toHaveBeenCalledWith(63, false);
+  });
+
+  it("stores Warehouse Hero delivery-proof photos in managed storage before recording metadata", async () => {
+    const warehouseHero = { ...baseUser, id: 72, openId: "warehouse-hero-72", role: "warehouse_hero" as const, email: "hero@example.com" };
+    vi.mocked(storagePut).mockResolvedValue({ key: "warehouse-delivery-proofs/72/proof_hash.jpg", url: "/manus-storage/warehouse-delivery-proofs/72/proof_hash.jpg" });
+    vi.spyOn(db, "createWarehouseDeliveryProof").mockResolvedValue({ id: 94, warehouseHeroId: 72, note: "Delivered", storageKey: "warehouse-delivery-proofs/72/proof_hash.jpg", mimeType: "image/jpeg", sizeBytes: 10, capturedAt: new Date(), createdAt: new Date() } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const caller = appRouter.createCaller(contextFor(warehouseHero));
+    await expect(caller.operations.uploadWarehouseDeliveryProof({ fileName: "proof.jpg", mimeType: "image/jpeg", base64: "data:image/jpeg;base64,QUJDREVGR0hJSktMTU5PUA==", note: "Delivered" })).resolves.toMatchObject({ proofId: 94, url: "/manus-storage/warehouse-delivery-proofs/72/proof_hash.jpg" });
+    expect(storagePut).toHaveBeenCalled();
+    expect(db.createWarehouseDeliveryProof).toHaveBeenCalledWith(expect.objectContaining({ warehouseHeroId: 72, mimeType: "image/jpeg", note: "Delivered" }));
   });
 
   it("blocks duplicate manager–delegate assignments", async () => {

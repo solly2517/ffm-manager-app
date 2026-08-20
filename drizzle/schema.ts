@@ -50,6 +50,17 @@ export const warehouseHeroLocations = mysqlTable("warehouse_hero_locations", {
   capturedAt: timestamp("capturedAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({ heroUnique: uniqueIndex("warehouse_hero_location_unique").on(table.warehouseHeroId), capturedIdx: index("warehouse_hero_location_captured_idx").on(table.capturedAt) }));
+
+export const warehouseDeliveryProofs = mysqlTable("warehouse_delivery_proofs", {
+  id: int("id").autoincrement().primaryKey(),
+  warehouseHeroId: int("warehouseHeroId").notNull(),
+  note: text("note"),
+  storageKey: varchar("storageKey", { length: 512 }).notNull(),
+  mimeType: varchar("mimeType", { length: 120 }).notNull(),
+  sizeBytes: int("sizeBytes").notNull(),
+  capturedAt: timestamp("capturedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({ heroIdx: index("warehouse_delivery_proof_hero_idx").on(table.warehouseHeroId), capturedIdx: index("warehouse_delivery_proof_captured_idx").on(table.capturedAt) }));
 export const invitations = mysqlTable("invitations", {
   id: int("id").autoincrement().primaryKey(),
   email: varchar("email", { length: 320 }).notNull(),
@@ -191,3 +202,4 @@ export type Doctor = typeof doctors.$inferSelect;
 export type Task = typeof tasks.$inferSelect;
 export type Visit = typeof visits.$inferSelect;
 export type Evidence = typeof evidence.$inferSelect;
+export type WarehouseDeliveryProof = typeof warehouseDeliveryProofs.$inferSelect;
