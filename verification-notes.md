@@ -77,3 +77,7 @@ Authenticated desktop capture of `/?workspace=admin` shows the protected Adminis
 ## Manager directory CRUD verification — 2026-08-20
 
 Authenticated desktop captures of `/?workspace=clients` and `/?workspace=geography` show the live blueprint workspaces with honest empty states. Clients exposes the live client form and DoctorEditor with relationship and client selectors; Geography exposes live region creation and the map fallback. No fabricated records were introduced. When records exist, the Manager UI provides the protected edit/delete actions with confirmation and live refresh.
+
+## Manager clinical-workspace verification — 2026-08-20
+
+Authenticated desktop captures of `/?workspace=surgeries` and `/?workspace=plans` show the new Surgeries and Visit Plans navigation items and blueprint workspaces. Surgeries displayed its live loading state during capture; Visit Plans displayed the honest empty state `No proposed visit plans are waiting for review.` No fabricated clinical records were introduced.
