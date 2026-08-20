@@ -12,6 +12,7 @@ export function normalizeVisitReport(report: string) { return report.trim(); }
 export function prepareVisitReport(report: string) { return { report: normalizeVisitReport(report) }; }
 export function visitPlanStatusLabel(status: "pending" | "approved" | "rejected") { return status === "approved" ? "Approved" : status === "rejected" ? "Rejected" : "Pending review"; }
 export function operationalSummaryCsv(summary: { clients: number; tasks: number; completedTasks: number; pendingTasks: number }) { return `metric,value\nclients,${summary.clients}\ntasks,${summary.tasks}\ncompleted_tasks,${summary.completedTasks}\npending_tasks,${summary.pendingTasks}\n`; }
+export function warehouseDeliveryProofsCsv(proofs: Array<{ id: number; warehouseHeroName?: string | null; warehouseHeroEmail?: string | null; note?: string | null; mimeType: string; sizeBytes: number; capturedAt: Date; url: string }>) { const cell = (value: string | number | null | undefined) => { const raw = String(value ?? ""); const safe = /^[=+\-@]/.test(raw) ? `'${raw}` : raw; return `"${safe.replace(/"/g, '""')}"`; }; const header = "proof_id,warehouse_hero,note,mime_type,size_bytes,captured_at,photo_url"; const rows = proofs.map((proof) => [proof.id, proof.warehouseHeroName || proof.warehouseHeroEmail || "Warehouse Hero", proof.note, proof.mimeType, proof.sizeBytes, proof.capturedAt.toISOString(), proof.url].map(cell).join(",")); return `${header}\n${rows.join("\n")}${rows.length ? "\n" : ""}`; }
 
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {

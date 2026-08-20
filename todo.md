@@ -36,6 +36,11 @@
 - [x] Add Manager-focused delivery-proof filtering to streamline assigned logistics review
 - [x] Add server-enforced delivery-proof date filters for Manager logistics review
 - [x] Show Warehouse Hero assignment readiness before GPS tracking or proof uploads are attempted
+- [x] Add an assignment-scoped Manager CSV export for delivery-proof audit records
+- [x] Add visible success and failure feedback for Manager delivery-proof CSV export attempts
+- [x] Add regression coverage for failed Manager delivery-proof CSV export recovery
+- [x] Exercise a failed delivery-proof export refetch and assert the Manager-facing retry feedback state
+- [x] Render the Manager Warehouse Heroes workspace and assert visible retry feedback after a mocked export failure
 - [x] Implement the missing delegate workflows from the reference app, including evidence capture, signature, media, GPS, and surgery/planning details
 - [x] Add loading, error, and empty states for admin user queries and all admin mutations
 - [x] Replace the placeholder email-add flow with a real invite/linking design that safely links invited emails to future logins and prevents duplicates
