@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
-import { isProtectedAdminTarget } from "./db";
+import { buildUserRefreshUpdateSet, isProtectedAdminTarget } from "./db";
 import * as db from "./db";
 import { storagePut } from "./storage";
 
@@ -76,6 +76,15 @@ describe("admin access control", () => {
     expect(isProtectedAdminTarget({ email: "DR.SELEAM@GMAIL.COM", openId: "other" }, "actor")).toBe(true);
     expect(isProtectedAdminTarget({ email: "other@example.com", openId: "actor" }, "actor")).toBe(true);
     expect(isProtectedAdminTarget({ email: "other@example.com", openId: "other" }, "actor")).toBe(false);
+  });
+
+  it("preserves registered identity fields during an auth refresh that only supplies an open ID", () => {
+    const refreshedAt = new Date("2026-08-20T17:45:00.000Z");
+    const updateSet = buildUserRefreshUpdateSet({ openId: "warehouse-hero-identity", lastSignedIn: refreshedAt }, refreshedAt);
+    expect(updateSet).toEqual({ lastSignedIn: refreshedAt });
+    expect(updateSet).not.toHaveProperty("name");
+    expect(updateSet).not.toHaveProperty("email");
+    expect(updateSet).not.toHaveProperty("loginMethod");
   });
 
   it("assigns and unassigns a manager–delegate pair through the admin router", async () => {

@@ -10,6 +10,7 @@ export function canUserUpdateTask(userRole: string, userId: number, delegateId: 
 export function canManagerAccessDelegate(userRole: string, managerId: number, delegateId: number, assignedDelegateIds: number[]) { return userRole !== "manager" || assignedDelegateIds.includes(delegateId); }
 export function normalizeVisitReport(report: string) { return report.trim(); }
 export function prepareVisitReport(report: string) { return { report: normalizeVisitReport(report) }; }
+export function buildUserRefreshUpdateSet(user: InsertUser, lastSignedIn: Date, isProtectedAdmin = false) { const updateSet: Record<string, unknown> = { lastSignedIn }; if (user.name !== undefined) updateSet.name = user.name; if (user.email !== undefined) updateSet.email = user.email; if (user.loginMethod !== undefined) updateSet.loginMethod = user.loginMethod; if (isProtectedAdmin) updateSet.role = "admin"; return updateSet; }
 export function visitPlanStatusLabel(status: "pending" | "approved" | "rejected") { return status === "approved" ? "Approved" : status === "rejected" ? "Rejected" : "Pending review"; }
 export function operationalSummaryCsv(summary: { clients: number; tasks: number; completedTasks: number; pendingTasks: number }) { return `metric,value\nclients,${summary.clients}\ntasks,${summary.tasks}\ncompleted_tasks,${summary.completedTasks}\npending_tasks,${summary.pendingTasks}\n`; }
 export function warehouseDeliveryProofsCsv(proofs: Array<{ id: number; warehouseHeroName?: string | null; warehouseHeroEmail?: string | null; note?: string | null; mimeType: string; sizeBytes: number; capturedAt: Date; url: string }>) { const cell = (value: string | number | null | undefined) => { const raw = String(value ?? ""); const safe = /^[=+\-@]/.test(raw) ? `'${raw}` : raw; return `"${safe.replace(/"/g, '""')}"`; }; const header = "proof_id,warehouse_hero,note,mime_type,size_bytes,captured_at,photo_url"; const rows = proofs.map((proof) => [proof.id, proof.warehouseHeroName || proof.warehouseHeroEmail || "Warehouse Hero", proof.note, proof.mimeType, proof.sizeBytes, proof.capturedAt.toISOString(), proof.url].map(cell).join(",")); return `${header}\n${rows.join("\n")}${rows.length ? "\n" : ""}`; }
@@ -28,8 +29,7 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   if (!db) { console.warn("[Database] Cannot upsert user: database not available"); return; }
   const isProtectedAdmin = user.email?.toLowerCase() === ADMIN_EMAIL || user.openId === ENV.ownerOpenId;
   const values: InsertUser = { openId: user.openId, name: user.name ?? null, email: user.email ?? null, loginMethod: user.loginMethod ?? null, lastSignedIn: user.lastSignedIn ?? new Date(), role: isProtectedAdmin ? "admin" : user.role ?? "user" };
-  const updateSet: Record<string, unknown> = { name: values.name, email: values.email, loginMethod: values.loginMethod, lastSignedIn: values.lastSignedIn };
-  if (isProtectedAdmin) updateSet.role = "admin";
+  const updateSet = buildUserRefreshUpdateSet(user, values.lastSignedIn!, isProtectedAdmin);
   const existingByEmail = values.email ? (await db.select().from(users).where(eq(users.email, values.email)).limit(1))[0] : undefined;
   if (existingByEmail && existingByEmail.openId !== user.openId) {
     await db.update(users).set({ openId: user.openId, ...updateSet, role: isProtectedAdmin ? "admin" : existingByEmail.role }).where(eq(users.id, existingByEmail.id));

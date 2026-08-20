@@ -264,3 +264,5 @@
 - [x] Add authorization and identity-rendering regression coverage for shared Warehouse Hero access
 
 - [x] Show each Warehouse Hero’s registered identity directly from the live GPS map marker and adjacent location summary
+
+- [x] Resolve generic Warehouse Hero map labels to a registered name or email, including current live location records
