@@ -69,3 +69,7 @@ The shared MapView now supports coordinate-backed DirectionsService route previe
 ## Delegate task-status verification — 2026-08-20
 
 Authenticated 390×844 previews of `/delegate?workspace=tasks` and `/delegate?workspace=visit` remain healthy after adding selected-task tracking and status feedback. The current database has zero assigned tasks, so the screenshots correctly show `0 assigned visits · live records` and `No assignment selected`; once tasks exist, tapping a task stores its ID before opening Visit, and status mutations report success or error feedback for that selected task.
+
+## Administrator workspace verification — 2026-08-20
+
+Authenticated desktop capture of `/?workspace=admin` shows the protected Administrator workspace, confirms `dr.seleam@gmail.com` as the automatically assigned administrator, and renders live audit activity (`20 recent audit events available`) without fabricated user-management counts.
