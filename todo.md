@@ -131,6 +131,7 @@
 - [x] Expand direct automated coverage for authentication, task-operation, evidence-ownership, and workspace-navigation boundaries
 - [x] Enforce visit-evidence uploads only for visits belonging to the signed-in Delegate and add rejection-path coverage
 - [x] Enforce assignment-scoped access to individual visit records and add Delegate, Manager, and Administrator regression coverage
+- [x] Restrict core field-operation queries to field roles and restore Administrator oversight of all surgery records
 - [x] Add focused automated authentication and task-operation boundary tests
 - [x] Add component-level responsive or navigation regression coverage beyond visual screenshots
 - [x] Add an assignment-scoped Manager surgery-creation form with selected Delegate, client, and procedure details

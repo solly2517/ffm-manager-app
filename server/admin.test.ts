@@ -41,6 +41,17 @@ describe("admin access control", () => {
     expect(Array.isArray(result)).toBe(true);
   });
 
+  it("keeps core field-operation records out of Warehouse Hero access while Administrators retain surgery oversight", async () => {
+    const hero = { ...baseUser, id: 88, role: "warehouse_hero" as const, email: "hero@example.com" };
+    const heroCaller = appRouter.createCaller(contextFor(hero));
+    await expect(heroCaller.operations.tasks()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(heroCaller.operations.surgeries()).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    vi.spyOn(db, "listAllSurgeries").mockResolvedValue([{ id: 61, delegateId: 7, procedureName: "Knee replacement" }] as never);
+    const adminCaller = appRouter.createCaller(contextFor({ ...baseUser, id: 1, role: "admin", email: "dr.seleam@gmail.com" }));
+    await expect(adminCaller.operations.surgeries()).resolves.toMatchObject([{ id: 61 }]);
+  });
+
   it("rejects non-admin addUser, setRole, and removeUser attempts", async () => {
     const caller = appRouter.createCaller(contextFor(baseUser));
     await expect(caller.admin.addUser({ email: "new@example.com", role: "delegate" })).rejects.toMatchObject({ code: "FORBIDDEN" });
