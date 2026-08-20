@@ -311,3 +311,8 @@
 - [x] Replace remaining Manager, Delegate, and Warehouse Hero numeric identifiers with registered names or email fallbacks across FFM workspaces
 - [x] Add regression coverage for five-step readiness, calendar discoverability, and identity-label resolution
 - [x] Verify and publish the readiness, calendar, and identity-label corrections
+- [x] Add an authorization-scoped surgery report with date, hospital, doctor, assigned Delegate, assigned Manager, detailed implants, and per-currency totals
+- [x] Add Excel workbook exports for the operational summary, task detail, and surgery detail reports
+- [x] Make the Reports workspace expose clear downloads for all Excel reports with the selected date range
+- [x] Add regression coverage for surgery-report relationships, totals, authorization, and Excel export contents
+- [x] Verify and publish the detailed surgery reporting and Excel export enhancement

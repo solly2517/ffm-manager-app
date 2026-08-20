@@ -90,6 +90,16 @@ describe("expanded FFM permissions", () => {
     expect(csv).toContain("metric,value");
   });
 
+  it("returns authorization-scoped surgery report rows with clinical, team, implant, and total-price details", async () => {
+    const detailed = vi.spyOn(db, "getDetailedSurgeryReport").mockResolvedValue([{ surgeryId: 77, surgeryDate: new Date("2026-08-20T10:00:00Z"), procedureName: "ACL", hospital: "EMC", doctor: "Dr. Eslam Fahmy", delegateName: "Solly", managerName: "Mohamed Selim", implants: [{ id: 1, implantName: "ACL screw", quantity: 2, unitPrice: 250, currency: "SAR", lineTotal: 500 }], implantTotals: [{ currency: "SAR", total: 500 }], totalImplantPrice: "SAR 500.00" }] as never);
+    const manager = appRouter.createCaller(createContext("manager"));
+    const rows = await manager.reports.surgeries({ from: "2026-08-01", to: "2026-08-31" });
+    expect(rows[0]).toMatchObject({ procedureName: "ACL", hospital: "EMC", doctor: "Dr. Eslam Fahmy", delegateName: "Solly", managerName: "Mohamed Selim", totalImplantPrice: "SAR 500.00" });
+    expect(rows[0]?.implants[0]).toMatchObject({ implantName: "ACL screw", lineTotal: 500, currency: "SAR" });
+    expect(detailed).toHaveBeenCalledWith(expect.objectContaining({ from: "2026-08-01", to: "2026-08-31" }));
+    await expect(appRouter.createCaller(createContext("delegate")).reports.surgeries()).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
   it("protects visit-report saves for unknown or unauthorized tasks", async () => {
     const caller = appRouter.createCaller(createContext("delegate"));
     await expect(caller.operations.saveVisitReport({ taskId: 999999, report: "Follow-up" })).rejects.toMatchObject({ code: "FORBIDDEN" });

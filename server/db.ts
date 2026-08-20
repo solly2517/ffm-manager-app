@@ -216,3 +216,56 @@ export async function dismissAllClientErrors() { const db = await getDb(); if (!
 export async function getMonitoringHealth() { const db = await getDb(); if (!db) return { database: "unavailable" as const, auditEvents: 0, clientErrors: 0 }; const [audit, errors] = await Promise.all([db.select({ total: count() }).from(auditEvents), db.select({ total: count() }).from(clientErrorReports).where(isNull(clientErrorReports.resolvedAt))]); return { database: "online" as const, auditEvents: Number(audit[0]?.total ?? 0), clientErrors: Number(errors[0]?.total ?? 0) }; }
 export function filterTasksByDateRange<T extends { scheduledAt: Date }>(rows: T[], filters?: { from?: string; to?: string }) { const from = filters?.from ? new Date(filters.from) : undefined; const to = filters?.to ? new Date(`${filters.to}T23:59:59.999Z`) : undefined; return rows.filter((task) => (!from || task.scheduledAt >= from) && (!to || task.scheduledAt <= to)); }
 export async function getOperationalSummary(filters?: { from?: string; to?: string; delegateIds?: number[] }) { const db = await getDb(); if (!db) return { clients: 0, tasks: 0, completedTasks: 0, pendingTasks: 0 }; const [clientRows, taskRows] = await Promise.all([db.select().from(clients), db.select().from(tasks)]); const assignedTasks = filters?.delegateIds ? taskRows.filter((task) => filters.delegateIds?.includes(task.delegateId)) : taskRows; const filteredTasks = filterTasksByDateRange(assignedTasks, filters); return { clients: clientRows.length, tasks: filteredTasks.length, completedTasks: filteredTasks.filter((task) => task.status === "completed").length, pendingTasks: filteredTasks.filter((task) => task.status === "pending").length }; }
+export async function getDetailedSurgeryReport(filters?: { from?: string; to?: string; delegateIds?: number[] }) {
+  const db = await getDb();
+  if (!db) return [];
+  const [surgeryRows, clientRows, people, assignments, implantRows, catalogue] = await Promise.all([
+    db.select().from(surgeries).orderBy(surgeries.surgeryDate),
+    db.select().from(clients),
+    db.select().from(users),
+    db.select().from(managerDelegateAssignments),
+    db.select().from(surgeryImplants).orderBy(surgeryImplants.registeredAt),
+    db.select().from(implantCatalogue),
+  ]);
+  const from = filters?.from ? new Date(filters.from) : undefined;
+  const to = filters?.to ? new Date(`${filters.to}T23:59:59.999Z`) : undefined;
+  const clientsById = new Map(clientRows.map((client) => [client.id, client]));
+  const peopleById = new Map(people.map((person) => [person.id, person]));
+  const catalogueById = new Map(catalogue.map((item) => [item.id, item]));
+  const managerByDelegateId = new Map(assignments.map((assignment) => [assignment.delegateId, peopleById.get(assignment.managerId)]));
+  const implantsBySurgeryId = new Map<number, typeof implantRows>();
+  for (const implant of implantRows) implantsBySurgeryId.set(implant.surgeryId, [...(implantsBySurgeryId.get(implant.surgeryId) ?? []), implant]);
+  return surgeryRows
+    .filter((surgery) => (!filters?.delegateIds || filters.delegateIds.includes(surgery.delegateId)) && (!from || surgery.surgeryDate >= from) && (!to || surgery.surgeryDate <= to))
+    .map((surgery) => {
+      const client = clientsById.get(surgery.clientId);
+      const delegate = peopleById.get(surgery.delegateId);
+      const manager = managerByDelegateId.get(surgery.delegateId);
+      const implants = (implantsBySurgeryId.get(surgery.id) ?? []).map((implant) => {
+        const catalogueItem = implant.implantCatalogueId ? catalogueById.get(implant.implantCatalogueId) : undefined;
+        const quantity = Number(implant.quantity);
+        const unitPrice = Number(implant.unitPrice ?? 0);
+        const lineTotal = Number.isFinite(unitPrice) ? Number((quantity * unitPrice).toFixed(2)) : 0;
+        const currency = (implant.currency || "SAR").toUpperCase();
+        return { id: implant.id, implantName: implant.implantName || catalogueItem?.name || "Unspecified implant", productCode: catalogueItem?.productCode || null, manufacturer: catalogueItem?.manufacturer || null, quantity, unitPrice, currency, lineTotal, notes: implant.notes || null };
+      });
+      const implantTotals = calculateSurgeryImplantTotals(implants);
+      return {
+        surgeryId: surgery.id,
+        surgeryDate: surgery.surgeryDate,
+        status: surgery.calendarStatus,
+        procedureName: surgery.procedureName || "Surgery",
+        hospital: surgery.hospital || client?.name || "Hospital not recorded",
+        hospitalCity: client?.city || null,
+        hospitalContact: client?.contactPerson || null,
+        doctor: surgery.surgeon || "Doctor not recorded",
+        delegateName: delegate?.name || delegate?.email || "Unassigned Delegate",
+        delegateEmail: delegate?.email || null,
+        managerName: manager?.name || manager?.email || "Manager not assigned",
+        managerEmail: manager?.email || null,
+        implants,
+        implantTotals,
+        totalImplantPrice: implantTotals.map((total) => `${total.currency} ${total.total.toFixed(2)}`).join(" · ") || "No implant pricing recorded",
+      };
+    });
+}
