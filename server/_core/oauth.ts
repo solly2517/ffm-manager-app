@@ -5,6 +5,10 @@ import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
 
+export function safeOAuthReturnTo(returnTo: string | undefined): string {
+  return returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/";
+}
+
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
   return typeof value === "string" ? value : undefined;
@@ -56,7 +60,8 @@ export function registerOAuthRoutes(app: Express) {
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      res.redirect(302, "/");
+      const returnTo = decodeOAuthState(state).returnTo;
+      res.redirect(302, safeOAuthReturnTo(returnTo));
     } catch (error) {
       console.error("[OAuth] Callback failed", error);
       res.status(500).json({ error: "OAuth callback failed" });

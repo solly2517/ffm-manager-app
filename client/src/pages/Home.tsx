@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
 import { DoctorEditor } from "@/components/DoctorEditor";
+import { buildPublicInviteLink } from "@/lib/inviteLink";
 import { MapView } from "@/components/Map";
 import { Users, Map, ClipboardList, MessageSquare, BarChart3, Globe2, Activity, AlertTriangle, Plus, LogOut, ShieldCheck, Search, Menu, X, Send, UserPlus, type LucideIcon } from "lucide-react";
 
@@ -82,7 +83,7 @@ export default function Home() {
   const clientErrorsQuery = trpc.monitoring.recentClientErrors.useQuery(undefined, { enabled: isAdmin && active === "admin" });
   const monitoringHealthQuery = trpc.monitoring.health.useQuery(undefined, { enabled: isAdmin && active === "admin" });
   const addUser = trpc.admin.addUser.useMutation({ onSuccess: () => { setNewUserEmail(""); setAdminNotice("User added to the FFM directory."); usersQuery.refetch(); } });
-  const createInvitation = trpc.admin.createInvitation.useMutation({ onSuccess: (result) => { setNewUserEmail(""); setInviteRole("delegate"); setInviteUrl(`${window.location.origin}${result.inviteUrl}`); invitationsQuery.refetch(); setAdminNotice(`Delegate invitation created for ${result.invitation?.email || "the invited email"}. Share the secure link with the invited user.`); usersQuery.refetch(); } });
+  const createInvitation = trpc.admin.createInvitation.useMutation({ onSuccess: (result) => { setNewUserEmail(""); setInviteRole("delegate"); setInviteUrl(buildPublicInviteLink(window.location, result.inviteUrl)); invitationsQuery.refetch(); setAdminNotice(`Delegate invitation created for ${result.invitation?.email || "the invited email"}. Share the secure link with the invited user.`); usersQuery.refetch(); } });
   const assignDelegate = trpc.admin.assignDelegate.useMutation({ onSuccess: () => { setAssignmentDelegateId(""); setAdminNotice("Delegate assigned to manager."); assignmentsQuery.refetch(); } });
   const unassignDelegate = trpc.admin.unassignDelegate.useMutation({ onSuccess: () => { setAdminNotice("Delegate unassigned from manager."); assignmentsQuery.refetch(); } });
   const setRole = trpc.admin.setRole.useMutation({ onSuccess: () => { setAdminNotice("User role updated."); usersQuery.refetch(); } });

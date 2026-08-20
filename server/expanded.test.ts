@@ -4,6 +4,8 @@ import { canManagerAccessDelegate, filterTasksByDateRange, mergePendingInvitatio
 import type { TrpcContext } from "./_core/context";
 import * as db from "./db";
 import { getDoctorEditState } from "../client/src/lib/doctorForm";
+import { decodeOAuthState, encodeOAuthState } from "@shared/const";
+import { safeOAuthReturnTo } from "./_core/oauth";
 
 function createContext(role: "user" | "manager" | "delegate" | "admin" = "user"): TrpcContext {
   return {
@@ -12,6 +14,21 @@ function createContext(role: "user" | "manager" | "delegate" | "admin" = "user")
     res: { clearCookie: () => undefined } as TrpcContext["res"],
   };
 }
+
+describe("FFM OAuth invitation return state", () => {
+  it("uses the invitation path and rejects external OAuth redirects", () => {
+    expect(safeOAuthReturnTo("/invite/abc123")).toBe("/invite/abc123");
+    expect(safeOAuthReturnTo("https://evil.example/steal")).toBe("/");
+    expect(safeOAuthReturnTo("//evil.example/steal")).toBe("/");
+    expect(safeOAuthReturnTo(undefined)).toBe("/");
+  });
+
+  it("preserves the same-site invitation path in OAuth state", () => {
+    const encoded = encodeOAuthState({ redirectUri: "https://ffmmanager.example/api/oauth/callback", nonce: "nonce", returnTo: "/invite/abc123" });
+    expect(decodeOAuthState(encoded)).toEqual({ redirectUri: "https://ffmmanager.example/api/oauth/callback", nonce: "nonce", returnTo: "/invite/abc123" });
+  });
+});
+
 
 describe("expanded FFM permissions", () => {
   afterEach(() => vi.restoreAllMocks());

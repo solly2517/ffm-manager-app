@@ -82,6 +82,10 @@
 
 - [x] Add a regression test for re-inviting an email with an existing pending invitation and assert role/token/link updates
 - [ ] Verify the authenticated Administration flow by creating a Delegate invitation after the earlier Manager removal scenario
+- [x] Fix invited Manager acceptance showing permission_denied instead of granting FFM access
+- [x] Preserve invitation return path through OAuth and validate same-site callback redirects
+- [x] Ensure Administration copies public production-domain invitation links instead of preview/dev URLs
+- [ ] Verify a real invited Manager can authenticate, accept the invitation, and enter FFM on the published domain
 
 - [x] Diagnose the administrator Copy link failure
 - [x] Implement clipboard fallback and visible copy success/error feedback
