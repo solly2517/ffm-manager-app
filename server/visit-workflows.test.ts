@@ -8,6 +8,8 @@ import { storagePut } from "./storage";
 vi.mock("./storage", () => ({ storagePut: vi.fn() }));
 
 function delegateContext(): TrpcContext { return { user: { id: 7, openId: "delegate-7", name: "Delegate", email: "delegate@example.com", loginMethod: "test", role: "delegate", createdAt: new Date(), updatedAt: new Date(), lastSignedIn: new Date() }, req: { protocol: "https", headers: {} } as TrpcContext["req"], res: { clearCookie: () => undefined } as TrpcContext["res"] }; }
+function managerContext(): TrpcContext { return { user: { id: 9, openId: "manager-9", name: "Manager", email: "manager@example.com", loginMethod: "test", role: "manager", createdAt: new Date(), updatedAt: new Date(), lastSignedIn: new Date() }, req: { protocol: "https", headers: {} } as TrpcContext["req"], res: { clearCookie: () => undefined } as TrpcContext["res"] }; }
+function adminContext(): TrpcContext { return { user: { id: 1, openId: "admin-1", name: "Administrator", email: "dr.seleam@gmail.com", loginMethod: "test", role: "admin", createdAt: new Date(), updatedAt: new Date(), lastSignedIn: new Date() }, req: { protocol: "https", headers: {} } as TrpcContext["req"], res: { clearCookie: () => undefined } as TrpcContext["res"] }; }
 
 describe("Delegate visit workflows", () => {
   afterEach(() => vi.restoreAllMocks());
@@ -71,6 +73,28 @@ describe("Delegate visit workflows", () => {
     const caller = appRouter.createCaller(delegateContext());
     await expect(caller.operations.updateTaskStatus({ id: 94, status: "completed" })).rejects.toMatchObject({ code: "FORBIDDEN" });
     expect(update).not.toHaveBeenCalled();
+  });
+
+  it("returns a visit record to its owning Delegate, an assigned Manager, and an Administrator", async () => {
+    const visit = { id: 44, taskId: 95, report: "Completed" } as never;
+    vi.spyOn(db, "getTaskById").mockResolvedValue({ id: 95, delegateId: 7 } as never);
+    vi.spyOn(db, "getVisitByTaskId").mockResolvedValue(visit);
+    await expect(appRouter.createCaller(delegateContext()).operations.visit({ taskId: 95 })).resolves.toEqual(visit);
+
+    vi.spyOn(db, "getTaskById").mockResolvedValue({ id: 96, delegateId: 8 } as never);
+    vi.spyOn(db, "getVisitByTaskId").mockResolvedValue({ id: 45, taskId: 96 } as never);
+    vi.spyOn(db, "listDelegateIdsForManager").mockResolvedValue([8]);
+    await expect(appRouter.createCaller(managerContext()).operations.visit({ taskId: 96 })).resolves.toMatchObject({ id: 45 });
+    await expect(appRouter.createCaller(adminContext()).operations.visit({ taskId: 96 })).resolves.toMatchObject({ id: 45 });
+  });
+
+  it("rejects visit records outside the signed-in Delegate or Manager assignment scope", async () => {
+    vi.spyOn(db, "getTaskById").mockResolvedValue({ id: 97, delegateId: 8 } as never);
+    const readVisit = vi.spyOn(db, "getVisitByTaskId");
+    await expect(appRouter.createCaller(delegateContext()).operations.visit({ taskId: 97 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    vi.spyOn(db, "listDelegateIdsForManager").mockResolvedValue([]);
+    await expect(appRouter.createCaller(managerContext()).operations.visit({ taskId: 97 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(readVisit).not.toHaveBeenCalled();
   });
 
   it("allows delegates to update only their own tasks", () => {
