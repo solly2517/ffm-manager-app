@@ -73,3 +73,7 @@ Authenticated 390×844 previews of `/delegate?workspace=tasks` and `/delegate?wo
 ## Administrator workspace verification — 2026-08-20
 
 Authenticated desktop capture of `/?workspace=admin` shows the protected Administrator workspace, confirms `dr.seleam@gmail.com` as the automatically assigned administrator, and renders live audit activity (`20 recent audit events available`) without fabricated user-management counts.
+
+## Manager directory CRUD verification — 2026-08-20
+
+Authenticated desktop captures of `/?workspace=clients` and `/?workspace=geography` show the live blueprint workspaces with honest empty states. Clients exposes the live client form and DoctorEditor with relationship and client selectors; Geography exposes live region creation and the map fallback. No fabricated records were introduced. When records exist, the Manager UI provides the protected edit/delete actions with confirmation and live refresh.
