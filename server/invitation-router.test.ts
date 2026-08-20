@@ -31,7 +31,7 @@ vi.mock("./db", () => dbMock);
 
 const { appRouter } = await import("./routers");
 import type { TrpcContext } from "./_core/context";
-import { COOKIE_NAME } from "@shared/const";
+import { FFM_MAGIC_SESSION_COOKIE } from "@shared/const";
 
 function adminContext(): TrpcContext {
 
@@ -54,7 +54,7 @@ describe("invitations.acceptMagic", () => {
     const result = await caller.invitations.acceptMagic({ token: "a".repeat(64) });
     expect(result).toEqual({ success: true, role: "manager" });
     expect(dbMock.acceptInvitation).toHaveBeenCalledWith(9);
-    expect(cookie).toHaveBeenCalledWith(COOKIE_NAME, expect.any(String), expect.objectContaining({ maxAge: 43_200_000 }));
+    expect(cookie).toHaveBeenCalledWith(FFM_MAGIC_SESSION_COOKIE, expect.any(String), expect.objectContaining({ maxAge: 43_200_000 }));
   });
 });
 

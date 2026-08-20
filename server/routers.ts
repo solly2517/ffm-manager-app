@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { COOKIE_NAME } from "@shared/const";
+import { COOKIE_NAME, FFM_MAGIC_SESSION_COOKIE } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
@@ -13,19 +13,19 @@ const ADMIN_EMAIL = "dr.seleam@gmail.com";
 const isAdmin = (user: { email?: string | null; role?: string }) => user.email?.toLowerCase() === ADMIN_EMAIL || user.role === "admin";
 const canManage = (user: { email?: string | null; role?: string }) => isAdmin(user) || user.role === "manager";
 const adminOnly = protectedProcedure.use(({ ctx, next }) => { if (!isAdmin(ctx.user)) throw new TRPCError({ code: "FORBIDDEN", message: "Administrator access required" }); return next({ ctx }); });
-const managerOnly = protectedProcedure.use(({ ctx, next }) => { if (!canManage(ctx.user)) { console.warn("[FFM] Manager procedure denied", { userId: ctx.user.id, openId: ctx.user.openId, email: ctx.user.email, role: ctx.user.role }); throw new TRPCError({ code: "FORBIDDEN", message: "Manager access required" }); } return next({ ctx }); });
+const managerOnly = protectedProcedure.use(({ ctx, next }) => { if (!canManage(ctx.user)) throw new TRPCError({ code: "FORBIDDEN", message: "Manager access required" }); return next({ ctx }); });
 const tokenHash = (token: string) => createHash("sha256").update(token).digest("hex");
 
 export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(({ ctx }) => { if (ctx.authTimedOut) throw new TRPCError({ code: "UNAUTHORIZED", message: "Session verification timed out. Please sign in again." }); return ctx.user; }),
-    logout: publicProcedure.mutation(({ ctx }) => { const cookieOptions = getSessionCookieOptions(ctx.req); ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 }); return { success: true } as const; }),
+    logout: publicProcedure.mutation(({ ctx }) => { const cookieOptions = getSessionCookieOptions(ctx.req); ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 }); ctx.res.clearCookie(FFM_MAGIC_SESSION_COOKIE, { ...cookieOptions, maxAge: -1 }); return { success: true } as const; }),
   }),
   invitations: router({
     preview: publicProcedure.input(z.object({ token: z.string().min(20) })).query(async ({ input }) => { const invitation = await getInvitationByHash(tokenHash(input.token)); if (!invitation || invitation.acceptedAt || invitation.expiresAt < new Date()) throw new TRPCError({ code: "NOT_FOUND", message: "Invitation is invalid or expired" }); return { email: invitation.email, role: invitation.role, expiresAt: invitation.expiresAt }; }),
     accept: protectedProcedure.input(z.object({ token: z.string().min(20) })).mutation(async ({ input, ctx }) => { const invitation = await getInvitationByHash(tokenHash(input.token)); if (!invitation || invitation.acceptedAt || invitation.expiresAt < new Date()) throw new TRPCError({ code: "BAD_REQUEST", message: "Invitation is invalid or expired" }); if (ctx.user.email?.toLowerCase() !== invitation.email.toLowerCase()) throw new TRPCError({ code: "FORBIDDEN", message: "This invitation belongs to a different email address" }); await upsertUser({ openId: ctx.user.openId, email: ctx.user.email, name: ctx.user.name, role: invitation.role, loginMethod: ctx.user.loginMethod }); await acceptInvitation(invitation.id); await addAuditEvent({ actorId: ctx.user.id, action: "invitation.accepted", entityType: "invitation", entityId: invitation.id }); return { success: true, role: invitation.role } as const; }),
-    acceptMagic: publicProcedure.input(z.object({ token: z.string().min(20) })).mutation(async ({ input, ctx }) => { const invitation = await getInvitationByHash(tokenHash(input.token)); if (!invitation || invitation.acceptedAt || invitation.expiresAt < new Date()) throw new TRPCError({ code: "BAD_REQUEST", message: "Invitation is invalid or expired" }); const invitedUser = await activateInvitedUser({ email: invitation.email, role: invitation.role }); if (!invitedUser) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Unable to activate invitation" }); await acceptInvitation(invitation.id); await addAuditEvent({ actorId: invitedUser.id, action: "invitation.accepted_magic_link", entityType: "invitation", entityId: invitation.id }); const sessionToken = await sdk.createSessionToken(invitedUser.openId, { expiresInMs: 1000 * 60 * 60 * 12, name: invitedUser.name || invitedUser.email || invitation.email }); ctx.res.cookie(COOKIE_NAME, sessionToken, { ...getSessionCookieOptions(ctx.req), maxAge: 1000 * 60 * 60 * 12 }); return { success: true, role: invitation.role } as const; }),
+    acceptMagic: publicProcedure.input(z.object({ token: z.string().min(20) })).mutation(async ({ input, ctx }) => { const invitation = await getInvitationByHash(tokenHash(input.token)); if (!invitation || invitation.acceptedAt || invitation.expiresAt < new Date()) throw new TRPCError({ code: "BAD_REQUEST", message: "Invitation is invalid or expired" }); const invitedUser = await activateInvitedUser({ email: invitation.email, role: invitation.role }); if (!invitedUser) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Unable to activate invitation" }); await acceptInvitation(invitation.id); await addAuditEvent({ actorId: invitedUser.id, action: "invitation.accepted_magic_link", entityType: "invitation", entityId: invitation.id }); const sessionToken = await sdk.createSessionToken(invitedUser.openId, { expiresInMs: 1000 * 60 * 60 * 12, name: invitedUser.name || invitedUser.email || invitation.email }); ctx.res.cookie(FFM_MAGIC_SESSION_COOKIE, sessionToken, { ...getSessionCookieOptions(ctx.req), maxAge: 1000 * 60 * 60 * 12 }); return { success: true, role: invitation.role } as const; }),
   }),
   admin: router({
     users: adminOnly.query(async () => listUsers()),

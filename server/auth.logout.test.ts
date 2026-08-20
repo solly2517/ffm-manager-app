@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { appRouter } from "./routers";
-import { COOKIE_NAME } from "../shared/const";
+import { COOKIE_NAME, FFM_MAGIC_SESSION_COOKIE } from "../shared/const";
 import { isAuthContextTimeout } from "./_core/context";
 import type { TrpcContext } from "./_core/context";
 
@@ -59,9 +59,9 @@ describe("auth.logout", () => {
     const result = await caller.auth.logout();
 
     expect(result).toEqual({ success: true });
-    expect(clearedCookies).toHaveLength(1);
-    expect(clearedCookies[0]?.name).toBe(COOKIE_NAME);
-    expect(clearedCookies[0]?.options).toMatchObject({
+    expect(clearedCookies).toHaveLength(2);
+    expect(clearedCookies.map((cookie) => cookie.name)).toEqual([COOKIE_NAME, FFM_MAGIC_SESSION_COOKIE]);
+    for (const cookie of clearedCookies) expect(cookie.options).toMatchObject({
       maxAge: -1,
       secure: true,
       sameSite: "none",
