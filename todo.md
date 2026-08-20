@@ -86,6 +86,11 @@
 - [x] Preserve invitation return path through OAuth and validate same-site callback redirects
 - [x] Ensure Administration copies public production-domain invitation links instead of preview/dev URLs
 - [ ] Verify a real invited Manager can authenticate, accept the invitation, and enter FFM on the published domain
+- [x] Diagnose that the WebDev permission wall blocks invited users before FFM and approve an FFM magic-link alternative
+- [ ] Implement secure single-use FFM magic-link sessions for invited users (code complete; live route verification pending)
+- [ ] Replace unauthenticated invitation OAuth CTA with direct FFM magic-link activation (code complete; published route verification pending)
+- [ ] Eliminate the remaining WebDev permission-denied redirect for invited Managers using another browser
+- [ ] Make the published FFM invitation route reachable without WebDev project authorization
 - [x] Fix production invitation mutation returning HTML instead of JSON by explicitly requesting JSON/XHR responses
 - [x] Probe the published invitation mutation and confirm it returns JSON with a 400 validation response for invalid input
 

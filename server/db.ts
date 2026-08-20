@@ -81,6 +81,16 @@ export async function upsertInvitedUser(input: { email: string; name?: string | 
   return created[0];
 }
 
+export async function activateInvitedUser(input: { email: string; role: "user" | "manager" | "delegate" }) {
+  const email = input.email.toLowerCase();
+  const user = await upsertInvitedUser({ email });
+  if (!user) throw new Error("Unable to create invited user");
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.update(users).set({ role: input.role, loginMethod: "ffm-magic-link", lastSignedIn: new Date() }).where(eq(users.id, user.id));
+  return getUserById(user.id);
+}
+
 export async function updateUserRole(id: number, role: "user" | "manager" | "delegate" | "admin") {
   const db = await getDb(); if (!db) throw new Error("Database is not available");
   await db.update(users).set({ role }).where(eq(users.id, id));
