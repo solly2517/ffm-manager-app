@@ -48,7 +48,7 @@
 - [x] Implement visit check-in and check-out with timestamps and GPS coordinates
 - [x] Implement photo, audio, and signature evidence capture with secure file storage
 - [ ] Replace map placeholders with real map and route data
-- [ ] Add offline-friendly delegate behavior and retry handling
+- [x] Add offline-friendly Delegate behavior with durable visit-report replay, query refetch on reconnect, and guarded feedback for other writes
 - [x] Add operational reports, exports, and configurable date filters
 - [x] Add onboarding, help documentation, privacy terms, and branded empty states
 - [ ] Add monitoring, error reporting, activity history, and notification preferences
