@@ -21,6 +21,12 @@ class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
+  componentDidCatch(error: Error, info: { componentStack: string }) {
+    const diagnostic = { message: error.message, stack: error.stack, componentStack: info.componentStack, route: window.location.pathname, capturedAt: new Date().toISOString() };
+    console.error("FFM client error captured", diagnostic);
+    try { localStorage.setItem("ffm-last-client-error", JSON.stringify(diagnostic)); } catch { /* diagnostics must never block recovery */ }
+  }
+
   render() {
     if (this.state.hasError) {
       return (
