@@ -1,5 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { COOKIE_NAME, UNAUTHED_ERR_MSG } from '@shared/const';
+import { responseDiagnostic } from "@/lib/apiResponse";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
@@ -76,13 +77,23 @@ const trpcClient = trpc.createClient({
         } catch {
           // sessionStorage unavailable
         }
-        return {};
+        return { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" };
       },
-      fetch(input, init) {
-        return globalThis.fetch(input, {
+      async fetch(input, init) {
+        const response = await globalThis.fetch(input, {
           ...(init ?? {}),
           credentials: "include",
+          headers: {
+            Accept: "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+            ...(init?.headers ?? {}),
+          },
         });
+        const diagnostic = await responseDiagnostic(response);
+        if (diagnostic.message) {
+          window.dispatchEvent(new CustomEvent("ffm:client-error", { detail: { message: diagnostic.message, route: String(input) } }));
+        }
+        return response;
       },
     }),
   ],

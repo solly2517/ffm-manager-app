@@ -86,6 +86,9 @@
 - [x] Preserve invitation return path through OAuth and validate same-site callback redirects
 - [x] Ensure Administration copies public production-domain invitation links instead of preview/dev URLs
 - [ ] Verify a real invited Manager can authenticate, accept the invitation, and enter FFM on the published domain
+- [x] Fix production invitation mutation returning HTML instead of JSON by explicitly requesting JSON/XHR responses
+- [x] Probe the published invitation mutation and confirm it returns JSON with a 400 validation response for invalid input
+
 
 - [x] Diagnose the administrator Copy link failure
 - [x] Implement clipboard fallback and visible copy success/error feedback
