@@ -115,13 +115,17 @@ describe("admin access control", () => {
     await expect(caller.operations.updateWarehouseHeroLocation({ latitude: "24.7136000", longitude: "46.6753000" })).resolves.toMatchObject({ id: 92, warehouseHeroId: 52 });
   });
 
-  it("rejects unassigned Warehouse Heroes from publishing GPS or delivery proof", async () => {
+  it("allows Warehouse Heroes to publish GPS and delivery proof without a Manager assignment", async () => {
     const warehouseHero = { ...baseUser, id: 54, openId: "warehouse-hero-54", role: "warehouse_hero" as const, locationSharing: true };
     vi.spyOn(db, "getUserById").mockResolvedValue(warehouseHero);
-    vi.spyOn(db, "hasManagerForWarehouseHero").mockResolvedValue(false);
+    vi.spyOn(db, "getWarehouseHeroLocation").mockResolvedValue(undefined);
+    vi.spyOn(db, "upsertWarehouseHeroLocation").mockResolvedValue({ id: 94, warehouseHeroId: 54, latitude: "24.7136000", longitude: "46.6753000", capturedAt: new Date(), updatedAt: new Date() } as never);
+    vi.mocked(storagePut).mockResolvedValue({ key: "warehouse-delivery-proofs/54/proof.jpg", url: "/manus-storage/warehouse-delivery-proofs/54/proof.jpg" });
+    vi.spyOn(db, "createWarehouseDeliveryProof").mockResolvedValue({ id: 95, warehouseHeroId: 54, note: null, storageKey: "warehouse-delivery-proofs/54/proof.jpg", mimeType: "image/jpeg", sizeBytes: 22, capturedAt: new Date(), createdAt: new Date() } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
     const caller = appRouter.createCaller(contextFor(warehouseHero));
-    await expect(caller.operations.updateWarehouseHeroLocation({ latitude: "24.7136000", longitude: "46.6753000" })).rejects.toMatchObject({ code: "FORBIDDEN" });
-    await expect(caller.operations.uploadWarehouseDeliveryProof({ fileName: "proof.jpg", mimeType: "image/jpeg", base64: "data:image/jpeg;base64,QUJDREVGR0hJSktMTU5PUA==" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.operations.updateWarehouseHeroLocation({ latitude: "24.7136000", longitude: "46.6753000" })).resolves.toMatchObject({ id: 94, warehouseHeroId: 54 });
+    await expect(caller.operations.uploadWarehouseDeliveryProof({ fileName: "proof.jpg", mimeType: "image/jpeg", base64: "data:image/jpeg;base64,QUJDREVGR0hJSktMTU5PUA==" })).resolves.toMatchObject({ proofId: 95 });
   });
 
   it("rejects out-of-range Warehouse Hero GPS coordinates before persistence", async () => {
@@ -131,28 +135,25 @@ describe("admin access control", () => {
     await expect(caller.operations.updateWarehouseHeroLocation({ latitude: "24.7136000", longitude: "181" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
-  it("returns Warehouse delivery proofs through the Manager-only assignment-scoped query", async () => {
-    const manager = { ...baseUser, id: 63, role: "manager" as const, email: "manager@example.com" };
-    vi.spyOn(db, "listWarehouseDeliveryProofsForManager").mockResolvedValue([{ id: 93, warehouseHeroId: 52, warehouseHeroName: "Hero", warehouseHeroEmail: "hero@example.com", note: "Delivered", storageKey: "warehouse-delivery-proofs/52/proof.jpg", mimeType: "image/jpeg", sizeBytes: 1200, capturedAt: new Date(), url: "/manus-storage/warehouse-delivery-proofs/52/proof.jpg" }] as never);
-    const caller = appRouter.createCaller(contextFor(manager));
+  it("returns shared Warehouse delivery proofs to every authenticated FFM member", async () => {
+    vi.spyOn(db, "listSharedWarehouseDeliveryProofs").mockResolvedValue([{ id: 93, warehouseHeroId: 52, warehouseHeroName: "Hero", warehouseHeroEmail: "hero@example.com", note: "Delivered", storageKey: "warehouse-delivery-proofs/52/proof.jpg", mimeType: "image/jpeg", sizeBytes: 1200, capturedAt: new Date(), url: "/manus-storage/warehouse-delivery-proofs/52/proof.jpg" }] as never);
+    const caller = appRouter.createCaller(contextFor(baseUser));
     await expect(caller.operations.warehouseDeliveryProofs()).resolves.toHaveLength(1);
-    expect(db.listWarehouseDeliveryProofsForManager).toHaveBeenCalledWith(63, false, undefined);
+    expect(db.listSharedWarehouseDeliveryProofs).toHaveBeenCalledWith(undefined);
   });
 
-  it("passes valid delivery-proof date filters through the Manager-scoped query", async () => {
-    const manager = { ...baseUser, id: 64, role: "manager" as const, email: "manager@example.com" };
-    vi.spyOn(db, "listWarehouseDeliveryProofsForManager").mockResolvedValue([] as never);
-    const caller = appRouter.createCaller(contextFor(manager));
+  it("passes valid delivery-proof date filters through the shared query", async () => {
+    vi.spyOn(db, "listSharedWarehouseDeliveryProofs").mockResolvedValue([] as never);
+    const caller = appRouter.createCaller(contextFor(baseUser));
     await expect(caller.operations.warehouseDeliveryProofs({ from: "2026-08-01", to: "2026-08-20" })).resolves.toEqual([]);
-    expect(db.listWarehouseDeliveryProofsForManager).toHaveBeenCalledWith(64, false, { from: "2026-08-01", to: "2026-08-20" });
+    expect(db.listSharedWarehouseDeliveryProofs).toHaveBeenCalledWith({ from: "2026-08-01", to: "2026-08-20" });
   });
 
-  it("exports only assignment-scoped delivery proofs with the selected audit filters", async () => {
-    const manager = { ...baseUser, id: 70, role: "manager" as const, email: "manager@example.com" };
-    vi.spyOn(db, "listWarehouseDeliveryProofsForManager").mockResolvedValue([{ id: 100, warehouseHeroId: 71, warehouseHeroName: "Hero", warehouseHeroEmail: "hero@example.com", note: "=Handover", storageKey: "warehouse-delivery-proofs/71/proof.jpg", mimeType: "image/jpeg", sizeBytes: 1200, capturedAt: new Date("2026-08-10T12:00:00.000Z"), url: "/manus-storage/warehouse-delivery-proofs/71/proof.jpg" }, { id: 101, warehouseHeroId: 72, warehouseHeroName: "Other Hero", warehouseHeroEmail: "other@example.com", note: "Other", storageKey: "warehouse-delivery-proofs/72/proof.jpg", mimeType: "image/jpeg", sizeBytes: 1000, capturedAt: new Date("2026-08-11T12:00:00.000Z"), url: "/manus-storage/warehouse-delivery-proofs/72/proof.jpg" }] as never);
-    const caller = appRouter.createCaller(contextFor(manager));
+  it("exports shared delivery proofs with the selected audit filters", async () => {
+    vi.spyOn(db, "listSharedWarehouseDeliveryProofs").mockResolvedValue([{ id: 100, warehouseHeroId: 71, warehouseHeroName: "Hero", warehouseHeroEmail: "hero@example.com", note: "=Handover", storageKey: "warehouse-delivery-proofs/71/proof.jpg", mimeType: "image/jpeg", sizeBytes: 1200, capturedAt: new Date("2026-08-10T12:00:00.000Z"), url: "/manus-storage/warehouse-delivery-proofs/71/proof.jpg" }, { id: 101, warehouseHeroId: 72, warehouseHeroName: "Other Hero", warehouseHeroEmail: "other@example.com", note: "Other", storageKey: "warehouse-delivery-proofs/72/proof.jpg", mimeType: "image/jpeg", sizeBytes: 1000, capturedAt: new Date("2026-08-11T12:00:00.000Z"), url: "/manus-storage/warehouse-delivery-proofs/72/proof.jpg" }] as never);
+    const caller = appRouter.createCaller(contextFor(baseUser));
     const csv = await caller.operations.exportWarehouseDeliveryProofsCsv({ from: "2026-08-01", to: "2026-08-20", warehouseHeroId: 71 });
-    expect(db.listWarehouseDeliveryProofsForManager).toHaveBeenCalledWith(70, false, { from: "2026-08-01", to: "2026-08-20", warehouseHeroId: 71 });
+    expect(db.listSharedWarehouseDeliveryProofs).toHaveBeenCalledWith({ from: "2026-08-01", to: "2026-08-20", warehouseHeroId: 71 });
     expect(csv).toContain("proof_id,warehouse_hero,note");
     expect(csv).toContain("\"'=Handover\"");
     expect(csv).not.toContain("Other Hero");
@@ -280,12 +281,10 @@ describe("admin access control", () => {
     expect(db.listWarehouseDeliveryProofsForHero).toHaveBeenCalledWith(66);
   });
 
-  it("returns only the signed-in Warehouse Hero's Manager assignment readiness", async () => {
+  it("reports every signed-in Warehouse Hero as available without a Manager assignment", async () => {
     const warehouseHero = { ...baseUser, id: 68, role: "warehouse_hero" as const, email: "hero@example.com" };
-    vi.spyOn(db, "hasManagerForWarehouseHero").mockResolvedValue(false);
     const caller = appRouter.createCaller(contextFor(warehouseHero));
-    await expect(caller.operations.warehouseHeroAssignmentStatus()).resolves.toEqual({ assigned: false });
-    expect(db.hasManagerForWarehouseHero).toHaveBeenCalledWith(68);
+    await expect(caller.operations.warehouseHeroAssignmentStatus()).resolves.toEqual({ assigned: true, available: true });
   });
 
   it("rejects non-Warehouse-Hero accounts from assignment readiness", async () => {

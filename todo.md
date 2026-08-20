@@ -27,7 +27,7 @@
 - [x] Add Warehouse Heroes as a first-class field role with dedicated Manager sidebar workspace
 - [x] Add Administrator-only Warehouse Hero-to-Manager assignment controls
 - [x] Add privacy-aware Warehouse Hero GPS location updates and Manager map visibility
-- [ ] Verify Warehouse Hero GPS capture on a real mobile device after accepting a Warehouse Hero invitation — external field test requiring an assigned Hero account and a mobile device with location permission
+- [ ] Verify Warehouse Hero GPS capture on a real mobile device after accepting a Warehouse Hero invitation — external field test requiring a Warehouse Hero account and a mobile device with location permission
 - [x] Fix Warehouse Hero invitation copy action with success and fallback feedback
 - [x] Fix Warehouse Hero location-sharing activation so GPS tracking can be enabled from the delivery-shift workspace
 - [x] Add Warehouse Hero delivery-proof photo upload with assignment-scoped Manager visibility
@@ -256,3 +256,9 @@
 - [x] Filter expected invalid or expired invitation probes from captured client-error diagnostics
 - [x] Diagnose and repair the reported surgery-calendar database query error after the lifecycle schema migration
 - [x] Add regression coverage for readiness updates, diagnostic dismissal or clearing, and filtered expected invitation failures
+
+- [x] Remove Warehouse Hero-to-Manager assignment as a dependency for authenticated FFM member visibility and logistics review
+- [x] Make the Warehouse Heroes directory and privacy-approved shared locations visible to all authenticated FFM members
+- [x] Replace numeric Manager, Delegate, and Warehouse Hero labels with registered names and email fallbacks throughout logistics workspaces
+- [x] Remove the obsolete Warehouse Hero assignment management controls from Administration
+- [x] Add authorization and identity-rendering regression coverage for shared Warehouse Hero access
