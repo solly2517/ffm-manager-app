@@ -88,7 +88,7 @@
 # Confirmed Full Improvement Roadmap
 
 - [ ] Complete database-backed CRUD for delegates, clients, doctors, tasks, messages, visits, surgery records, geography, and visit plans
-- [ ] Add task assignment and status-update forms for Manager and Delegate users
+- [x] Add task assignment and status-update forms for Manager and Delegate users
 - [ ] Add client, doctor, province, city, surgery, and visit-plan forms with approval states
 - [ ] Complete photo, audio, signature, GPS, timestamps, and secure evidence linkage for visits
 - [ ] Add real map pins, route planning, delegate location updates, and configurable location privacy

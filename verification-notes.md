@@ -65,3 +65,7 @@ The document head now includes FFM title, description, theme color, application 
 ## Live route-preview verification — 2026-08-20
 
 The shared MapView now supports coordinate-backed DirectionsService route previews with visible `Calculating live route…` and `Route unavailable; live pins remain visible.` states. Manager Geography and Delegate My Tasks pass route props only when two or more real coordinate-backed records exist. Authenticated desktop previews of `/` and `/delegate` remain healthy after the update; the current production database has zero assigned tasks/clients, so the captures correctly show the blueprint map fallback without fabricated pins or routes.
+
+## Delegate task-status verification — 2026-08-20
+
+Authenticated 390×844 previews of `/delegate?workspace=tasks` and `/delegate?workspace=visit` remain healthy after adding selected-task tracking and status feedback. The current database has zero assigned tasks, so the screenshots correctly show `0 assigned visits · live records` and `No assignment selected`; once tasks exist, tapping a task stores its ID before opening Visit, and status mutations report success or error feedback for that selected task.
