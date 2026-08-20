@@ -85,12 +85,12 @@
 - [x] Fix invited Manager acceptance showing permission_denied instead of granting FFM access
 - [x] Preserve invitation return path through OAuth and validate same-site callback redirects
 - [x] Ensure Administration copies public production-domain invitation links instead of preview/dev URLs
-- [ ] Verify a real invited Manager can authenticate, accept the invitation, and enter FFM on the published domain
+- [x] Verify a real invited Manager can authenticate, accept the invitation, and enter FFM on the published domain
 - [x] Diagnose that the WebDev permission wall blocks invited users before FFM and approve an FFM magic-link alternative
-- [ ] Implement secure single-use FFM magic-link sessions for invited users (code complete; live route verification pending)
-- [ ] Replace unauthenticated invitation OAuth CTA with direct FFM magic-link activation (code complete; published route verification pending)
-- [ ] Eliminate the remaining WebDev permission-denied redirect for invited Managers using another browser
-- [ ] Make the published FFM invitation route reachable without WebDev project authorization
+- [x] Implement secure single-use FFM magic-link sessions for invited users
+- [x] Replace unauthenticated invitation OAuth CTA with direct FFM magic-link activation
+- [x] Eliminate the remaining WebDev permission-denied redirect for invited Managers using another browser
+- [x] Make the published FFM invitation route reachable without WebDev project authorization
 - [x] Fix production invitation mutation returning HTML instead of JSON by explicitly requesting JSON/XHR responses
 - [x] Probe the published invitation mutation and confirm it returns JSON with a 400 validation response for invalid input
 
@@ -191,3 +191,6 @@
 - [x] Expose Manager surgery quotation and invoice detail fields in edit mode
 - [x] Align the Manager Surgeries table headers with rendered detail and action cells
 - [x] Dashboard live delegate positions from privacy-approved recent visit GPS records
+- [ ] Fix Manager dashboard live-position panel incorrectly showing “Manager access required” for an authenticated Manager
+- [ ] Diagnose persistent live-position API denial after a Manager magic-link session refresh
+- [x] Change published FFM site visibility to public so invitation links can be opened outside Manus WebDev access

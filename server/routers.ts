@@ -13,7 +13,7 @@ const ADMIN_EMAIL = "dr.seleam@gmail.com";
 const isAdmin = (user: { email?: string | null; role?: string }) => user.email?.toLowerCase() === ADMIN_EMAIL || user.role === "admin";
 const canManage = (user: { email?: string | null; role?: string }) => isAdmin(user) || user.role === "manager";
 const adminOnly = protectedProcedure.use(({ ctx, next }) => { if (!isAdmin(ctx.user)) throw new TRPCError({ code: "FORBIDDEN", message: "Administrator access required" }); return next({ ctx }); });
-const managerOnly = protectedProcedure.use(({ ctx, next }) => { if (!canManage(ctx.user)) throw new TRPCError({ code: "FORBIDDEN", message: "Manager access required" }); return next({ ctx }); });
+const managerOnly = protectedProcedure.use(({ ctx, next }) => { if (!canManage(ctx.user)) { console.warn("[FFM] Manager procedure denied", { userId: ctx.user.id, openId: ctx.user.openId, email: ctx.user.email, role: ctx.user.role }); throw new TRPCError({ code: "FORBIDDEN", message: "Manager access required" }); } return next({ ctx }); });
 const tokenHash = (token: string) => createHash("sha256").update(token).digest("hex");
 
 export const appRouter = router({
