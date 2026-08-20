@@ -171,3 +171,7 @@
 - [x] Add Geography parent-region selection for city records in the Manager workflow
 
 - [x] Add Manager surgery and visit-plan live review workspaces with assignment-scoped queries, approval controls, and empty/error states
+
+- [x] Add assignment-scoped Manager surgery status/detail updates with protected mutation, confirmation feedback, and regression coverage
+- [x] Expose Manager surgery quotation and invoice detail fields in edit mode
+- [x] Align the Manager Surgeries table headers with rendered detail and action cells

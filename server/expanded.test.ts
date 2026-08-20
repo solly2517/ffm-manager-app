@@ -233,3 +233,25 @@ describe("FFM Manager surgery and visit-plan workspaces", () => {
     await expect(caller.operations.reviewVisitPlan({ id: 999, status: "approved" })).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 });
+
+
+describe("FFM surgery update authorization", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("allows an assigned Manager and blocks an unassigned Manager", async () => {
+    vi.spyOn(db, "getSurgeryById").mockResolvedValue({ id: 5, delegateId: 20, status: "pending" } as any);
+    vi.spyOn(db, "listDelegateIdsForManager").mockResolvedValue([20]);
+    vi.spyOn(db, "updateSurgery").mockResolvedValue({ id: 5, delegateId: 20, status: "partial" } as any);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined);
+    const managerCaller = appRouter.createCaller(createContext("manager"));
+    await expect(managerCaller.operations.updateSurgery({ id: 5, status: "partial", notes: "Updated" })).resolves.toEqual({ id: 5, delegateId: 20, status: "partial" });
+    vi.spyOn(db, "listDelegateIdsForManager").mockResolvedValue([]);
+    await expect(managerCaller.operations.updateSurgery({ id: 5, status: "collected" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("rejects a missing surgery record", async () => {
+    vi.spyOn(db, "getSurgeryById").mockResolvedValue(undefined);
+    const managerCaller = appRouter.createCaller(createContext("manager"));
+    await expect(managerCaller.operations.updateSurgery({ id: 999, status: "partial" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+});
