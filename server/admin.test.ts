@@ -111,7 +111,21 @@ describe("admin access control", () => {
     vi.spyOn(db, "listWarehouseDeliveryProofsForManager").mockResolvedValue([{ id: 93, warehouseHeroId: 52, warehouseHeroName: "Hero", warehouseHeroEmail: "hero@example.com", note: "Delivered", storageKey: "warehouse-delivery-proofs/52/proof.jpg", mimeType: "image/jpeg", sizeBytes: 1200, capturedAt: new Date(), url: "/manus-storage/warehouse-delivery-proofs/52/proof.jpg" }] as never);
     const caller = appRouter.createCaller(contextFor(manager));
     await expect(caller.operations.warehouseDeliveryProofs()).resolves.toHaveLength(1);
-    expect(db.listWarehouseDeliveryProofsForManager).toHaveBeenCalledWith(63, false);
+    expect(db.listWarehouseDeliveryProofsForManager).toHaveBeenCalledWith(63, false, undefined);
+  });
+
+  it("passes valid delivery-proof date filters through the Manager-scoped query", async () => {
+    const manager = { ...baseUser, id: 64, role: "manager" as const, email: "manager@example.com" };
+    vi.spyOn(db, "listWarehouseDeliveryProofsForManager").mockResolvedValue([] as never);
+    const caller = appRouter.createCaller(contextFor(manager));
+    await expect(caller.operations.warehouseDeliveryProofs({ from: "2026-08-01", to: "2026-08-20" })).resolves.toEqual([]);
+    expect(db.listWarehouseDeliveryProofsForManager).toHaveBeenCalledWith(64, false, { from: "2026-08-01", to: "2026-08-20" });
+  });
+
+  it("rejects a delivery-proof date range whose end precedes its start", async () => {
+    const manager = { ...baseUser, id: 65, role: "manager" as const, email: "manager@example.com" };
+    const caller = appRouter.createCaller(contextFor(manager));
+    await expect(caller.operations.warehouseDeliveryProofs({ from: "2026-08-20", to: "2026-08-01" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
   it("returns only the signed-in Warehouse Hero's own delivery-proof history", async () => {
