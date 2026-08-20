@@ -212,6 +212,21 @@ describe("FFM Manager directory CRUD", () => {
 });
 
 
+describe("FFM live delegate position visibility", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("returns only the privacy-approved live position contract to Managers", async () => {
+    const positions = [{ delegateId: 20, delegateName: "Field Delegate", delegateEmail: "delegate@example.com", latitude: "24.7136000", longitude: "46.6753000", capturedAt: new Date("2026-08-20T08:00:00Z") }];
+    const live = vi.spyOn(db, "listLiveDelegatePositionsForManager").mockResolvedValue(positions as any);
+    const managerCaller = appRouter.createCaller(createContext("manager"));
+    await expect(managerCaller.operations.liveDelegatePositions()).resolves.toEqual(positions);
+    expect(live).toHaveBeenCalledWith(999999);
+    const delegateCaller = appRouter.createCaller(createContext("delegate"));
+    await expect(delegateCaller.operations.liveDelegatePositions()).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+});
+
+
 describe("FFM Manager surgery and visit-plan workspaces", () => {
   afterEach(() => vi.restoreAllMocks());
 

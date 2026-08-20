@@ -156,7 +156,7 @@
 - [x] Add explicit user-visible recovery behavior for authentication timeout/service failure through the existing unauthenticated login recovery path
 
 - [x] Add a persisted Delegate location-sharing privacy preference with protected read/update procedures and Profile UI
-- [ ] Enforce location-sharing preference across future live delegate tracking and Manager visibility controls
+- [x] Enforce location-sharing preference across live delegate tracking and Manager visibility controls
 
 - [x] Add authenticated Help & Privacy guidance explaining managed database/object-storage recovery and browser-draft limitations
 - [ ] Configure automated database/object-storage backup operations when the hosting backup policy is supplied
