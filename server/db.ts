@@ -49,7 +49,7 @@ export async function getUserById(id: number) {
   return result[0];
 }
 
-export async function updateNotificationPreferences(userId: number, input: { pushNotifications?: boolean; emailNotifications?: boolean }) {
+export async function updateNotificationPreferences(userId: number, input: { pushNotifications?: boolean; emailNotifications?: boolean; locationSharing?: boolean }) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
   await db.update(users).set(input).where(eq(users.id, userId));

@@ -150,3 +150,6 @@
 - [x] Reproduce the original authenticated `/?from_webdev=1` failure and confirm `/api/trpc/auth.me` returns JSON through the proxied path
 - [x] Verify the authenticated Manager route after the fix and record browser evidence without the tRPC parse error
 - [x] Add explicit user-visible recovery behavior for authentication timeout/service failure through the existing unauthenticated login recovery path
+
+- [x] Add a persisted Delegate location-sharing privacy preference with protected read/update procedures and Profile UI
+- [ ] Enforce location-sharing preference across future live delegate tracking and Manager visibility controls

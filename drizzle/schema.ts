@@ -12,6 +12,7 @@ export const users = mysqlTable("users", {
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
   pushNotifications: boolean("pushNotifications").default(true).notNull(),
   emailNotifications: boolean("emailNotifications").default(true).notNull(),
+  locationSharing: boolean("locationSharing").default(false).notNull(),
 }, (table) => ({ emailIdx: index("users_email_idx").on(table.email) }));
 
 export const clientErrorReports = mysqlTable("client_error_reports", {

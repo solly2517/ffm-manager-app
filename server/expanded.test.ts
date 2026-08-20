@@ -113,11 +113,11 @@ describe("expanded FFM permissions", () => {
     await expect(caller.operations.addGeography({ kind: "province", name: "Example Province" })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
   it("returns persisted notification preferences and updates only the requested setting", async () => {
-    vi.spyOn(db, "getUserById").mockResolvedValue({ pushNotifications: false, emailNotifications: true } as any);
-    const update = vi.spyOn(db, "updateNotificationPreferences").mockResolvedValue({ pushNotifications: true, emailNotifications: true } as any);
+    vi.spyOn(db, "getUserById").mockResolvedValue({ pushNotifications: false, emailNotifications: true, locationSharing: false } as any);
+    const update = vi.spyOn(db, "updateNotificationPreferences").mockResolvedValue({ pushNotifications: true, emailNotifications: true, locationSharing: false } as any);
     const caller = appRouter.createCaller(createContext("delegate"));
-    await expect(caller.preferences.get()).resolves.toEqual({ pushNotifications: false, emailNotifications: true });
-    await expect(caller.preferences.update({ pushNotifications: true })).resolves.toEqual({ pushNotifications: true, emailNotifications: true });
+    await expect(caller.preferences.get()).resolves.toEqual({ pushNotifications: false, emailNotifications: true, locationSharing: false });
+    await expect(caller.preferences.update({ pushNotifications: true })).resolves.toEqual({ pushNotifications: true, emailNotifications: true, locationSharing: false });
     expect(update).toHaveBeenCalledWith(999999, { pushNotifications: true });
   });
   it("rejects an empty notification preference update", async () => {
