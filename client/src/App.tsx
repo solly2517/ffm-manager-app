@@ -11,6 +11,7 @@ import Delegate from "./pages/Delegate";
 import Help from "./pages/Help";
 import Invite from "@/pages/Invite";
 import WarehouseHero from "@/pages/WarehouseHero";
+import SurgeryCalendar from "@/pages/SurgeryCalendar";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/help" component={Help} />
       <Route path="/invite/:token" component={Invite} />
       <Route path="/warehouse-hero" component={WarehouseHero} />
+      <Route path="/surgery-calendar" component={SurgeryCalendar} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

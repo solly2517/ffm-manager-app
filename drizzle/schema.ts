@@ -153,6 +153,8 @@ export const surgeries = mysqlTable("surgeries", {
   clientId: int("clientId").notNull(),
   delegateId: int("delegateId").notNull(),
   surgeryDate: timestamp("surgeryDate").notNull(),
+  notifiedAt: timestamp("notifiedAt").defaultNow().notNull(),
+  calendarStatus: mysqlEnum("calendarStatus", ["notified", "confirmed", "postponed", "cancelled", "completed"]).default("notified").notNull(),
   hospital: varchar("hospital", { length: 220 }),
   surgeon: varchar("surgeon", { length: 180 }),
   procedureName: varchar("procedureName", { length: 220 }),
@@ -163,6 +165,30 @@ export const surgeries = mysqlTable("surgeries", {
   createdBy: int("createdBy").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
+
+export const surgeryImplants = mysqlTable("surgeryImplants", {
+  id: int("id").autoincrement().primaryKey(),
+  surgeryId: int("surgeryId").notNull(),
+  implantName: varchar("implantName", { length: 220 }).notNull(),
+  quantity: int("quantity").notNull(),
+  lotNumber: varchar("lotNumber", { length: 160 }),
+  serialNumber: varchar("serialNumber", { length: 160 }),
+  notes: text("notes"),
+  registeredBy: int("registeredBy").notNull(),
+  registeredAt: timestamp("registeredAt").defaultNow().notNull(),
+}, (table) => ({ surgeryIdx: index("surgery_implants_surgery_idx").on(table.surgeryId) }));
+
+export const surgeryDeliveryProofs = mysqlTable("surgeryDeliveryProofs", {
+  id: int("id").autoincrement().primaryKey(),
+  surgeryId: int("surgeryId").notNull(),
+  storageKey: varchar("storageKey", { length: 500 }).notNull(),
+  originalName: varchar("originalName", { length: 220 }).notNull(),
+  mimeType: varchar("mimeType", { length: 120 }).notNull(),
+  sizeBytes: int("sizeBytes").notNull(),
+  note: text("note"),
+  uploadedBy: int("uploadedBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({ surgeryIdx: index("surgery_delivery_proofs_surgery_idx").on(table.surgeryId) }));
 
 export const visitPlans = mysqlTable("visitPlans", {
   id: int("id").autoincrement().primaryKey(),
@@ -210,4 +236,6 @@ export type Doctor = typeof doctors.$inferSelect;
 export type Task = typeof tasks.$inferSelect;
 export type Visit = typeof visits.$inferSelect;
 export type Evidence = typeof evidence.$inferSelect;
+export type SurgeryImplant = typeof surgeryImplants.$inferSelect;
+export type SurgeryDeliveryProof = typeof surgeryDeliveryProofs.$inferSelect;
 export type WarehouseDeliveryProof = typeof warehouseDeliveryProofs.$inferSelect;

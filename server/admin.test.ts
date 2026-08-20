@@ -185,6 +185,50 @@ describe("admin access control", () => {
     expect(createSurgery).not.toHaveBeenCalled();
   });
 
+  it("allows every authenticated role to read the shared surgery calendar while keeping clinical resources field-only", async () => {
+    vi.spyOn(db, "listAllSurgeries").mockResolvedValue([{ id: 121, delegateId: 75, procedureName: "Knee replacement", surgeryDate: new Date("2026-09-01"), calendarStatus: "notified" }] as never);
+    const warehouseHero = appRouter.createCaller(contextFor({ ...baseUser, id: 120, role: "warehouse_hero" as const, email: "hero@example.com" }));
+    const standardUser = appRouter.createCaller(contextFor(baseUser));
+    await expect(warehouseHero.operations.surgeryCalendar()).resolves.toHaveLength(1);
+    await expect(standardUser.operations.surgeryCalendar()).resolves.toHaveLength(1);
+    await expect(warehouseHero.operations.surgeryResources({ surgeryId: 121 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("lets an assigned Manager update a surgery calendar appointment but blocks Administrators from writing it", async () => {
+    const surgery = { id: 122, delegateId: 75, surgeryDate: new Date("2026-09-01"), calendarStatus: "notified" };
+    vi.spyOn(db, "getSurgeryById").mockResolvedValue(surgery as never);
+    vi.spyOn(db, "listDelegateIdsForManager").mockResolvedValue([75]);
+    vi.spyOn(db, "updateSurgery").mockResolvedValue({ ...surgery, calendarStatus: "confirmed" } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const manager = appRouter.createCaller(contextFor({ ...baseUser, id: 74, role: "manager" as const, email: "manager@example.com" }));
+    await expect(manager.operations.updateSurgerySchedule({ id: 122, surgeryDate: new Date("2026-09-02T08:00:00.000Z"), calendarStatus: "confirmed" })).resolves.toMatchObject({ id: 122, calendarStatus: "confirmed" });
+    const admin = appRouter.createCaller(contextFor({ ...baseUser, id: 1, role: "admin" as const, email: "dr.seleam@gmail.com" }));
+    await expect(admin.operations.updateSurgerySchedule({ id: 122, surgeryDate: new Date("2026-09-02T08:00:00.000Z"), calendarStatus: "confirmed" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("registers implants only within the caller's assigned surgery scope", async () => {
+    const surgery = { id: 123, delegateId: 75, surgeryDate: new Date("2026-09-01") };
+    vi.spyOn(db, "getSurgeryById").mockResolvedValue(surgery as never);
+    vi.spyOn(db, "listDelegateIdsForManager").mockResolvedValue([75]);
+    vi.spyOn(db, "createSurgeryImplant").mockResolvedValue({ id: 10, surgeryId: 123, implantName: "Femoral stem", quantity: 1 } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const manager = appRouter.createCaller(contextFor({ ...baseUser, id: 74, role: "manager" as const, email: "manager@example.com" }));
+    await expect(manager.operations.addSurgeryImplant({ surgeryId: 123, implantName: "Femoral stem", quantity: 1, lotNumber: "LOT-9" })).resolves.toMatchObject({ id: 10, implantName: "Femoral stem" });
+    expect(db.createSurgeryImplant).toHaveBeenCalledWith(expect.objectContaining({ surgeryId: 123, registeredBy: 74, lotNumber: "LOT-9" }));
+  });
+
+  it("stores an authorized Delegate patient-sheet proof in managed storage before persisting surgery metadata", async () => {
+    const delegate = { ...baseUser, id: 75, role: "delegate" as const, email: "delegate@example.com" };
+    vi.spyOn(db, "getSurgeryById").mockResolvedValue({ id: 124, delegateId: 75, surgeryDate: new Date("2026-09-01") } as never);
+    vi.mocked(storagePut).mockResolvedValue({ key: "surgery-delivery-proofs/124/patient-sheet.pdf", url: "/manus-storage/surgery-delivery-proofs/124/patient-sheet.pdf" });
+    vi.spyOn(db, "createSurgeryDeliveryProof").mockResolvedValue({ id: 11, surgeryId: 124, storageKey: "surgery-delivery-proofs/124/patient-sheet.pdf", originalName: "patient-sheet.pdf", mimeType: "application/pdf", sizeBytes: 10, uploadedBy: 75, createdAt: new Date() } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const caller = appRouter.createCaller(contextFor(delegate));
+    await expect(caller.operations.uploadSurgeryDeliveryProof({ surgeryId: 124, fileName: "patient sheet.pdf", mimeType: "application/pdf", base64: "data:application/pdf;base64,QUJDREVGR0hJSktMTU5PUA==", note: "Hospital delivery sheet" })).resolves.toMatchObject({ proofId: 11 });
+    expect(storagePut).toHaveBeenCalledWith(expect.stringContaining("surgery-delivery-proofs/124/"), expect.any(Buffer), "application/pdf");
+    expect(db.createSurgeryDeliveryProof).toHaveBeenCalledWith(expect.objectContaining({ surgeryId: 124, uploadedBy: 75, originalName: "patient_sheet.pdf" }));
+  });
+
   it("returns only the signed-in Warehouse Hero's own delivery-proof history", async () => {
     const warehouseHero = { ...baseUser, id: 66, role: "warehouse_hero" as const, email: "hero@example.com" };
     vi.spyOn(db, "listWarehouseDeliveryProofsForHero").mockResolvedValue([{ id: 96, note: "Hospital handover", storageKey: "warehouse-delivery-proofs/66/proof.jpg", mimeType: "image/jpeg", sizeBytes: 1200, capturedAt: new Date(), url: "/manus-storage/warehouse-delivery-proofs/66/proof.jpg" }] as never);

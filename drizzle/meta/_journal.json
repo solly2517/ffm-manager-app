@@ -71,6 +71,13 @@
       "when": 1787236075923,
       "tag": "0009_goofy_true_believers",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1787238261561,
+      "tag": "0010_faulty_fat_cobra",
+      "breakpoints": true
     }
   ]
 }

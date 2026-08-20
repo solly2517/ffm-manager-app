@@ -11,6 +11,7 @@ import { DoctorEditor } from "@/components/DoctorEditor";
 import { buildPublicInviteLink } from "@/lib/inviteLink";
 import { MapView } from "@/components/Map";
 import { WarehouseHeroesWorkspace } from "@/pages/WarehouseHeroesWorkspace";
+import SurgeryCalendar from "@/pages/SurgeryCalendar";
 import { Users, Map, ClipboardList, MessageSquare, BarChart3, Globe2, Activity, AlertTriangle, Plus, LogOut, ShieldCheck, Search, Menu, X, Send, UserPlus, Truck, type LucideIcon } from "lucide-react";
 
 const nav = [
@@ -20,6 +21,7 @@ const nav = [
   { id: "clients", label: "Clients", icon: Globe2 },
   { id: "tasks", label: "Tasks", icon: ClipboardList },
   { id: "surgeries", label: "Surgeries", icon: Activity },
+  { id: "surgery-calendar", label: "Surgery Calendar", icon: Activity },
   { id: "plans", label: "Visit Plans", icon: ClipboardList },
   { id: "messages", label: "Messages", icon: MessageSquare },
   { id: "reports", label: "Reports", icon: BarChart3 },
@@ -143,6 +145,7 @@ export default function Home() {
 
   const current = nav.find((item) => item.id === active) ?? nav[0];
   if (active === "warehouse-heroes") return <WarehouseHeroesWorkspace isAdmin={isAdmin} onBack={() => setActive("dashboard")} />;
+  if (active === "surgery-calendar") return <SurgeryCalendar />;
 
   return <div className="manager-shell">
     <aside className={`manager-sidebar ${mobileOpen ? "open" : ""}`}>
