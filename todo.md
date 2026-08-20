@@ -274,3 +274,8 @@
 - [x] Create the supplied EMC client in Jeddah, add Dr. Eslam Fahmy, and assign solly2517@gmail.com to m.m.selim1977@gmail.com for Delegate plan review
 
 - [x] Auto-fill the Manager surgery hospital from the selected client and replace the free-text surgeon field with a doctor selector filtered to that client
+
+- [x] Add direct approved-catalogue implant selection for Administrator, Manager, and Delegate surgery workflows
+- [x] Record unit price and currency for each implant entry with role-scoped authorization and audit history
+- [x] Calculate and display per-line and total implant amounts for every surgery
+- [x] Add price, currency, and total-calculation regression coverage

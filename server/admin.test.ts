@@ -224,8 +224,12 @@ describe("admin access control", () => {
     vi.spyOn(db, "createSurgeryImplant").mockResolvedValue({ id: 10, surgeryId: 123, implantName: "Femoral stem", quantity: 1 } as never);
     vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
     const manager = appRouter.createCaller(contextFor({ ...baseUser, id: 74, role: "manager" as const, email: "manager@example.com" }));
-    await expect(manager.operations.addSurgeryImplant({ surgeryId: 123, implantCatalogueId: 8, quantity: 1, lotNumber: "LOT-9" })).resolves.toMatchObject({ id: 10, implantName: "Femoral stem" });
-    expect(db.createSurgeryImplant).toHaveBeenCalledWith(expect.objectContaining({ surgeryId: 123, implantCatalogueId: 8, implantName: "Femoral stem", registeredBy: 74, lotNumber: "LOT-9" }));
+    await expect(manager.operations.addSurgeryImplant({ surgeryId: 123, implantCatalogueId: 8, quantity: 1, unitPrice: 1250.5, currency: "sar", lotNumber: "LOT-9" })).resolves.toMatchObject({ id: 10, implantName: "Femoral stem" });
+    expect(db.createSurgeryImplant).toHaveBeenCalledWith(expect.objectContaining({ surgeryId: 123, implantCatalogueId: 8, implantName: "Femoral stem", unitPrice: "1250.50", currency: "SAR", registeredBy: 74, lotNumber: "LOT-9" }));
+  });
+
+  it("calculates surgery implant totals separately for each recorded currency", () => {
+    expect(db.calculateSurgeryImplantTotals([{ quantity: 2, unitPrice: "1250.50", currency: "SAR" }, { quantity: 1, unitPrice: 99.99, currency: "SAR" }, { quantity: 3, unitPrice: 10, currency: "USD" }])).toEqual([{ currency: "SAR", total: 2600.99 }, { currency: "USD", total: 30 }]);
   });
 
   it("rejects an implant that is not listed as active in the approved catalogue", async () => {
@@ -234,7 +238,7 @@ describe("admin access control", () => {
     vi.spyOn(db, "listDelegateIdsForManager").mockResolvedValue([75]);
     vi.spyOn(db, "getImplantCatalogueItem").mockResolvedValue({ id: 9, name: "Retired implant", isActive: false } as never);
     const manager = appRouter.createCaller(contextFor({ ...baseUser, id: 74, role: "manager" as const, email: "manager@example.com" }));
-    await expect(manager.operations.addSurgeryImplant({ surgeryId: 125, implantCatalogueId: 9, quantity: 1 })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(manager.operations.addSurgeryImplant({ surgeryId: 125, implantCatalogueId: 9, quantity: 1, unitPrice: 100, currency: "SAR" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
   it("requires a reason and new future date before postponing a surgery on its scheduled day", async () => {

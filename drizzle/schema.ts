@@ -191,6 +191,8 @@ export const surgeryImplants = mysqlTable("surgeryImplants", {
   implantCatalogueId: int("implantCatalogueId"),
   implantName: varchar("implantName", { length: 220 }).notNull(),
   quantity: int("quantity").notNull(),
+  unitPrice: decimal("unitPrice", { precision: 12, scale: 2 }).default("0.00").notNull(),
+  currency: varchar("currency", { length: 3 }).default("SAR").notNull(),
   lotNumber: varchar("lotNumber", { length: 160 }),
   serialNumber: varchar("serialNumber", { length: 160 }),
   notes: text("notes"),
