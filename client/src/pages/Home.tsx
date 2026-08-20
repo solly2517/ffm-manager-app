@@ -115,6 +115,28 @@ export default function Home() {
   const livePositionsQuery = trpc.operations.liveDelegatePositions.useQuery(undefined, { enabled: isAuthenticated && active === "dashboard", refetchInterval: 30000 });
   const livePositionMarkers = (livePositionsQuery.data ?? []).flatMap((position) => { const latitude = Number(position.latitude); const longitude = Number(position.longitude); return Number.isFinite(latitude) && Number.isFinite(longitude) ? [{ id: `delegate-${position.delegateId}`, position: { lat: latitude, lng: longitude }, title: position.delegateName || position.delegateEmail || `Delegate #${position.delegateId}` }] : []; });
   const clientMarkers = (clientsQuery.data ?? []).flatMap((client) => { const latitude = Number(client.latitude); const longitude = Number(client.longitude); return Number.isFinite(latitude) && Number.isFinite(longitude) ? [{ id: client.id, position: { lat: latitude, lng: longitude }, title: client.name }] : []; });
+  const selectedSurgeryClient = (clientsQuery.data ?? []).find((client) => String(client.id) === newSurgeryClientId);
+  const selectedSurgeryClientDoctors = selectedSurgeryClient ? (doctorsQuery.data ?? []).filter((doctor) => doctor.clientId === selectedSurgeryClient.id) : [];
+  useEffect(() => {
+    const selectedHospital = selectedSurgeryClient?.name ?? "";
+    if (newSurgeryHospital !== selectedHospital) setNewSurgeryHospital(selectedHospital);
+    if (!selectedSurgeryClientDoctors.some((doctor) => doctor.name === newSurgerySurgeon)) setNewSurgerySurgeon("");
+  }, [selectedSurgeryClient, selectedSurgeryClientDoctors, newSurgeryHospital, newSurgerySurgeon]);
+  useEffect(() => {
+    if (active !== "surgeries") return;
+    const hospitalInput = document.querySelector<HTMLInputElement>('input[aria-label="Surgery hospital"]');
+    const surgeonInput = document.querySelector<HTMLInputElement>('input[aria-label="Surgery surgeon"]');
+    if (!hospitalInput || !surgeonInput) return;
+    hospitalInput.readOnly = true;
+    hospitalInput.title = "Hospital is selected automatically from the client.";
+    const listId = "surgery-client-doctors";
+    let options = document.getElementById(listId) as HTMLDataListElement | null;
+    if (!options) { options = document.createElement("datalist"); options.id = listId; document.body.appendChild(options); }
+    options.replaceChildren(...selectedSurgeryClientDoctors.map((doctor) => { const option = document.createElement("option"); option.value = doctor.name; option.label = doctor.specialty ? `${doctor.name} — ${doctor.specialty}` : doctor.name; return option; }));
+    surgeonInput.setAttribute("list", listId);
+    surgeonInput.placeholder = selectedSurgeryClient ? (selectedSurgeryClientDoctors.length ? "Select surgeon from this client" : "No registered doctors for this client") : "Select client first";
+    surgeonInput.disabled = !selectedSurgeryClient || !selectedSurgeryClientDoctors.length;
+  }, [active, selectedSurgeryClient, selectedSurgeryClientDoctors]);
   const messagesQuery = trpc.operations.messages.useQuery(undefined, { enabled: isAuthenticated });
   const unreadMessageCount = messagesQuery.data?.filter((item) => item.recipientId === user?.id && !item.readAt).length ?? 0;
   const visibleDelegates = useMemo(() => (delegatesQuery.data || []).filter((delegate) => `${delegate.name || ""} ${delegate.email || ""}`.toLowerCase().includes(query.toLowerCase())), [delegatesQuery.data, query]);

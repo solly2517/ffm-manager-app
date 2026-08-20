@@ -272,3 +272,5 @@
 - [x] Diagnose and restore the intended Delegate planning access for solly2517@gmail.com without disrupting Warehouse Hero operations
 
 - [x] Create the supplied EMC client in Jeddah, add Dr. Eslam Fahmy, and assign solly2517@gmail.com to m.m.selim1977@gmail.com for Delegate plan review
+
+- [x] Auto-fill the Manager surgery hospital from the selected client and replace the free-text surgeon field with a doctor selector filtered to that client
