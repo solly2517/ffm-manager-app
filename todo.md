@@ -160,3 +160,5 @@
 
 - [x] Add authenticated Help & Privacy guidance explaining managed database/object-storage recovery and browser-draft limitations
 - [ ] Configure automated database/object-storage backup operations when the hosting backup policy is supplied
+
+- [x] Add Manager client edit/delete CRUD with protected procedures, confirmation feedback, and regression coverage

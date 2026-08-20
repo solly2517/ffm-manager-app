@@ -147,3 +147,28 @@ describe("FFM monitoring diagnostics", () => {
     await expect(managerCaller.monitoring.health()).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 });
+
+
+describe("FFM Manager client CRUD", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("allows managers to update and remove an existing client through protected procedures", async () => {
+    vi.spyOn(db, "getClientById").mockResolvedValue({ id: 42, name: "Old Hospital" } as any);
+    const update = vi.spyOn(db, "updateClient").mockResolvedValue({ id: 42, name: "New Hospital" } as any);
+    const remove = vi.spyOn(db, "removeClient").mockResolvedValue({ success: true });
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined);
+    const caller = appRouter.createCaller(createContext("manager"));
+    await expect(caller.operations.updateClient({ id: 42, name: "New Hospital" })).resolves.toEqual({ id: 42, name: "New Hospital" });
+    await expect(caller.operations.removeClient({ id: 42 })).resolves.toEqual({ success: true });
+    expect(update).toHaveBeenCalledWith(42, { name: "New Hospital" });
+    expect(remove).toHaveBeenCalledWith(42);
+  });
+
+  it("blocks delegate client mutations and rejects missing clients", async () => {
+    const delegateCaller = appRouter.createCaller(createContext("delegate"));
+    await expect(delegateCaller.operations.removeClient({ id: 42 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    vi.spyOn(db, "getClientById").mockResolvedValue(undefined);
+    const managerCaller = appRouter.createCaller(createContext("manager"));
+    await expect(managerCaller.operations.updateClient({ id: 42, name: "Missing Hospital" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+});
