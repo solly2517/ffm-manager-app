@@ -241,3 +241,5 @@
 - [x] Add a shared surgery calendar with read access for all authenticated roles
 - [x] Restrict surgery calendar creation and updates to Delegates and assigned Managers with assignment-scope validation; Administrators retain oversight-only access
 - [x] Add 2–7 day surgery-notification planning guidance, calendar status states, and operational validation coverage
+
+- [x] Allow the Administrator to create surgery records and update shared surgery calendar appointments with audit coverage

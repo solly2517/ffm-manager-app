@@ -194,7 +194,7 @@ describe("admin access control", () => {
     await expect(warehouseHero.operations.surgeryResources({ surgeryId: 121 })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
-  it("lets an assigned Manager update a surgery calendar appointment but blocks Administrators from writing it", async () => {
+  it("lets an assigned Manager and the Administrator update surgery calendar appointments", async () => {
     const surgery = { id: 122, delegateId: 75, surgeryDate: new Date("2026-09-01"), calendarStatus: "notified" };
     vi.spyOn(db, "getSurgeryById").mockResolvedValue(surgery as never);
     vi.spyOn(db, "listDelegateIdsForManager").mockResolvedValue([75]);
@@ -203,7 +203,7 @@ describe("admin access control", () => {
     const manager = appRouter.createCaller(contextFor({ ...baseUser, id: 74, role: "manager" as const, email: "manager@example.com" }));
     await expect(manager.operations.updateSurgerySchedule({ id: 122, surgeryDate: new Date("2026-09-02T08:00:00.000Z"), calendarStatus: "confirmed" })).resolves.toMatchObject({ id: 122, calendarStatus: "confirmed" });
     const admin = appRouter.createCaller(contextFor({ ...baseUser, id: 1, role: "admin" as const, email: "dr.seleam@gmail.com" }));
-    await expect(admin.operations.updateSurgerySchedule({ id: 122, surgeryDate: new Date("2026-09-02T08:00:00.000Z"), calendarStatus: "confirmed" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(admin.operations.updateSurgerySchedule({ id: 122, surgeryDate: new Date("2026-09-02T08:00:00.000Z"), calendarStatus: "confirmed" })).resolves.toMatchObject({ id: 122, calendarStatus: "confirmed" });
   });
 
   it("registers implants only within the caller's assigned surgery scope", async () => {
