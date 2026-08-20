@@ -47,7 +47,7 @@
 - [x] Add audit logging and confirmation safeguards for sensitive administrator actions
 - [x] Implement visit check-in and check-out with timestamps and GPS coordinates
 - [x] Implement photo, audio, and signature evidence capture with secure file storage
-- [ ] Replace map placeholders with real map and route data
+- [x] Replace map placeholders with live coordinate-backed map pins and route-preview wiring, with authenticated empty-state verification
 - [x] Add offline-friendly Delegate behavior with durable visit-report replay, query refetch on reconnect, and guarded feedback for other writes
 - [x] Add operational reports, exports, and configurable date filters
 - [x] Add onboarding, help documentation, privacy terms, and branded empty states
@@ -92,6 +92,7 @@
 - [ ] Add client, doctor, province, city, surgery, and visit-plan forms with approval states
 - [ ] Complete photo, audio, signature, GPS, timestamps, and secure evidence linkage for visits
 - [ ] Add real map pins, route planning, delegate location updates, and configurable location privacy
+- [x] Add live map pins and route-planning preview wiring from coordinate-backed records, with explicit unavailable fallback
 - [ ] Add secure invitation acceptance, duplicate prevention, role separation, and protected-admin safeguards
 - [ ] Add audit history, error reporting, activity monitoring, notification preferences, and backup guidance
 - [ ] Add report exports with operational filters and production-ready empty/loading/error states

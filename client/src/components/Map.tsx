@@ -76,7 +76,7 @@
 
 /// <reference types="@types/google.maps" />
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePersistFn } from "@/hooks/usePersistFn";
 import { cn } from "@/lib/utils";
 
@@ -92,10 +92,12 @@ const FORGE_BASE_URL =
   "https://forge.butterfly-effect.dev";
 const MAPS_PROXY_URL = `${FORGE_BASE_URL}/v1/maps/proxy`;
 
+type MapRoute = { origin: google.maps.LatLngLiteral; destination: google.maps.LatLngLiteral; waypoints?: google.maps.DirectionsWaypoint[] };
+
 function loadMapScript() {
   return new Promise(resolve => {
     const script = document.createElement("script");
-    script.src = `${MAPS_PROXY_URL}/maps/api/js?key=${API_KEY}&v=weekly&libraries=marker,places,geocoding,geometry`;
+    script.src = `${MAPS_PROXY_URL}/maps/api/js?key=${API_KEY}&v=weekly&libraries=marker,places,geocoding,geometry,routes`;
     script.async = true;
     script.crossOrigin = "anonymous";
     script.onload = () => {
@@ -120,6 +122,7 @@ interface MapViewProps {
   initialCenter?: google.maps.LatLngLiteral;
   initialZoom?: number;
   markers?: MapMarker[];
+  route?: MapRoute;
   onMapReady?: (map: google.maps.Map) => void;
 }
 
@@ -128,11 +131,15 @@ export function MapView({
   initialCenter = { lat: 37.7749, lng: -122.4194 },
   initialZoom = 12,
   markers = [],
+  route,
   onMapReady,
 }: MapViewProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<google.maps.Map | null>(null);
   const markerInstances = useRef<google.maps.Marker[]>([]);
+  const routeRenderer = useRef<google.maps.DirectionsRenderer | null>(null);
+  const [routeStatus, setRouteStatus] = useState<"idle" | "loading" | "ready" | "unavailable">("idle");
+  const routeKey = route ? JSON.stringify([route.origin, route.destination, route.waypoints ?? []]) : "";
   const renderMarkers = usePersistFn((mapInstance: google.maps.Map) => {
     markerInstances.current.forEach((marker) => marker.setMap(null));
     markerInstances.current = markers.map((marker) => new window.google!.maps.Marker({ map: mapInstance, position: marker.position, title: marker.title }));
@@ -167,7 +174,31 @@ export function MapView({
     if (map.current) renderMarkers(map.current);
   }, [markers, renderMarkers]);
 
+  useEffect(() => {
+    if (!map.current || !route || !window.google?.maps) {
+      setRouteStatus("idle");
+      return;
+    }
+    const service = new window.google.maps.DirectionsService();
+    routeRenderer.current?.setMap(null);
+    routeRenderer.current = new window.google.maps.DirectionsRenderer({ map: map.current, suppressMarkers: true, preserveViewport: true });
+    setRouteStatus("loading");
+    service.route({ origin: route.origin, destination: route.destination, waypoints: route.waypoints, travelMode: window.google.maps.TravelMode.DRIVING }, (result, status) => {
+      if (status === "OK" && result) {
+        routeRenderer.current?.setDirections(result);
+        setRouteStatus("ready");
+      } else {
+        console.warn("FFM route preview unavailable", status);
+        setRouteStatus("unavailable");
+      }
+    });
+    return () => { routeRenderer.current?.setMap(null); routeRenderer.current = null; };
+  }, [routeKey]);
+
   return (
-    <div ref={mapContainer} className={cn("w-full h-[500px]", className)} />
+    <div ref={mapContainer} className={cn("relative w-full h-[500px]", className)}>
+      {routeStatus === "loading" && <div className="absolute left-3 top-3 z-10 rounded-md bg-[#081b3a]/90 px-3 py-2 text-xs text-white">Calculating live route…</div>}
+      {routeStatus === "unavailable" && <div className="absolute left-3 top-3 z-10 rounded-md bg-[#081b3a]/90 px-3 py-2 text-xs text-white">Route unavailable; live pins remain visible.</div>}
+    </div>
   );
 }

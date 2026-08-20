@@ -55,3 +55,13 @@ Authenticated screenshots after the tRPC recovery hardening show Manager Dashboa
 ## Direct Delegate workspace routing — 2026-08-19/20
 
 The new `workspace` query routing was verified for `/delegate?workspace=messages`, `/delegate?workspace=surgery`, and `/delegate?workspace=plan`. Messages rendered the authenticated live empty state, `No messages from your manager yet.` Surgeries and Plan captures remained at the authentication loading screen in the screenshot service, so those two workspaces remain pending authenticated visual confirmation rather than being treated as verified.
+
+## Monitoring and deployment metadata — 2026-08-20
+
+The authenticated FFM client now dispatches React ErrorBoundary failures and tRPC query/mutation failures into a protected production-backed diagnostics mutation. The pipeline excludes unauthorized/auth-timeout failures and prevents recursive self-reporting when the diagnostics mutation itself fails. Administrators can view recent diagnostics and a concrete health summary reporting database availability, audit-event volume, and captured-error volume. Focused monitoring router coverage is included in the 33-test suite.
+
+The document head now includes FFM title, description, theme color, application name, Apple mobile web-app metadata, Open Graph metadata, and the existing FFM favicon link. Custom-domain and branded-email configuration remain separate deployment requirements.
+
+## Live route-preview verification — 2026-08-20
+
+The shared MapView now supports coordinate-backed DirectionsService route previews with visible `Calculating live route…` and `Route unavailable; live pins remain visible.` states. Manager Geography and Delegate My Tasks pass route props only when two or more real coordinate-backed records exist. Authenticated desktop previews of `/` and `/delegate` remain healthy after the update; the current production database has zero assigned tasks/clients, so the captures correctly show the blueprint map fallback without fabricated pins or routes.
