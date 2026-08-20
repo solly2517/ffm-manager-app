@@ -21,6 +21,8 @@
 - [x] Provide the one-site live delivery path and administrator login instructions
 
 - [ ] Implement the missing manager workflows from the reference app with real interactive behavior instead of placeholder sections
+- [ ] Audit remaining Manager workflow gaps and select the next database-backed capability to complete
+- [x] Enable Managers to message a specific assigned Delegate with assignment-scoped server validation
 - [x] Implement the missing delegate workflows from the reference app, including evidence capture, signature, media, GPS, and surgery/planning details
 - [x] Add loading, error, and empty states for admin user queries and all admin mutations
 - [x] Replace the placeholder email-add flow with a real invite/linking design that safely links invited emails to future logins and prevents duplicates

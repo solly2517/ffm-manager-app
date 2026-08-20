@@ -114,6 +114,15 @@ describe("expanded FFM permissions", () => {
     await expect(caller.operations.delegates()).resolves.toEqual([]);
   });
 
+  it("blocks a Manager from directly messaging an unassigned Delegate", async () => {
+    vi.spyOn(db, "getUserById").mockResolvedValue({ id: 123, openId: "delegate-123", name: "Unassigned Delegate", email: "delegate123@example.com", loginMethod: "test", role: "delegate", createdAt: new Date(), updatedAt: new Date(), lastSignedIn: new Date() });
+    vi.spyOn(db, "listDelegateIdsForManager").mockResolvedValue([]);
+    const createMessage = vi.spyOn(db, "createMessage");
+    const caller = appRouter.createCaller(createContext("manager"));
+    await expect(caller.operations.sendMessage({ recipientId: 123, body: "Please review the visit plan." })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(createMessage).not.toHaveBeenCalled();
+  });
+
   it("allows managers to access only assigned delegates", () => {
     expect(canManagerAccessDelegate("manager", 10, 20, [20, 21])).toBe(true);
     expect(canManagerAccessDelegate("manager", 10, 22, [20, 21])).toBe(false);
