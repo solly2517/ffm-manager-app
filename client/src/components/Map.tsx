@@ -144,9 +144,9 @@ export function MapView({
   const routeKey = route ? JSON.stringify([route.origin, route.destination, route.waypoints ?? []]) : "";
   const renderMarkers = usePersistFn((mapInstance: google.maps.Map) => {
     markerCleanups.current.forEach((cleanup) => cleanup());
-    const labelWarehouseHeroes = showMarkerLabels ?? markers.some((marker) => String(marker.id).startsWith("warehouse-hero-"));
+    const showLiveIdentityLabels = showMarkerLabels ?? markers.some((marker) => /^(warehouse-hero|delegate)-/.test(String(marker.id)));
     markerCleanups.current = markers.map((marker) => {
-      if (labelWarehouseHeroes && marker.title && window.google?.maps.marker?.AdvancedMarkerElement) {
+      if (showLiveIdentityLabels && marker.title && window.google?.maps.marker?.AdvancedMarkerElement) {
         const label = document.createElement("div");
         label.textContent = marker.title;
         label.setAttribute("aria-label", `Live location: ${marker.title}`);

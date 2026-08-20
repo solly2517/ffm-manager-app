@@ -266,3 +266,5 @@
 - [x] Show each Warehouse Hero’s registered identity directly from the live GPS map marker and adjacent location summary
 
 - [x] Resolve generic Warehouse Hero map labels to a registered name or email, including current live location records
+
+- [x] Show each live Delegate GPS position with the registered Delegate name or email on the dashboard map
