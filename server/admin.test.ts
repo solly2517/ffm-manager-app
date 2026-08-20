@@ -139,6 +139,27 @@ describe("admin access control", () => {
     await expect(caller.operations.warehouseDeliveryProofs({ from: "2026-08-20", to: "2026-08-01" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
+  it("creates a surgery for a Delegate within the Manager assignment scope", async () => {
+    const manager = { ...baseUser, id: 74, role: "manager" as const, email: "manager@example.com" };
+    vi.spyOn(db, "getClientById").mockResolvedValue({ id: 5, name: "City Hospital" } as never);
+    vi.spyOn(db, "listDelegateIdsForManager").mockResolvedValue([75]);
+    vi.spyOn(db, "createSurgery").mockResolvedValue({ id: 102, delegateId: 75, clientId: 5, procedureName: "Knee replacement", surgeryDate: new Date("2026-09-01"), createdBy: 74 } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const caller = appRouter.createCaller(contextFor(manager));
+    await expect(caller.operations.createManagerSurgery({ delegateId: 75, clientId: 5, surgeryDate: new Date("2026-09-01"), procedureName: "Knee replacement", hospital: "City Hospital" })).resolves.toMatchObject({ id: 102, delegateId: 75, clientId: 5 });
+    expect(db.createSurgery).toHaveBeenCalledWith(expect.objectContaining({ delegateId: 75, clientId: 5, createdBy: 74 }));
+  });
+
+  it("rejects Manager surgery creation for an unassigned Delegate", async () => {
+    const manager = { ...baseUser, id: 76, role: "manager" as const, email: "manager@example.com" };
+    vi.spyOn(db, "getClientById").mockResolvedValue({ id: 5, name: "City Hospital" } as never);
+    vi.spyOn(db, "listDelegateIdsForManager").mockResolvedValue([]);
+    const createSurgery = vi.spyOn(db, "createSurgery");
+    const caller = appRouter.createCaller(contextFor(manager));
+    await expect(caller.operations.createManagerSurgery({ delegateId: 77, clientId: 5, surgeryDate: new Date("2026-09-01"), procedureName: "Knee replacement" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(createSurgery).not.toHaveBeenCalled();
+  });
+
   it("returns only the signed-in Warehouse Hero's own delivery-proof history", async () => {
     const warehouseHero = { ...baseUser, id: 66, role: "warehouse_hero" as const, email: "hero@example.com" };
     vi.spyOn(db, "listWarehouseDeliveryProofsForHero").mockResolvedValue([{ id: 96, note: "Hospital handover", storageKey: "warehouse-delivery-proofs/66/proof.jpg", mimeType: "image/jpeg", sizeBytes: 1200, capturedAt: new Date(), url: "/manus-storage/warehouse-delivery-proofs/66/proof.jpg" }] as never);

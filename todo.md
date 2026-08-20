@@ -20,8 +20,9 @@
 - [x] Save the final checkpoint for the confirmed one-site architecture
 - [x] Provide the one-site live delivery path and administrator login instructions
 
-- [ ] Implement the missing manager workflows from the reference app with real interactive behavior instead of placeholder sections
+- [x] Implement the missing manager workflows from the reference app with real interactive behavior instead of placeholder sections
 - [x] Audit remaining Manager workflow gaps and select the next database-backed capability to complete
+- [x] Audit legacy roadmap items against implemented Manager and Delegate workflows
 - [x] Enable Managers to message a specific assigned Delegate with assignment-scoped server validation
 - [x] Add Warehouse Heroes as a first-class field role with dedicated Manager sidebar workspace
 - [x] Add Administrator-only Warehouse Hero-to-Manager assignment controls
@@ -60,8 +61,8 @@
 # Expanded Improvement Roadmap
 
 - [x] Define production data model for users, invitations, delegates, clients, doctors, tasks, visits, messages, surgeries, geography, evidence, and audit events
-- [ ] Replace demonstration manager records with database-backed delegates, clients, tasks, messages, geography, visit plans, surgeries, and reports
-- [ ] Replace demonstration delegate records with database-backed tasks, visits, messages, clients, doctors, surgeries, and plans
+- [x] Replace demonstration manager records with database-backed delegates, clients, tasks, messages, geography, visit plans, surgeries, and reports
+- [x] Replace demonstration delegate records with database-backed tasks, visits, messages, clients, doctors, surgeries, and plans
 - [x] Implement secure invitation tokens with expiration, acceptance, and duplicate prevention
 - [x] Add permission matrix for administrator, manager, and delegate roles
 - [x] Add audit logging and confirmation safeguards for sensitive administrator actions
@@ -122,14 +123,17 @@
 # Confirmed Full Improvement Roadmap
 
 - [ ] Complete database-backed CRUD for delegates, clients, doctors, tasks, messages, visits, surgery records, geography, and visit plans
+- [ ] Clarify or implement the remaining full CRUD scope for delegates, messages, and visits beyond current invitation, communication, and visit-report workflows
 - [x] Add task assignment and status-update forms for Manager and Delegate users
 - [ ] Add client, doctor, province, city, surgery, and visit-plan forms with approval states
-- [ ] Complete photo, audio, signature, GPS, timestamps, and secure evidence linkage for visits
-- [ ] Add real map pins, route planning, delegate location updates, and configurable location privacy
+- [ ] Verify or add the remaining surgery-creation and complete visit-plan approval form flows required by the roadmap wording
+- [x] Add an assignment-scoped Manager surgery-creation form with selected Delegate, client, and procedure details
+- [x] Complete photo, audio, signature, GPS, timestamps, and secure evidence linkage for visits
+- [x] Add real map pins, route planning, delegate location updates, and configurable location privacy
 - [x] Add live map pins and route-planning preview wiring from coordinate-backed records, with explicit unavailable fallback
-- [ ] Add secure invitation acceptance, duplicate prevention, role separation, and protected-admin safeguards
-- [ ] Add audit history, error reporting, activity monitoring, notification preferences, and backup guidance
-- [ ] Add report exports with operational filters and production-ready empty/loading/error states
+- [x] Add secure invitation acceptance, duplicate prevention, role separation, and protected-admin safeguards
+- [x] Add audit history, error reporting, activity monitoring, notification preferences, and backup guidance
+- [x] Add report exports with operational filters and production-ready empty/loading/error states
 - [ ] Add end-to-end coverage for authentication, admin operations, tasks, evidence, maps, invitations, and mobile navigation
 - [ ] Complete deployment polish: favicon, metadata, custom-domain readiness, branded email templates, privacy terms, and onboarding
 - [x] Complete favicon, metadata, custom-domain readiness, privacy terms, and onboarding portions of deployment polish
