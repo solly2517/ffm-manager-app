@@ -136,6 +136,19 @@ describe("admin access control", () => {
     expect(db.listWarehouseDeliveryProofsForHero).toHaveBeenCalledWith(66);
   });
 
+  it("returns only the signed-in Warehouse Hero's Manager assignment readiness", async () => {
+    const warehouseHero = { ...baseUser, id: 68, role: "warehouse_hero" as const, email: "hero@example.com" };
+    vi.spyOn(db, "hasManagerForWarehouseHero").mockResolvedValue(false);
+    const caller = appRouter.createCaller(contextFor(warehouseHero));
+    await expect(caller.operations.warehouseHeroAssignmentStatus()).resolves.toEqual({ assigned: false });
+    expect(db.hasManagerForWarehouseHero).toHaveBeenCalledWith(68);
+  });
+
+  it("rejects non-Warehouse-Hero accounts from assignment readiness", async () => {
+    const caller = appRouter.createCaller(contextFor({ ...baseUser, id: 69, role: "manager" as const, email: "manager@example.com" }));
+    await expect(caller.operations.warehouseHeroAssignmentStatus()).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
   it("rejects non-Warehouse-Hero accounts from personal delivery-proof history", async () => {
     const caller = appRouter.createCaller(contextFor({ ...baseUser, id: 67, role: "manager" as const, email: "manager@example.com" }));
     await expect(caller.operations.myWarehouseDeliveryProofs()).rejects.toMatchObject({ code: "FORBIDDEN" });
