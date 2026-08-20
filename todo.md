@@ -290,3 +290,9 @@
 - [x] Replace invalid or duplicate prior imported catalogue records with an idempotent stock-sourced import and provenance metadata
 - [x] Add regression coverage for stock-sourced catalogue normalization, search visibility, and clinical authorization
 - [x] Verify the corrected catalogue data in the Surgery Calendar and publish the replacement import
+- [x] Extract the supplied Al Tamam Stock Management PDF as the authoritative source for the implant-only correction
+- [x] Define and apply validated exclusion rules for instruments, trays, guides, and other non-implant tools
+- [x] Rebuild active FFM surgery catalogue records with implant-only product families and clear family, reference, size, and manufacturer labels
+- [x] Preserve direct clinical entries and inactive audit history while replacing the incorrect active stock-source catalogue set
+- [x] Add regression coverage for non-implant exclusion and accurate clinical product labels
+- [x] Verify implant-only search results in the Surgery Calendar and publish the corrected catalogue

@@ -10,7 +10,7 @@ const match = sourceHtml.match(/<script\s+type=["']application\/json["']\s+id=["
 if (!match?.[1]) throw new Error("The supplied stock-management HTML does not contain a catalogue-data JSON block");
 
 const { records, report } = normalizeStockCatalogue(JSON.parse(match[1]), {
-  sourceLabel: "AL-Tamam Stock Management embedded catalogue",
+  sourceLabel: "AL-Tamam Stock Management embedded catalogue — implant-only verified v2",
 });
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 fs.writeFileSync(outputPath, `${JSON.stringify(records, null, 2)}\n`);

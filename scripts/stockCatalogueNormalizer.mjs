@@ -2,7 +2,8 @@ const clean = (value) => String(value ?? "").replace(/\s+/g, " ").trim();
 const compactKey = (value) => clean(value).toUpperCase().replace(/[^A-Z0-9]+/g, "");
 const limit = (value, length) => clean(value).slice(0, length);
 
-const NON_IMPLANT_PATTERN = /\b(instrument|instruments|instrumentation|kit|kits|tray|case|drill|drilling|driver|guide|handle|holder|inserter|extractor|reamer|rasp|sizer|broach|wrench|bender|saw)\b/i;
+const NON_IMPLANT_PATTERN = /\b(instruments?|instrumentation|kits?|trays?|containers?|case|drill(?:ing)?|drill bits?|sleeves?|driver|screwdrivers?|guide|guide wires?|handles?|holders?|inserters?|extractors?|reamers?|rasps?|sizers?|broaches?|wrenches?|bender|saw|hammer|gauges?|forceps|coupling|aiming arm|depth gauges?|pin wrench|alignment tool|alignment rod|wheel lock|chisels?|calipers?|\bstands?\b|trocar)\b/i;
+const IMPLANT_PATTERN = /\b(implant|plate|screw(?!driver)|nail(?!\s+(?:inserter|cutting|guide))|wire(?!\s+(?:guide|bender))|pin(?!\s+wrench)|stem|cup|liner|head|femoral|tibial|acetabular|glenoid|component|prosthesis|anchor|button|cage|rod|spacer|fixator|ring|clamp|strut|blade|bolt|bar|mesh|wedge|osteotomy|suture|ligament|tendon|interference)\b/i;
 
 function productManufacturer(productLine) {
   return limit(clean(productLine).split(/[—-]/)[0], 180) || "AL-Tamam";
@@ -20,11 +21,28 @@ function sourceFor(productLine, page, sourceLabel) {
   return limit(`${sourceLabel} | ${clean(productLine)}${Number.isFinite(Number(page)) ? ` | p. ${page}` : ""}`, 260);
 }
 
+function splitReference(rawReference) {
+  const raw = clean(rawReference);
+  const tokens = raw.split(" ").filter(Boolean);
+  const labelIndex = tokens.findIndex((token, index) => index > 0 && /[a-z]/.test(token));
+  if (labelIndex === -1) return { productCode: raw, referenceLabel: "" };
+  return { productCode: tokens.slice(0, labelIndex).join(" "), referenceLabel: tokens.slice(labelIndex).join(" ") };
+}
+
+function clinicalFamilyName(family, referenceLabel, specs) {
+  const normalizedFamily = clean(family);
+  const note = clean(specs?.NOTE);
+  const looksLikeReferenceOnly = /^(\(?MOI\b|[A-Z]{2,}\s*\d|[A-Z0-9-]+\s*[-_]\s*\d)/.test(normalizedFamily) || /^\([^)]*\)$/.test(normalizedFamily);
+  if (referenceLabel && (looksLikeReferenceOnly || /^(general|cannulated|screws?)$/i.test(normalizedFamily))) return referenceLabel;
+  if (note && (looksLikeReferenceOnly || /^(general|cannulated|screws?)$/i.test(normalizedFamily))) return note;
+  return normalizedFamily || referenceLabel;
+}
+
 export function normalizeStockCatalogue(catalogue, { sourceLabel = "AL-Tamam Stock Management embedded catalogue" } = {}) {
   const records = [];
   const seenCodes = new Set();
   const manufacturerCounts = new Map();
-  const exclusions = { nonImplant: 0, invalidReference: 0, duplicateReference: 0 };
+  const exclusions = { nonImplant: 0, unsupportedProduct: 0, invalidReference: 0, duplicateReference: 0 };
   let candidateReferences = 0;
 
   for (const [productLine, solutions] of Object.entries(catalogue ?? {})) {
@@ -32,14 +50,20 @@ export function normalizeStockCatalogue(catalogue, { sourceLabel = "AL-Tamam Sto
       for (const [family, variants] of Object.entries(families ?? {})) {
         for (const variant of Array.isArray(variants) ? variants : []) {
           const specSummary = formatSpecs(variant.specs);
-          const clinicalText = [productLine, solution, family, specSummary, variant.material].map(clean).filter(Boolean).join(" ");
-          const referenceCodes = [variant.refSS, variant.refTIT].map(clean).filter(Boolean);
-          candidateReferences += referenceCodes.length;
-          if (NON_IMPLANT_PATTERN.test(clinicalText)) {
-            exclusions.nonImplant += referenceCodes.length;
-            continue;
-          }
-          for (const productCode of referenceCodes) {
+          const references = [variant.refSS, variant.refTIT].map(splitReference).filter((reference) => reference.productCode);
+          candidateReferences += references.length;
+          for (const reference of references) {
+            const productCode = reference.productCode;
+            const productName = clinicalFamilyName(family, reference.referenceLabel, variant.specs);
+            const clinicalText = [productLine, solution, family, productName, reference.referenceLabel, specSummary, variant.material].map(clean).filter(Boolean).join(" ");
+            if (NON_IMPLANT_PATTERN.test(clinicalText)) {
+              exclusions.nonImplant += 1;
+              continue;
+            }
+            if (!IMPLANT_PATTERN.test(clinicalText)) {
+              exclusions.unsupportedProduct += 1;
+              continue;
+            }
             const codeKey = compactKey(productCode);
             if (!codeKey || productCode.length > 160) {
               exclusions.invalidReference += 1;
@@ -51,10 +75,11 @@ export function normalizeStockCatalogue(catalogue, { sourceLabel = "AL-Tamam Sto
             }
             seenCodes.add(codeKey);
             const manufacturer = productManufacturer(productLine);
-            const exactName = [clean(family), specSummary].filter(Boolean).join(" — ");
+            const exactName = [productName, specSummary].filter(Boolean).join(" — ");
             const description = [
               `Product line: ${clean(productLine)}`,
               `Solution: ${clean(solution)}`,
+              `Exact reference: ${productCode}`,
               specSummary && `Specifications: ${specSummary}`,
               clean(variant.material) && `Material: ${clean(variant.material)}`,
               Number.isFinite(Number(variant.page)) && `Source page: ${variant.page}`,

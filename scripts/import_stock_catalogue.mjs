@@ -4,10 +4,11 @@ import { normalizeProductCode } from "./stockCatalogueNormalizer.mjs";
 
 const inputPath = process.argv[2] || "/home/ubuntu/ffm-manager-app/data/stock-catalogue-import.json";
 const SOURCE_PREFIX = "AL-Tamam Stock Management embedded catalogue";
+const SOURCE_LABEL = "AL-Tamam Stock Management embedded catalogue — implant-only verified v2";
 const DIRECT_CLINICAL_SOURCE = "Direct clinical entry";
 const records = JSON.parse(fs.readFileSync(inputPath, "utf8"));
 if (!Array.isArray(records) || !records.length) throw new Error("The stock-sourced catalogue artifact is empty or invalid");
-if (records.some((record) => !record.name || !record.productCode || !String(record.source || "").startsWith(SOURCE_PREFIX))) {
+if (records.some((record) => !record.name || !record.productCode || !String(record.source || "").startsWith(SOURCE_LABEL))) {
   throw new Error("The input contains records outside the validated Al Tamam stock catalogue format");
 }
 
@@ -24,9 +25,11 @@ let summary;
 
 for (const row of existingRows) {
   const codeKey = normalizeProductCode(row.productCode);
-  if (String(row.source || "").startsWith(SOURCE_PREFIX)) {
+  if (String(row.source || "").startsWith(SOURCE_LABEL)) {
     if (codeKey) existingStockCodeKeys.add(codeKey);
-    if (!incomingCodeKeys.has(codeKey)) staleStockIds.push(row.id);
+    if (row.isActive && !incomingCodeKeys.has(codeKey)) staleStockIds.push(row.id);
+  } else if (row.isActive && String(row.source || "").startsWith(SOURCE_PREFIX)) {
+    staleStockIds.push(row.id);
   } else if (row.source === DIRECT_CLINICAL_SOURCE || row.source == null || row.source === "") {
     if (codeKey) protectedCodeKeys.add(codeKey);
   }
@@ -55,7 +58,7 @@ try {
     const values = batch.flatMap((record) => [record.name, record.manufacturer, record.productCode, record.description, record.source, true, admin.id]);
     await db.query(`INSERT INTO implantCatalogue (name, manufacturer, productCode, description, source, isActive, createdBy) VALUES ${placeholders}`, values);
   }
-  const metadata = JSON.stringify({ source: SOURCE_PREFIX, supplied: records.length, inserted: rowsToInsert.length, legacyDeactivated: Number(legacyResult.affectedRows ?? 0), staleStockDeactivated: staleStockIds.length, skippedClinicalDuplicates });
+  const metadata = JSON.stringify({ source: SOURCE_LABEL, supplied: records.length, inserted: rowsToInsert.length, legacyDeactivated: Number(legacyResult.affectedRows ?? 0), staleStockDeactivated: staleStockIds.length, skippedClinicalDuplicates });
   await db.query("INSERT INTO auditEvents (actorId, action, entityType, entityId, metadata) VALUES (?, ?, ?, ?, ?)", [admin.id, "implant_catalogue.stock_source_imported", "implantCatalogue", null, metadata]);
   await db.commit();
   summary = { supplied: records.length, existing: existingRows.length, inserted: rowsToInsert.length, legacyDeactivated: Number(legacyResult.affectedRows ?? 0), staleStockDeactivated: staleStockIds.length, skippedClinicalDuplicates };
