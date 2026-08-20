@@ -296,3 +296,8 @@
 - [x] Preserve direct clinical entries and inactive audit history while replacing the incorrect active stock-source catalogue set
 - [x] Add regression coverage for non-implant exclusion and accurate clinical product labels
 - [x] Verify implant-only search results in the Surgery Calendar and publish the corrected catalogue
+- [x] Remove the misleading 100-product availability message and provide access to every validated implant through search
+- [x] Replace the surgery form's Select catalogue wording with a clear implant-search label
+- [x] Remove Lot and Serial fields from the surgery implant-registration user interface and submission payload
+- [x] Add regression coverage for full-catalogue search access and simplified implant registration
+- [x] Verify and publish the simplified full-catalogue surgery workflow
