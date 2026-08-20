@@ -129,7 +129,10 @@
 - [x] Add regression coverage for assignment permissions, reassignment, and unassigned-manager access
 
 - [x] Add a Stock Review sidebar item and read-only workspace in FFM
+- [x] Remove the Stock Review sidebar item and its unreachable Manager workspace
 - [ ] Connect Stock Review to the provided stock-management app through a verified server-side read-only data path
+- [ ] Enable and verify a public read-only stock endpoint for the FFM integration
+
 - [x] Validate Stock Review loading, authentication-required, embed-error, and role-safe view-only states; live stock values remain pending API access
 
 - [x] Create a Manager and Delegate user manual PDF that excludes Administrator procedures
