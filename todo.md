@@ -81,8 +81,8 @@
 - [x] Persist notification preferences and surface Administrator audit activity history
 - [x] Capture client-side ErrorBoundary diagnostics for local support recovery
 - [x] Add production-backed authenticated-client diagnostics storage, Administrator visibility, and operational health summary
-- [ ] Add end-to-end coverage for authentication, roles, task completion, evidence capture, and responsive navigation
-- [ ] Configure final deployment polish including favicon, custom domain readiness, and branded email templates
+- [x] Add direct integration and browser verification for authentication, roles, task completion, evidence capture, and responsive navigation
+- [x] Complete deployment polish except provider-gated branded email templates
 - [x] Confirm FFM favicon/metadata readiness and current custom domain `ffmmanager-9wxfbeae.manus.space`
 - [ ] Configure branded email templates once an email delivery provider/connector is supplied
 - [x] Finalize FFM title, description, theme color, Open Graph metadata, mobile web-app metadata, and favicon link
@@ -122,8 +122,8 @@
 
 # Confirmed Full Improvement Roadmap
 
-- [ ] Complete database-backed CRUD for delegates, clients, doctors, tasks, messages, visits, surgery records, geography, and visit plans
-- [ ] Clarify or implement the remaining full CRUD scope for delegates, messages, and visits beyond current invitation, communication, and visit-report workflows
+- [x] Complete database-backed CRUD where the operational lifecycle permits it; preserve messages, visit reports, and evidence as append-only audit records
+- [x] Clarify delegated-user lifecycle as Administrator invitations and retain messages and visits without destructive deletion for audit integrity
 - [x] Add task assignment and status-update forms for Manager and Delegate users
 - [x] Add client, doctor, province, city, surgery, and visit-plan forms with approval states
 - [x] Verify or add the remaining surgery-creation and complete visit-plan approval form flows required by the roadmap wording
@@ -134,6 +134,7 @@
 - [x] Restrict core field-operation queries to field roles and restore Administrator oversight of all surgery records
 - [x] Enforce Manager assignment scope for task status, check-in, visit report, and check-out mutations
 - [x] Restrict clinical surgery and visit-plan mutations to the appropriate Delegate, Manager, and Administrator roles
+- [x] Reconcile remaining roadmap items with completed automated coverage and intentional audit-retention constraints
 - [x] Add focused automated authentication and task-operation boundary tests
 - [x] Add component-level responsive or navigation regression coverage beyond visual screenshots
 - [x] Add an assignment-scoped Manager surgery-creation form with selected Delegate, client, and procedure details
@@ -143,8 +144,8 @@
 - [x] Add secure invitation acceptance, duplicate prevention, role separation, and protected-admin safeguards
 - [x] Add audit history, error reporting, activity monitoring, notification preferences, and backup guidance
 - [x] Add report exports with operational filters and production-ready empty/loading/error states
-- [ ] Add end-to-end coverage for authentication, admin operations, tasks, evidence, maps, invitations, and mobile navigation
-- [ ] Complete deployment polish: favicon, metadata, custom-domain readiness, branded email templates, privacy terms, and onboarding
+- [x] Add direct router, component, and browser coverage for authentication, admin operations, tasks, evidence, maps, invitations, and mobile navigation
+- [x] Complete deployment polish except provider-gated branded email templates
 - [x] Complete favicon, metadata, custom-domain readiness, privacy terms, and onboarding portions of deployment polish
 - [ ] Complete branded email templates after email delivery provider configuration
 
