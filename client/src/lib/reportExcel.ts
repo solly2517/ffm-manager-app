@@ -18,23 +18,28 @@ function appendSheet(workbook: WorkBook, name: string, rows: Array<Record<string
   utils.book_append_sheet(workbook, worksheet, name);
 }
 
-export function buildReportWorkbook(summary: ReportSummary, tasks: TaskReportRow[], surgeries: SurgeryReportRow[]) {
-  const workbook = utils.book_new();
-  appendSheet(workbook, "Operational summary", [
+function summaryRows(summary: ReportSummary) {
+  return [
     { Metric: "Clients", Value: summary.clients },
     { Metric: "Total tasks", Value: summary.tasks },
     { Metric: "Completed tasks", Value: summary.completedTasks },
     { Metric: "Pending tasks", Value: summary.pendingTasks },
-  ]);
-  appendSheet(workbook, "Tasks", tasks.map((task) => ({
+  ];
+}
+
+function taskRows(tasks: TaskReportRow[]) {
+  return tasks.map((task) => ({
     "Task ID": task.id,
     "Scheduled date": new Date(task.scheduledAt).toLocaleString(),
     Status: task.status,
     Client: task.clientName || "Unassigned client",
     City: task.clientCity || "",
     Delegate: task.delegateName || task.delegateEmail || "Unassigned Delegate",
-  })));
-  appendSheet(workbook, "Surgery summary", surgeries.map((surgery) => ({
+  }));
+}
+
+function surgeryRows(surgeries: SurgeryReportRow[]) {
+  return surgeries.map((surgery) => ({
     "Surgery ID": surgery.surgeryId,
     "Surgery date": new Date(surgery.surgeryDate).toLocaleString(),
     Status: surgery.status,
@@ -46,8 +51,11 @@ export function buildReportWorkbook(summary: ReportSummary, tasks: TaskReportRow
     Delegate: surgery.delegateName || surgery.delegateEmail || "Unassigned Delegate",
     Manager: surgery.managerName || surgery.managerEmail || "Manager not assigned",
     "Implant total": surgery.totalImplantPrice,
-  })));
-  appendSheet(workbook, "Implants used", surgeries.flatMap((surgery) => surgery.implants.map((implant) => ({
+  }));
+}
+
+function implantRows(surgeries: SurgeryReportRow[]) {
+  return surgeries.flatMap((surgery) => surgery.implants.map((implant) => ({
     "Surgery ID": surgery.surgeryId,
     "Surgery date": new Date(surgery.surgeryDate).toLocaleString(),
     Procedure: surgery.procedureName,
@@ -63,10 +71,34 @@ export function buildReportWorkbook(summary: ReportSummary, tasks: TaskReportRow
     Currency: implant.currency,
     "Line total": implant.lineTotal,
     Notes: implant.notes || "",
-  }))));
+  })));
+}
+
+function buildSingleSheetWorkbook(name: string, rows: Array<Record<string, unknown>>) {
+  const workbook = utils.book_new();
+  appendSheet(workbook, name, rows);
   return workbook;
 }
+
+export function buildReportWorkbook(summary: ReportSummary, tasks: TaskReportRow[], surgeries: SurgeryReportRow[]) {
+  const workbook = utils.book_new();
+  appendSheet(workbook, "Operational summary", summaryRows(summary));
+  appendSheet(workbook, "Tasks", taskRows(tasks));
+  appendSheet(workbook, "Surgery summary", surgeryRows(surgeries));
+  appendSheet(workbook, "Implants used", implantRows(surgeries));
+  return workbook;
+}
+
+export function buildOperationalSummaryWorkbook(summary: ReportSummary) { return buildSingleSheetWorkbook("Operational summary", summaryRows(summary)); }
+export function buildTaskReportWorkbook(tasks: TaskReportRow[]) { return buildSingleSheetWorkbook("Tasks", taskRows(tasks)); }
+export function buildSurgeryReportWorkbook(surgeries: SurgeryReportRow[]) { return buildSingleSheetWorkbook("Surgery summary", surgeryRows(surgeries)); }
+export function buildImplantReportWorkbook(surgeries: SurgeryReportRow[]) { return buildSingleSheetWorkbook("Implants used", implantRows(surgeries)); }
 
 export function downloadReportWorkbook(summary: ReportSummary, tasks: TaskReportRow[], surgeries: SurgeryReportRow[], fileStem = "ffm-operational-report") {
   writeFileXLSX(buildReportWorkbook(summary, tasks, surgeries), `${fileStem}.xlsx`);
 }
+
+export function downloadOperationalSummaryWorkbook(summary: ReportSummary) { writeFileXLSX(buildOperationalSummaryWorkbook(summary), "ffm-operational-summary.xlsx"); }
+export function downloadTaskReportWorkbook(tasks: TaskReportRow[]) { writeFileXLSX(buildTaskReportWorkbook(tasks), "ffm-task-report.xlsx"); }
+export function downloadSurgeryReportWorkbook(surgeries: SurgeryReportRow[]) { writeFileXLSX(buildSurgeryReportWorkbook(surgeries), "ffm-surgery-report.xlsx"); }
+export function downloadImplantReportWorkbook(surgeries: SurgeryReportRow[]) { writeFileXLSX(buildImplantReportWorkbook(surgeries), "ffm-implant-detail-report.xlsx"); }

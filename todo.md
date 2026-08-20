@@ -316,3 +316,8 @@
 - [x] Make the Reports workspace expose clear downloads for all Excel reports with the selected date range
 - [x] Add regression coverage for surgery-report relationships, totals, authorization, and Excel export contents
 - [x] Verify and publish the detailed surgery reporting and Excel export enhancement
+- [x] Inspect the supplied SurgeriesSheet workbook and map its reporting fields to FFM surgery data
+- [x] Show surgery and implant report details in a readable on-screen Reports workspace table rather than only in export guidance
+- [x] Replace the single combined export with separate Excel downloads for operational summary, task detail, surgery detail, and implant detail
+- [x] Add regression coverage for visible surgery-report data and individual export workbook contents
+- [x] Verify and publish the refined Reports workspace and reference-aligned downloads
