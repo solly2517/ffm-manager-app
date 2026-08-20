@@ -249,3 +249,10 @@
 - [x] Add an Administrator-managed approved implant catalogue and select implants from it during surgery completion
 - [x] Require at least one registered implant and a patient-sheet delivery proof before marking a surgery completed
 - [x] Add role-boundary and state-transition coverage for the day-of-surgery workflow
+
+- [x] Add a preoperative readiness checklist for hospital confirmation, implant availability, Delegate assignment, and delivery preparation
+- [x] Add Administrator controls to dismiss individual captured client-error records without deleting audit history
+- [x] Add Administrator control to clear all captured client-error records after review with a preserved audit event
+- [x] Filter expected invalid or expired invitation probes from captured client-error diagnostics
+- [x] Diagnose and repair the reported surgery-calendar database query error after the lifecycle schema migration
+- [x] Add regression coverage for readiness updates, diagnostic dismissal or clearing, and filtered expected invitation failures

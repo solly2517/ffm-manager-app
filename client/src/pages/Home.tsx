@@ -12,6 +12,8 @@ import { buildPublicInviteLink } from "@/lib/inviteLink";
 import { MapView } from "@/components/Map";
 import { WarehouseHeroesWorkspace } from "@/pages/WarehouseHeroesWorkspace";
 import SurgeryCalendar from "@/pages/SurgeryCalendar";
+import AdminDiagnostics from "@/pages/AdminDiagnostics";
+import SurgeryReadiness from "@/pages/SurgeryReadiness";
 import { Users, Map, ClipboardList, MessageSquare, BarChart3, Globe2, Activity, AlertTriangle, Plus, LogOut, ShieldCheck, Search, Menu, X, Send, UserPlus, Truck, type LucideIcon } from "lucide-react";
 
 const nav = [
@@ -22,11 +24,13 @@ const nav = [
   { id: "tasks", label: "Tasks", icon: ClipboardList },
   { id: "surgeries", label: "Surgeries", icon: Activity },
   { id: "surgery-calendar", label: "Surgery Calendar", icon: Activity },
+  { id: "surgery-readiness", label: "Pre-op Readiness", icon: ClipboardList },
   { id: "plans", label: "Visit Plans", icon: ClipboardList },
   { id: "messages", label: "Messages", icon: MessageSquare },
   { id: "reports", label: "Reports", icon: BarChart3 },
   { id: "geography", label: "Geography", icon: Map },
   { id: "admin", label: "Administration", icon: ShieldCheck },
+  { id: "diagnostics", label: "Diagnostics", icon: AlertTriangle },
 ];
 
 
@@ -146,13 +150,15 @@ export default function Home() {
   const current = nav.find((item) => item.id === active) ?? nav[0];
   if (active === "warehouse-heroes") return <WarehouseHeroesWorkspace isAdmin={isAdmin} onBack={() => setActive("dashboard")} />;
   if (active === "surgery-calendar") return <SurgeryCalendar />;
+  if (active === "surgery-readiness") return <SurgeryReadiness />;
+  if (active === "diagnostics") return <AdminDiagnostics />;
 
   return <div className="manager-shell">
     <aside className={`manager-sidebar ${mobileOpen ? "open" : ""}`}>
       <div className="brand-lockup"><div className="logo-mark small">FFM</div><div><strong>FFM Manager</strong><span>Control Panel</span></div><button className="mobile-close" onClick={() => setMobileOpen(false)}><X size={18}/></button></div>
       <div className="sidebar-rule" />
       <p className="sidebar-kicker">Operations</p>
-      <nav>{nav.filter((item) => item.id !== "admin" || isAdmin).map((item) => { const Icon = item.icon; return <button key={item.id} className={`sidebar-link ${active === item.id ? "active" : ""}`} onClick={() => { setActive(item.id); setMobileOpen(false); }}><Icon size={17}/><span>{item.label}</span>{item.id === "messages" && messagesQuery.data && unreadMessageCount > 0 ? <b>{unreadMessageCount}</b> : null}</button>; })}</nav>
+      <nav>{nav.filter((item) => (item.id !== "admin" && item.id !== "diagnostics") || isAdmin).map((item) => { const Icon = item.icon; return <button key={item.id} className={`sidebar-link ${active === item.id ? "active" : ""}`} onClick={() => { setActive(item.id); setMobileOpen(false); }}><Icon size={17}/><span>{item.label}</span>{item.id === "messages" && messagesQuery.data && unreadMessageCount > 0 ? <b>{unreadMessageCount}</b> : null}</button>; })}</nav>
       <div className="sidebar-user"><div className="avatar">{initials(user?.name || user?.email || "FFM")}</div><div className="user-copy"><strong>{user?.name || "Authenticated user"}</strong><span>{isAdmin ? "Administrator" : user?.email || "Delegate"}</span></div><button className="logout-icon" onClick={() => logout()} title="Sign out"><LogOut size={16}/></button></div>
     </aside>
     {mobileOpen && <button className="sidebar-scrim" onClick={() => setMobileOpen(false)} aria-label="Close navigation"/>}

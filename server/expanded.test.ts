@@ -158,6 +158,16 @@ describe("expanded FFM permissions", () => {
     const caller = appRouter.createCaller(createContext("delegate"));
     await expect(caller.preferences.update({})).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
+
+  it("records all four preoperative readiness checks only within the caller's surgery scope", async () => {
+    const surgery = { id: 501, delegateId: 999999, surgeryDate: new Date("2026-08-27"), calendarStatus: "confirmed" };
+    vi.spyOn(db, "getSurgeryById").mockResolvedValue(surgery as never);
+    const update = vi.spyOn(db, "updateSurgery").mockResolvedValue({ ...surgery, hospitalConfirmed: true, implantsAvailable: true, delegateReady: true, deliveryPrepared: true } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined);
+    const caller = appRouter.createCaller(createContext("delegate"));
+    await expect(caller.operations.updateSurgeryReadiness({ id: 501, hospitalConfirmed: true, implantsAvailable: true, delegateReady: true, deliveryPrepared: true })).resolves.toMatchObject({ id: 501, deliveryPrepared: true });
+    expect(update).toHaveBeenCalledWith(501, expect.objectContaining({ hospitalConfirmed: true, implantsAvailable: true, delegateReady: true, deliveryPrepared: true, readinessUpdatedBy: 999999 }));
+  });
 });
 
 
@@ -171,6 +181,26 @@ describe("FFM monitoring diagnostics", () => {
     expect(capture).toHaveBeenCalledWith(expect.objectContaining({ userId: 999999, message: "API failed", route: "/delegate" }));
     const userCaller = appRouter.createCaller(createContext("user"));
     await expect(userCaller.monitoring.recentClientErrors({ limit: 5 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("ignores expected invalid invitation probes instead of storing diagnostic noise", async () => {
+    const capture = vi.spyOn(db, "captureClientError").mockResolvedValue(undefined);
+    const caller = appRouter.createCaller(createContext("delegate"));
+    await expect(caller.monitoring.captureClientError({ message: "Invitation is invalid or expired", route: "/invite/not-a-real-token" })).resolves.toEqual({ success: true, ignored: true });
+    expect(capture).not.toHaveBeenCalled();
+  });
+
+  it("allows only an Administrator to dismiss individual or all active client diagnostics", async () => {
+    const dismissOne = vi.spyOn(db, "dismissClientError").mockResolvedValue({ success: true });
+    const dismissAll = vi.spyOn(db, "dismissAllClientErrors").mockResolvedValue(4);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined);
+    const adminCaller = appRouter.createCaller(createContext("admin"));
+    await expect(adminCaller.monitoring.dismissClientError({ id: 33 })).resolves.toEqual({ success: true });
+    await expect(adminCaller.monitoring.dismissAllClientErrors()).resolves.toEqual({ success: true, dismissedCount: 4 });
+    expect(dismissOne).toHaveBeenCalledWith(33);
+    expect(dismissAll).toHaveBeenCalledOnce();
+    const managerCaller = appRouter.createCaller(createContext("manager"));
+    await expect(managerCaller.monitoring.dismissAllClientErrors()).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
   it("exposes the monitoring health contract only to administrators", async () => {
