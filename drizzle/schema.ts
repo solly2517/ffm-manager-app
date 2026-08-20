@@ -14,6 +14,17 @@ export const users = mysqlTable("users", {
   emailNotifications: boolean("emailNotifications").default(true).notNull(),
 }, (table) => ({ emailIdx: index("users_email_idx").on(table.email) }));
 
+export const clientErrorReports = mysqlTable("client_error_reports", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"),
+  message: varchar("message", { length: 500 }).notNull(),
+  stack: text("stack"),
+  componentStack: text("componentStack"),
+  route: varchar("route", { length: 255 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  resolvedAt: timestamp("resolvedAt"),
+}, (table) => ({ createdIdx: index("client_error_created_idx").on(table.createdAt), userIdx: index("client_error_user_idx").on(table.userId) }));
+
 export const managerDelegateAssignments = mysqlTable("manager_delegate_assignments", {
   id: int("id").autoincrement().primaryKey(),
   managerId: int("managerId").notNull(),

@@ -125,3 +125,25 @@ describe("expanded FFM permissions", () => {
     await expect(caller.preferences.update({})).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 });
+
+
+describe("FFM monitoring diagnostics", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("allows authenticated users to capture client diagnostics and blocks anonymous role access", async () => {
+    const capture = vi.spyOn(db, "captureClientError").mockResolvedValue(undefined);
+    const caller = appRouter.createCaller(createContext("delegate"));
+    await expect(caller.monitoring.captureClientError({ message: "API failed", route: "/delegate" })).resolves.toEqual({ success: true });
+    expect(capture).toHaveBeenCalledWith(expect.objectContaining({ userId: 999999, message: "API failed", route: "/delegate" }));
+    const userCaller = appRouter.createCaller(createContext("user"));
+    await expect(userCaller.monitoring.recentClientErrors({ limit: 5 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("exposes the monitoring health contract only to administrators", async () => {
+    vi.spyOn(db, "getMonitoringHealth").mockResolvedValue({ database: "online", auditEvents: 12, clientErrors: 2 });
+    const adminCaller = appRouter.createCaller(createContext("admin"));
+    await expect(adminCaller.monitoring.health()).resolves.toEqual({ database: "online", auditEvents: 12, clientErrors: 2 });
+    const managerCaller = appRouter.createCaller(createContext("manager"));
+    await expect(managerCaller.monitoring.health()).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+});

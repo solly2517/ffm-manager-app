@@ -1,6 +1,6 @@
-import { and, eq, ne, or } from "drizzle-orm";
+import { and, count, desc, eq, ne, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, invitations, clients, doctors, managerDelegateAssignments, tasks, visits, evidence, auditEvents, messages, surgeries, visitPlans, geography } from "../drizzle/schema";
+import { InsertUser, users, invitations, clients, doctors, managerDelegateAssignments, tasks, visits, evidence, auditEvents, messages, surgeries, visitPlans, geography, clientErrorReports } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -153,5 +153,8 @@ export async function addEvidence(input: typeof evidence.$inferInsert) { const d
 export async function addAuditEvent(input: typeof auditEvents.$inferInsert) { const db = await getDb(); if (!db) return; await db.insert(auditEvents).values(input); }
 
 export async function listAuditEvents(limit = 100) { const db = await getDb(); if (!db) return []; return db.select().from(auditEvents).limit(limit); }
+export async function captureClientError(input: typeof clientErrorReports.$inferInsert) { const db = await getDb(); if (!db) return; await db.insert(clientErrorReports).values(input); }
+export async function listClientErrors(limit = 100) { const db = await getDb(); if (!db) return []; return db.select().from(clientErrorReports).orderBy(desc(clientErrorReports.createdAt)).limit(limit); }
+export async function getMonitoringHealth() { const db = await getDb(); if (!db) return { database: "unavailable" as const, auditEvents: 0, clientErrors: 0 }; const [audit, errors] = await Promise.all([db.select({ total: count() }).from(auditEvents), db.select({ total: count() }).from(clientErrorReports)]); return { database: "online" as const, auditEvents: Number(audit[0]?.total ?? 0), clientErrors: Number(errors[0]?.total ?? 0) }; }
 export function filterTasksByDateRange<T extends { scheduledAt: Date }>(rows: T[], filters?: { from?: string; to?: string }) { const from = filters?.from ? new Date(filters.from) : undefined; const to = filters?.to ? new Date(`${filters.to}T23:59:59.999Z`) : undefined; return rows.filter((task) => (!from || task.scheduledAt >= from) && (!to || task.scheduledAt <= to)); }
 export async function getOperationalSummary(filters?: { from?: string; to?: string; delegateIds?: number[] }) { const db = await getDb(); if (!db) return { clients: 0, tasks: 0, completedTasks: 0, pendingTasks: 0 }; const [clientRows, taskRows] = await Promise.all([db.select().from(clients), db.select().from(tasks)]); const assignedTasks = filters?.delegateIds ? taskRows.filter((task) => filters.delegateIds?.includes(task.delegateId)) : taskRows; const filteredTasks = filterTasksByDateRange(assignedTasks, filters); return { clients: clientRows.length, tasks: filteredTasks.length, completedTasks: filteredTasks.filter((task) => task.status === "completed").length, pendingTasks: filteredTasks.filter((task) => task.status === "pending").length }; }

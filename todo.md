@@ -51,7 +51,15 @@
 - [x] Add offline-friendly Delegate behavior with durable visit-report replay, query refetch on reconnect, and guarded feedback for other writes
 - [x] Add operational reports, exports, and configurable date filters
 - [x] Add onboarding, help documentation, privacy terms, and branded empty states
-- [ ] Add monitoring, error reporting, activity history, and notification preferences
+- [x] Add authenticated client monitoring, error reporting, activity history, and notification preferences
+- [x] Persist notification preferences and surface Administrator audit activity history
+- [x] Capture and persist React ErrorBoundary diagnostics with Administrator visibility
+- [x] Add recent client-error counts and empty/loading/error states to Administration
+- [x] Persist authenticated API/tRPC query and mutation failures for diagnostics with self-report recursion guards
+- [x] Add a concrete Administrator operational-health summary beyond recent client errors
+- [x] Persist notification preferences and surface Administrator audit activity history
+- [x] Capture client-side ErrorBoundary diagnostics for local support recovery
+- [x] Add production-backed authenticated-client diagnostics storage, Administrator visibility, and operational health summary
 - [ ] Add end-to-end coverage for authentication, roles, task completion, evidence capture, and responsive navigation
 - [ ] Configure final deployment polish including favicon, custom domain readiness, and branded email templates
 

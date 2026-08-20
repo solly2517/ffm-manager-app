@@ -1,5 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useEffect } from "react";
+import { trpc } from "./lib/trpc";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -29,8 +31,23 @@ function Router() {
 //   to keep consistent foreground/background color across components
 // - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
 
+function ErrorReporter() {
+  const captureClientError = trpc.monitoring.captureClientError.useMutation();
+  useEffect(() => {
+    const handleError = (event: Event) => {
+      const detail = (event as CustomEvent<{ message: string; stack?: string; componentStack?: string; route?: string }>).detail;
+      if (detail?.message) captureClientError.mutate(detail);
+    };
+    window.addEventListener("ffm:client-error", handleError);
+    return () => window.removeEventListener("ffm:client-error", handleError);
+  }, [captureClientError]);
+  return null;
+}
+
 function App() {
   return (
+    <>
+      <ErrorReporter />
     <ErrorBoundary>
       <ThemeProvider
         defaultTheme="light"
@@ -42,6 +59,7 @@ function App() {
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
+    </>
   );
 }
 

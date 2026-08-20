@@ -10,6 +10,21 @@ import "./index.css";
 
 const queryClient = new QueryClient();
 
+const dispatchApiDiagnostic = (kind: "query" | "mutation", error: unknown) => {
+  if (typeof window === "undefined") return;
+  const message = error instanceof Error ? error.message : String(error);
+  window.dispatchEvent(new CustomEvent("ffm:client-error", { detail: { message: `[API ${kind} Error] ${message}`, stack: error instanceof Error ? error.stack : undefined, route: window.location.pathname } }));
+};
+
+const shouldCaptureApiDiagnostic = (error: unknown) => {
+  if (error instanceof TRPCClientError) {
+    if (error.data?.code === "UNAUTHORIZED") return false;
+    const path = typeof error.data?.path === "string" ? error.data.path : "";
+    if (path.includes("monitoring.captureClientError")) return false;
+  }
+  return true;
+};
+
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
   if (typeof window === "undefined") return;
@@ -25,6 +40,7 @@ queryClient.getQueryCache().subscribe(event => {
     const error = event.query.state.error;
     redirectToLoginIfUnauthorized(error);
     console.error("[API Query Error]", error);
+    if (shouldCaptureApiDiagnostic(error)) dispatchApiDiagnostic("query", error);
   }
 });
 
@@ -33,6 +49,7 @@ queryClient.getMutationCache().subscribe(event => {
     const error = event.mutation.state.error;
     redirectToLoginIfUnauthorized(error);
     console.error("[API Mutation Error]", error);
+    if (shouldCaptureApiDiagnostic(error)) dispatchApiDiagnostic("mutation", error);
   }
 });
 
