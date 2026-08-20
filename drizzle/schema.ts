@@ -180,6 +180,7 @@ export const implantCatalogue = mysqlTable("implantCatalogue", {
   manufacturer: varchar("manufacturer", { length: 180 }),
   productCode: varchar("productCode", { length: 160 }),
   description: text("description"),
+  source: varchar("source", { length: 260 }),
   isActive: boolean("isActive").default(true).notNull(),
   createdBy: int("createdBy").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

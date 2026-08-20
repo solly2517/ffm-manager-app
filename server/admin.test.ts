@@ -232,13 +232,33 @@ describe("admin access control", () => {
     expect(db.calculateSurgeryImplantTotals([{ quantity: 2, unitPrice: "1250.50", currency: "SAR" }, { quantity: 1, unitPrice: 99.99, currency: "SAR" }, { quantity: 3, unitPrice: 10, currency: "USD" }])).toEqual([{ currency: "SAR", total: 2600.99 }, { currency: "USD", total: 30 }]);
   });
 
-  it("rejects an implant that is not listed as active in the approved catalogue", async () => {
+  it("lets a Delegate search imported catalogue products without an approval gate", async () => {
+    vi.spyOn(db, "searchImplantCatalogue").mockResolvedValue([{ id: 501, name: "Femoral nail", productCode: "2-07-321-340", source: "Altamamproductsforuploading.xlsx / Medgal" }] as never);
+    const delegate = appRouter.createCaller(contextFor({ ...baseUser, id: 75, role: "delegate" as const, email: "delegate@example.com" }));
+    await expect(delegate.operations.implantCatalogue({ query: "Femoral" })).resolves.toMatchObject([{ id: 501, productCode: "2-07-321-340" }]);
+    expect(db.searchImplantCatalogue).toHaveBeenCalledWith("Femoral");
+  });
+
+  it("allows a listed catalogue implant without an approval-state gate", async () => {
     const surgery = { id: 125, delegateId: 75, surgeryDate: new Date("2026-09-01"), calendarStatus: "confirmed" };
     vi.spyOn(db, "getSurgeryById").mockResolvedValue(surgery as never);
     vi.spyOn(db, "listDelegateIdsForManager").mockResolvedValue([75]);
     vi.spyOn(db, "getImplantCatalogueItem").mockResolvedValue({ id: 9, name: "Retired implant", isActive: false } as never);
+    vi.spyOn(db, "createSurgeryImplant").mockResolvedValue({ id: 11, surgeryId: 125, implantName: "Retired implant" } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
     const manager = appRouter.createCaller(contextFor({ ...baseUser, id: 74, role: "manager" as const, email: "manager@example.com" }));
-    await expect(manager.operations.addSurgeryImplant({ surgeryId: 125, implantCatalogueId: 9, quantity: 1, unitPrice: 100, currency: "SAR" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(manager.operations.addSurgeryImplant({ surgeryId: 125, implantCatalogueId: 9, quantity: 1, unitPrice: 100, currency: "SAR" })).resolves.toMatchObject({ id: 11 });
+  });
+
+  it("lets a Delegate create and register a missing implant directly during an assigned surgery", async () => {
+    const delegate = { ...baseUser, id: 75, role: "delegate" as const, email: "delegate@example.com" };
+    vi.spyOn(db, "getSurgeryById").mockResolvedValue({ id: 126, delegateId: 75, surgeryDate: new Date("2026-09-01"), calendarStatus: "confirmed" } as never);
+    vi.spyOn(db, "createImplantCatalogueItem").mockResolvedValue({ id: 44, name: "Custom trauma plate", productCode: "CTP-1" } as never);
+    vi.spyOn(db, "createSurgeryImplant").mockResolvedValue({ id: 12, surgeryId: 126, implantName: "Custom trauma plate" } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const caller = appRouter.createCaller(contextFor(delegate));
+    await expect(caller.operations.addSurgeryImplant({ surgeryId: 126, implantName: "Custom trauma plate", productCode: "CTP-1", quantity: 2, unitPrice: 250, currency: "SAR" })).resolves.toMatchObject({ id: 12 });
+    expect(db.createImplantCatalogueItem).toHaveBeenCalledWith(expect.objectContaining({ name: "Custom trauma plate", productCode: "CTP-1", source: "Direct clinical entry", createdBy: 75 }));
   });
 
   it("requires a reason and new future date before postponing a surgery on its scheduled day", async () => {

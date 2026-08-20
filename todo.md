@@ -279,3 +279,9 @@
 - [x] Record unit price and currency for each implant entry with role-scoped authorization and audit history
 - [x] Calculate and display per-line and total implant amounts for every surgery
 - [x] Add price, currency, and total-calculation regression coverage
+
+- [x] Extract and deduplicate the supplied Excel and PDF product catalogues without importing prices
+- [x] Import normalized product catalogue records into the FFM implant catalogue with source metadata and no price fields
+- [x] Remove the Administrator-only implant approval requirement from clinical implant selection and creation
+- [x] Allow Administrators, Managers, and Delegates to add a new implant directly during a surgery with audit history
+- [x] Add regression coverage for imported catalogue visibility and direct implant creation by clinical roles
