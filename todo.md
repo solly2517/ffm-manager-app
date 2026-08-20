@@ -321,3 +321,8 @@
 - [x] Replace the single combined export with separate Excel downloads for operational summary, task detail, surgery detail, and implant detail
 - [x] Add regression coverage for visible surgery-report data and individual export workbook contents
 - [x] Verify and publish the refined Reports workspace and reference-aligned downloads
+- [x] Expand direct messaging to all authenticated FFM roles, including Warehouse Heroes, with explicit recipient visibility rules
+- [x] Provide an all-member role-aware recipient directory using registered names and email fallbacks
+- [x] Preserve message audit history, unread status, and protected user-account safeguards across expanded messaging
+- [x] Add regression coverage for cross-role messaging, Warehouse Hero participation, and unauthorized recipient rejection
+- [x] Verify and publish all-member role-aware messaging

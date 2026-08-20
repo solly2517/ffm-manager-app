@@ -124,13 +124,23 @@ describe("expanded FFM permissions", () => {
     await expect(caller.operations.delegates()).resolves.toEqual([]);
   });
 
-  it("blocks a Manager from directly messaging an unassigned Delegate", async () => {
-    vi.spyOn(db, "getUserById").mockResolvedValue({ id: 123, openId: "delegate-123", name: "Unassigned Delegate", email: "delegate123@example.com", loginMethod: "test", role: "delegate", createdAt: new Date(), updatedAt: new Date(), lastSignedIn: new Date() });
-    vi.spyOn(db, "listDelegateIdsForManager").mockResolvedValue([]);
-    const createMessage = vi.spyOn(db, "createMessage");
+  it("allows a Manager to message an active Warehouse Hero without a Manager assignment", async () => {
+    vi.spyOn(db, "getUserById").mockResolvedValue({ id: 123, openId: "hero-123", name: "Warehouse Hero", email: "hero@example.com", loginMethod: "test", role: "warehouse_hero", createdAt: new Date(), updatedAt: new Date(), lastSignedIn: new Date() });
+    const createMessage = vi.spyOn(db, "createMessage").mockResolvedValue({ id: 55, senderId: 999999, recipientId: 123, body: "Delivery preparation is ready." } as never);
     const caller = appRouter.createCaller(createContext("manager"));
-    await expect(caller.operations.sendMessage({ recipientId: 123, body: "Please review the visit plan." })).rejects.toMatchObject({ code: "FORBIDDEN" });
-    expect(createMessage).not.toHaveBeenCalled();
+    await expect(caller.operations.sendMessage({ recipientId: 123, body: "Delivery preparation is ready." })).resolves.toMatchObject({ id: 55, recipientId: 123 });
+    expect(createMessage).toHaveBeenCalledWith(expect.objectContaining({ senderId: 999999, recipientId: 123 }));
+  });
+
+  it("allows a Warehouse Hero to use the all-member recipient directory and send a message", async () => {
+    const warehouseHero = { ...createContext("user").user!, id: 444, openId: "warehouse-hero-444", email: "hero@example.com", role: "warehouse_hero" as const };
+    vi.spyOn(db, "listMessageRecipients").mockResolvedValue([{ id: 701, name: "Delegate One", email: "delegate@example.com", role: "delegate", lastSignedIn: new Date(), displayName: "Delegate One" }] as never);
+    vi.spyOn(db, "getUserById").mockResolvedValue({ id: 701, openId: "delegate-701", name: "Delegate One", email: "delegate@example.com", loginMethod: "test", role: "delegate", createdAt: new Date(), updatedAt: new Date(), lastSignedIn: new Date() });
+    vi.spyOn(db, "createMessage").mockResolvedValue({ id: 56, senderId: 444, recipientId: 701, body: "Tools have been delivered." } as never);
+    const caller = appRouter.createCaller({ ...createContext("user"), user: warehouseHero });
+    await expect(caller.operations.messageRecipients()).resolves.toMatchObject([{ id: 701, displayName: "Delegate One", role: "delegate" }]);
+    await expect(caller.operations.sendMessage({ recipientId: 701, body: "Tools have been delivered." })).resolves.toMatchObject({ recipientId: 701 });
+    await expect(caller.operations.sendMessage({ recipientId: 444, body: "Self message" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
   it("requires Warehouse Heroes to enable location sharing before publishing GPS", async () => {
