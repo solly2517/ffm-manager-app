@@ -75,6 +75,28 @@ describe("Delegate visit workflows", () => {
     expect(update).not.toHaveBeenCalled();
   });
 
+  it("allows an assigned Manager to update a Delegate task status", async () => {
+    vi.spyOn(db, "getTaskById").mockResolvedValue({ id: 98, delegateId: 8, status: "pending" } as never);
+    vi.spyOn(db, "listDelegateIdsForManager").mockResolvedValue([8]);
+    vi.spyOn(db, "updateTaskStatus").mockResolvedValue({ id: 98, delegateId: 8, status: "completed" } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    await expect(appRouter.createCaller(managerContext()).operations.updateTaskStatus({ id: 98, status: "completed" })).resolves.toMatchObject({ id: 98, status: "completed" });
+  });
+
+  it("rejects unassigned Manager task and visit mutations before writes", async () => {
+    vi.spyOn(db, "getTaskById").mockResolvedValue({ id: 99, delegateId: 8, status: "pending" } as never);
+    vi.spyOn(db, "listDelegateIdsForManager").mockResolvedValue([]);
+    const taskUpdate = vi.spyOn(db, "updateTaskStatus");
+    const visitWrite = vi.spyOn(db, "upsertVisit");
+    const caller = appRouter.createCaller(managerContext());
+    await expect(caller.operations.updateTaskStatus({ id: 99, status: "completed" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.operations.checkIn({ taskId: 99, latitude: "24.7136", longitude: "46.6753" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.operations.saveVisitReport({ taskId: 99, report: "Unapproved attempt" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.operations.checkOut({ taskId: 99, latitude: "24.7136", longitude: "46.6753", report: "Unapproved attempt" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(taskUpdate).not.toHaveBeenCalled();
+    expect(visitWrite).not.toHaveBeenCalled();
+  });
+
   it("returns a visit record to its owning Delegate, an assigned Manager, and an Administrator", async () => {
     const visit = { id: 44, taskId: 95, report: "Completed" } as never;
     vi.spyOn(db, "getTaskById").mockResolvedValue({ id: 95, delegateId: 7 } as never);
