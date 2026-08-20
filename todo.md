@@ -167,3 +167,5 @@
 - [x] Preserve existing doctor relationship metadata during Manager edits via relationship selector and edit-state helper
 - [x] Add regression coverage proving doctor edits do not reset relationship metadata
 - [x] Add a UI form-state regression proving Manager doctor edit preserves non-new relationships
+
+- [x] Add Geography parent-region selection for city records in the Manager workflow
