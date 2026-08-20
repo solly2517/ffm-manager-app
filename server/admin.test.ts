@@ -114,6 +114,19 @@ describe("admin access control", () => {
     expect(db.listWarehouseDeliveryProofsForManager).toHaveBeenCalledWith(63, false);
   });
 
+  it("returns only the signed-in Warehouse Hero's own delivery-proof history", async () => {
+    const warehouseHero = { ...baseUser, id: 66, role: "warehouse_hero" as const, email: "hero@example.com" };
+    vi.spyOn(db, "listWarehouseDeliveryProofsForHero").mockResolvedValue([{ id: 96, note: "Hospital handover", storageKey: "warehouse-delivery-proofs/66/proof.jpg", mimeType: "image/jpeg", sizeBytes: 1200, capturedAt: new Date(), url: "/manus-storage/warehouse-delivery-proofs/66/proof.jpg" }] as never);
+    const caller = appRouter.createCaller(contextFor(warehouseHero));
+    await expect(caller.operations.myWarehouseDeliveryProofs()).resolves.toHaveLength(1);
+    expect(db.listWarehouseDeliveryProofsForHero).toHaveBeenCalledWith(66);
+  });
+
+  it("rejects non-Warehouse-Hero accounts from personal delivery-proof history", async () => {
+    const caller = appRouter.createCaller(contextFor({ ...baseUser, id: 67, role: "manager" as const, email: "manager@example.com" }));
+    await expect(caller.operations.myWarehouseDeliveryProofs()).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
   it("stores Warehouse Hero delivery-proof photos in managed storage before recording metadata", async () => {
     const warehouseHero = { ...baseUser, id: 72, openId: "warehouse-hero-72", role: "warehouse_hero" as const, email: "hero@example.com" };
     vi.spyOn(db, "hasManagerForWarehouseHero").mockResolvedValue(true);
