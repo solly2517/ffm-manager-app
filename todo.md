@@ -175,3 +175,4 @@
 - [x] Add assignment-scoped Manager surgery status/detail updates with protected mutation, confirmation feedback, and regression coverage
 - [x] Expose Manager surgery quotation and invoice detail fields in edit mode
 - [x] Align the Manager Surgeries table headers with rendered detail and action cells
+- [x] Dashboard live delegate positions from privacy-approved recent visit GPS records
