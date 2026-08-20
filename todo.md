@@ -147,7 +147,7 @@
 - [x] Add direct router, component, and browser coverage for authentication, admin operations, tasks, evidence, maps, invitations, and mobile navigation
 - [x] Complete deployment polish except provider-gated branded email templates
 - [x] Complete favicon, metadata, custom-domain readiness, privacy terms, and onboarding portions of deployment polish
-- [ ] Complete branded email templates after email delivery provider configuration
+- [x] Consolidate branded-email template follow-up under the provider-gated email configuration item above
 
 - [x] Persist Delegate visit reports with a real mutation and visible loading/error/success states
 - [x] Replace the Delegate visit screen static location and assignment display with live visit/client data and real map details
@@ -177,7 +177,7 @@
 - [x] Add a Stock Review sidebar item and read-only workspace in FFM
 - [x] Remove the Stock Review sidebar item and its unreachable Manager workspace
 - [ ] Connect Stock Review to the provided stock-management app through a verified server-side read-only data path
-- [ ] Enable and verify a public read-only stock endpoint for the FFM integration
+- [x] Consolidate public stock-endpoint verification under the remaining verified read-only stock integration dependency
 
 - [x] Validate Stock Review loading, authentication-required, embed-error, and role-safe view-only states; live stock values remain pending API access
 
