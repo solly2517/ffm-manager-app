@@ -125,8 +125,9 @@
 - [ ] Complete database-backed CRUD for delegates, clients, doctors, tasks, messages, visits, surgery records, geography, and visit plans
 - [ ] Clarify or implement the remaining full CRUD scope for delegates, messages, and visits beyond current invitation, communication, and visit-report workflows
 - [x] Add task assignment and status-update forms for Manager and Delegate users
-- [ ] Add client, doctor, province, city, surgery, and visit-plan forms with approval states
-- [ ] Verify or add the remaining surgery-creation and complete visit-plan approval form flows required by the roadmap wording
+- [x] Add client, doctor, province, city, surgery, and visit-plan forms with approval states
+- [x] Verify or add the remaining surgery-creation and complete visit-plan approval form flows required by the roadmap wording
+- [x] Add explicit Delegate visit-plan submission regression coverage alongside Manager approval coverage
 - [x] Add an assignment-scoped Manager surgery-creation form with selected Delegate, client, and procedure details
 - [x] Complete photo, audio, signature, GPS, timestamps, and secure evidence linkage for visits
 - [x] Add real map pins, route planning, delegate location updates, and configurable location privacy

@@ -24,6 +24,14 @@ describe("Delegate visit workflows", () => {
     await expect(caller.operations.saveVisitReport({ taskId: 91, report: "  Follow-up required  " })).resolves.toMatchObject({ report: "Follow-up required" });
   });
 
+  it("submits a visit plan for the signed-in Delegate through the router", async () => {
+    vi.spyOn(db, "createVisitPlan").mockResolvedValue({ id: 22, delegateId: 7, clientId: 41, proposedAt: new Date("2026-09-05T09:00:00.000Z"), status: "pending", notes: "Morning follow-up" } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const caller = appRouter.createCaller(delegateContext());
+    await expect(caller.operations.submitVisitPlan({ clientId: 41, proposedAt: new Date("2026-09-05T09:00:00.000Z"), notes: "Morning follow-up" })).resolves.toMatchObject({ id: 22, delegateId: 7, status: "pending" });
+    expect(db.createVisitPlan).toHaveBeenCalledWith(expect.objectContaining({ delegateId: 7, clientId: 41, notes: "Morning follow-up" }));
+  });
+
   it("allows delegates to update only their own tasks", () => {
     expect(canUserUpdateTask("delegate", 7, 7)).toBe(true);
     expect(canUserUpdateTask("delegate", 7, 8)).toBe(false);
