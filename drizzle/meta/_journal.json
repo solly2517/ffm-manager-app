@@ -64,6 +64,13 @@
       "when": 1787227125875,
       "tag": "0008_spooky_smiling_tiger",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1787236075923,
+      "tag": "0009_goofy_true_believers",
+      "breakpoints": true
     }
   ]
 }

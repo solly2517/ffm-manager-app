@@ -194,6 +194,14 @@ export const auditEvents = mysqlTable("auditEvents", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({ actorIdx: index("audit_actor_idx").on(table.actorId), createdIdx: index("audit_created_idx").on(table.createdAt) }));
 
+export const weeklyBackupReminderSchedules = mysqlTable("weeklyBackupReminderSchedules", {
+  id: int("id").autoincrement().primaryKey(),
+  scheduleCronTaskUid: varchar("scheduleCronTaskUid", { length: 65 }).notNull().unique(),
+  lastTriggeredAt: timestamp("lastTriggeredAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({ taskUidIdx: index("weekly_backup_reminder_task_uid_idx").on(table.scheduleCronTaskUid) }));
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type Invitation = typeof invitations.$inferSelect;

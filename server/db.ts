@@ -1,6 +1,6 @@
 import { and, count, desc, eq, ne, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, invitations, clients, doctors, managerDelegateAssignments, managerWarehouseHeroAssignments, warehouseHeroLocations, warehouseDeliveryProofs, tasks, visits, evidence, auditEvents, messages, surgeries, visitPlans, geography, clientErrorReports } from "../drizzle/schema";
+import { InsertUser, users, invitations, clients, doctors, managerDelegateAssignments, managerWarehouseHeroAssignments, warehouseHeroLocations, warehouseDeliveryProofs, tasks, visits, evidence, auditEvents, messages, surgeries, visitPlans, geography, clientErrorReports, weeklyBackupReminderSchedules } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -192,6 +192,9 @@ export async function addEvidence(input: typeof evidence.$inferInsert) { const d
 export async function addAuditEvent(input: typeof auditEvents.$inferInsert) { const db = await getDb(); if (!db) return; await db.insert(auditEvents).values(input); }
 
 export async function listAuditEvents(limit = 100) { const db = await getDb(); if (!db) return []; return db.select().from(auditEvents).limit(limit); }
+export async function getWeeklyBackupReminderSchedule() { const db = await getDb(); if (!db) return undefined; return db.select().from(weeklyBackupReminderSchedules).limit(1).then((rows) => rows[0]); }
+export async function getWeeklyBackupReminderScheduleByTaskUid(taskUid: string) { const db = await getDb(); if (!db) return undefined; return db.select().from(weeklyBackupReminderSchedules).where(eq(weeklyBackupReminderSchedules.scheduleCronTaskUid, taskUid)).limit(1).then((rows) => rows[0]); }
+export async function recordWeeklyBackupReminder(taskUid: string, triggeredAt: Date) { const db = await getDb(); if (!db) throw new Error("Database is not available"); await db.update(weeklyBackupReminderSchedules).set({ lastTriggeredAt: triggeredAt }).where(eq(weeklyBackupReminderSchedules.scheduleCronTaskUid, taskUid)); return getWeeklyBackupReminderScheduleByTaskUid(taskUid); }
 export async function captureClientError(input: typeof clientErrorReports.$inferInsert) { const db = await getDb(); if (!db) return; await db.insert(clientErrorReports).values(input); }
 export async function listClientErrors(limit = 100) { const db = await getDb(); if (!db) return []; return db.select().from(clientErrorReports).orderBy(desc(clientErrorReports.createdAt)).limit(limit); }
 export async function getMonitoringHealth() { const db = await getDb(); if (!db) return { database: "unavailable" as const, auditEvents: 0, clientErrors: 0 }; const [audit, errors] = await Promise.all([db.select({ total: count() }).from(auditEvents), db.select({ total: count() }).from(clientErrorReports)]); return { database: "online" as const, auditEvents: Number(audit[0]?.total ?? 0), clientErrors: Number(errors[0]?.total ?? 0) }; }

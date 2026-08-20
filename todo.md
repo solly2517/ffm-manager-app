@@ -209,6 +209,7 @@
 
 - [x] Add authenticated Help & Privacy guidance explaining managed database/object-storage recovery and browser-draft limitations
 - [ ] Configure automated database/object-storage backup operations when the hosting backup policy is supplied
+- [ ] Add an Administrator in-app reminder every Thursday at 11:00 a.m. GMT+3 to download a fresh weekly backup copy
 
 - [x] Add Manager client edit/delete CRUD with protected procedures, confirmation feedback, and regression coverage
 
