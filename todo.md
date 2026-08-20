@@ -243,3 +243,9 @@
 - [x] Add 2–7 day surgery-notification planning guidance, calendar status states, and operational validation coverage
 
 - [x] Allow the Administrator to create surgery records and update shared surgery calendar appointments with audit coverage
+
+- [x] Add day-of-surgery lifecycle actions for postponement, cancellation, and completion with auditable reasons
+- [x] Require a rescheduled date and reason when a surgery is postponed
+- [x] Add an Administrator-managed approved implant catalogue and select implants from it during surgery completion
+- [x] Require at least one registered implant and a patient-sheet delivery proof before marking a surgery completed
+- [x] Add role-boundary and state-transition coverage for the day-of-surgery workflow

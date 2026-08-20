@@ -207,14 +207,57 @@ describe("admin access control", () => {
   });
 
   it("registers implants only within the caller's assigned surgery scope", async () => {
-    const surgery = { id: 123, delegateId: 75, surgeryDate: new Date("2026-09-01") };
+    const surgery = { id: 123, delegateId: 75, surgeryDate: new Date("2026-09-01"), calendarStatus: "confirmed" };
     vi.spyOn(db, "getSurgeryById").mockResolvedValue(surgery as never);
     vi.spyOn(db, "listDelegateIdsForManager").mockResolvedValue([75]);
+    vi.spyOn(db, "getImplantCatalogueItem").mockResolvedValue({ id: 8, name: "Femoral stem", manufacturer: "FFM Medical", productCode: "FS-8", isActive: true } as never);
     vi.spyOn(db, "createSurgeryImplant").mockResolvedValue({ id: 10, surgeryId: 123, implantName: "Femoral stem", quantity: 1 } as never);
     vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
     const manager = appRouter.createCaller(contextFor({ ...baseUser, id: 74, role: "manager" as const, email: "manager@example.com" }));
-    await expect(manager.operations.addSurgeryImplant({ surgeryId: 123, implantName: "Femoral stem", quantity: 1, lotNumber: "LOT-9" })).resolves.toMatchObject({ id: 10, implantName: "Femoral stem" });
-    expect(db.createSurgeryImplant).toHaveBeenCalledWith(expect.objectContaining({ surgeryId: 123, registeredBy: 74, lotNumber: "LOT-9" }));
+    await expect(manager.operations.addSurgeryImplant({ surgeryId: 123, implantCatalogueId: 8, quantity: 1, lotNumber: "LOT-9" })).resolves.toMatchObject({ id: 10, implantName: "Femoral stem" });
+    expect(db.createSurgeryImplant).toHaveBeenCalledWith(expect.objectContaining({ surgeryId: 123, implantCatalogueId: 8, implantName: "Femoral stem", registeredBy: 74, lotNumber: "LOT-9" }));
+  });
+
+  it("rejects an implant that is not listed as active in the approved catalogue", async () => {
+    const surgery = { id: 125, delegateId: 75, surgeryDate: new Date("2026-09-01"), calendarStatus: "confirmed" };
+    vi.spyOn(db, "getSurgeryById").mockResolvedValue(surgery as never);
+    vi.spyOn(db, "listDelegateIdsForManager").mockResolvedValue([75]);
+    vi.spyOn(db, "getImplantCatalogueItem").mockResolvedValue({ id: 9, name: "Retired implant", isActive: false } as never);
+    const manager = appRouter.createCaller(contextFor({ ...baseUser, id: 74, role: "manager" as const, email: "manager@example.com" }));
+    await expect(manager.operations.addSurgeryImplant({ surgeryId: 125, implantCatalogueId: 9, quantity: 1 })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("requires a reason and new future date before postponing a surgery on its scheduled day", async () => {
+    const delegate = { ...baseUser, id: 75, role: "delegate" as const, email: "delegate@example.com" };
+    const surgeryDate = new Date();
+    vi.spyOn(db, "getSurgeryById").mockResolvedValue({ id: 126, delegateId: 75, surgeryDate, calendarStatus: "confirmed" } as never);
+    const caller = appRouter.createCaller(contextFor(delegate));
+    await expect(caller.operations.resolveSurgeryLifecycle({ id: 126, action: "postponed" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(caller.operations.resolveSurgeryLifecycle({ id: 126, action: "postponed", reason: "Operating room unavailable", rescheduledDate: new Date(surgeryDate.getTime()) })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
+
+  it("requires an implant and patient-sheet proof before completing a surgery", async () => {
+    const delegate = { ...baseUser, id: 75, role: "delegate" as const, email: "delegate@example.com" };
+    vi.spyOn(db, "getSurgeryById").mockResolvedValue({ id: 127, delegateId: 75, surgeryDate: new Date(), calendarStatus: "confirmed" } as never);
+    vi.spyOn(db, "listSurgeryImplants").mockResolvedValue([] as never);
+    vi.spyOn(db, "listSurgeryDeliveryProofs").mockResolvedValue([] as never);
+    const updateSurgery = vi.spyOn(db, "updateSurgery");
+    const caller = appRouter.createCaller(contextFor(delegate));
+    await expect(caller.operations.resolveSurgeryLifecycle({ id: 127, action: "completed" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(updateSurgery).not.toHaveBeenCalled();
+  });
+
+  it("completes a surgery only after approved implants and patient-sheet proof are present", async () => {
+    const delegate = { ...baseUser, id: 75, role: "delegate" as const, email: "delegate@example.com" };
+    const surgery = { id: 128, delegateId: 75, surgeryDate: new Date(), calendarStatus: "confirmed" };
+    vi.spyOn(db, "getSurgeryById").mockResolvedValue(surgery as never);
+    vi.spyOn(db, "listSurgeryImplants").mockResolvedValue([{ id: 1, surgeryId: 128, implantCatalogueId: 8 }] as never);
+    vi.spyOn(db, "listSurgeryDeliveryProofs").mockResolvedValue([{ id: 2, surgeryId: 128, storageKey: "surgery-delivery-proofs/128/patient-sheet.pdf" }] as never);
+    vi.spyOn(db, "updateSurgery").mockResolvedValue({ ...surgery, calendarStatus: "completed" } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const caller = appRouter.createCaller(contextFor(delegate));
+    await expect(caller.operations.resolveSurgeryLifecycle({ id: 128, action: "completed", reason: "Procedure successful" })).resolves.toMatchObject({ id: 128, calendarStatus: "completed" });
+    expect(db.updateSurgery).toHaveBeenCalledWith(128, expect.objectContaining({ calendarStatus: "completed" }));
   });
 
   it("stores an authorized Delegate patient-sheet proof in managed storage before persisting surgery metadata", async () => {

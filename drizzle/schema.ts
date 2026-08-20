@@ -155,6 +155,8 @@ export const surgeries = mysqlTable("surgeries", {
   surgeryDate: timestamp("surgeryDate").notNull(),
   notifiedAt: timestamp("notifiedAt").defaultNow().notNull(),
   calendarStatus: mysqlEnum("calendarStatus", ["notified", "confirmed", "postponed", "cancelled", "completed"]).default("notified").notNull(),
+  lifecycleReason: text("lifecycleReason"),
+  lifecycleUpdatedAt: timestamp("lifecycleUpdatedAt"),
   hospital: varchar("hospital", { length: 220 }),
   surgeon: varchar("surgeon", { length: 180 }),
   procedureName: varchar("procedureName", { length: 220 }),
@@ -166,9 +168,21 @@ export const surgeries = mysqlTable("surgeries", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+export const implantCatalogue = mysqlTable("implantCatalogue", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 220 }).notNull(),
+  manufacturer: varchar("manufacturer", { length: 180 }),
+  productCode: varchar("productCode", { length: 160 }),
+  description: text("description"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdBy: int("createdBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({ nameIdx: index("implant_catalogue_name_idx").on(table.name), activeIdx: index("implant_catalogue_active_idx").on(table.isActive) }));
+
 export const surgeryImplants = mysqlTable("surgeryImplants", {
   id: int("id").autoincrement().primaryKey(),
   surgeryId: int("surgeryId").notNull(),
+  implantCatalogueId: int("implantCatalogueId"),
   implantName: varchar("implantName", { length: 220 }).notNull(),
   quantity: int("quantity").notNull(),
   lotNumber: varchar("lotNumber", { length: 160 }),
@@ -237,5 +251,6 @@ export type Task = typeof tasks.$inferSelect;
 export type Visit = typeof visits.$inferSelect;
 export type Evidence = typeof evidence.$inferSelect;
 export type SurgeryImplant = typeof surgeryImplants.$inferSelect;
+export type ImplantCatalogueItem = typeof implantCatalogue.$inferSelect;
 export type SurgeryDeliveryProof = typeof surgeryDeliveryProofs.$inferSelect;
 export type WarehouseDeliveryProof = typeof warehouseDeliveryProofs.$inferSelect;
