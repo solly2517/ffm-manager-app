@@ -30,6 +30,8 @@
 - [x] Fix Warehouse Hero invitation copy action with success and fallback feedback
 - [x] Fix Warehouse Hero location-sharing activation so GPS tracking can be enabled from the delivery-shift workspace
 - [x] Add Warehouse Hero delivery-proof photo upload with assignment-scoped Manager visibility
+- [x] Harden Warehouse Hero delivery-proof upload and GPS update authorization with explicit request limits and assignment-scope regression coverage
+- [x] Add rejection-path tests for unassigned Warehouse Hero GPS/proof requests and coordinate/size limits
 - [x] Implement the missing delegate workflows from the reference app, including evidence capture, signature, media, GPS, and surgery/planning details
 - [x] Add loading, error, and empty states for admin user queries and all admin mutations
 - [x] Replace the placeholder email-add flow with a real invite/linking design that safely links invited emails to future logins and prevents duplicates

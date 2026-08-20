@@ -82,10 +82,28 @@ describe("admin access control", () => {
   it("allows a Warehouse Hero with location consent to publish the latest GPS point", async () => {
     const warehouseHero = { ...baseUser, id: 52, openId: "warehouse-hero-52", role: "warehouse_hero" as const, locationSharing: true };
     vi.spyOn(db, "getUserById").mockResolvedValue(warehouseHero);
+    vi.spyOn(db, "hasManagerForWarehouseHero").mockResolvedValue(true);
+    vi.spyOn(db, "getWarehouseHeroLocation").mockResolvedValue(undefined);
     vi.spyOn(db, "upsertWarehouseHeroLocation").mockResolvedValue({ id: 92, warehouseHeroId: 52, latitude: "24.7136000", longitude: "46.6753000", capturedAt: new Date(), updatedAt: new Date() } as never);
     vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
     const caller = appRouter.createCaller(contextFor(warehouseHero));
     await expect(caller.operations.updateWarehouseHeroLocation({ latitude: "24.7136000", longitude: "46.6753000" })).resolves.toMatchObject({ id: 92, warehouseHeroId: 52 });
+  });
+
+  it("rejects unassigned Warehouse Heroes from publishing GPS or delivery proof", async () => {
+    const warehouseHero = { ...baseUser, id: 54, openId: "warehouse-hero-54", role: "warehouse_hero" as const, locationSharing: true };
+    vi.spyOn(db, "getUserById").mockResolvedValue(warehouseHero);
+    vi.spyOn(db, "hasManagerForWarehouseHero").mockResolvedValue(false);
+    const caller = appRouter.createCaller(contextFor(warehouseHero));
+    await expect(caller.operations.updateWarehouseHeroLocation({ latitude: "24.7136000", longitude: "46.6753000" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.operations.uploadWarehouseDeliveryProof({ fileName: "proof.jpg", mimeType: "image/jpeg", base64: "data:image/jpeg;base64,QUJDREVGR0hJSktMTU5PUA==" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("rejects out-of-range Warehouse Hero GPS coordinates before persistence", async () => {
+    const warehouseHero = { ...baseUser, id: 55, openId: "warehouse-hero-55", role: "warehouse_hero" as const, locationSharing: true };
+    const caller = appRouter.createCaller(contextFor(warehouseHero));
+    await expect(caller.operations.updateWarehouseHeroLocation({ latitude: "91", longitude: "46.6753000" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(caller.operations.updateWarehouseHeroLocation({ latitude: "24.7136000", longitude: "181" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
   it("returns Warehouse delivery proofs through the Manager-only assignment-scoped query", async () => {
@@ -98,6 +116,7 @@ describe("admin access control", () => {
 
   it("stores Warehouse Hero delivery-proof photos in managed storage before recording metadata", async () => {
     const warehouseHero = { ...baseUser, id: 72, openId: "warehouse-hero-72", role: "warehouse_hero" as const, email: "hero@example.com" };
+    vi.spyOn(db, "hasManagerForWarehouseHero").mockResolvedValue(true);
     vi.mocked(storagePut).mockResolvedValue({ key: "warehouse-delivery-proofs/72/proof_hash.jpg", url: "/manus-storage/warehouse-delivery-proofs/72/proof_hash.jpg" });
     vi.spyOn(db, "createWarehouseDeliveryProof").mockResolvedValue({ id: 94, warehouseHeroId: 72, note: "Delivered", storageKey: "warehouse-delivery-proofs/72/proof_hash.jpg", mimeType: "image/jpeg", sizeBytes: 10, capturedAt: new Date(), createdAt: new Date() } as never);
     vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
@@ -105,6 +124,14 @@ describe("admin access control", () => {
     await expect(caller.operations.uploadWarehouseDeliveryProof({ fileName: "proof.jpg", mimeType: "image/jpeg", base64: "data:image/jpeg;base64,QUJDREVGR0hJSktMTU5PUA==", note: "Delivered" })).resolves.toMatchObject({ proofId: 94, url: "/manus-storage/warehouse-delivery-proofs/72/proof_hash.jpg" });
     expect(storagePut).toHaveBeenCalled();
     expect(db.createWarehouseDeliveryProof).toHaveBeenCalledWith(expect.objectContaining({ warehouseHeroId: 72, mimeType: "image/jpeg", note: "Delivered" }));
+  });
+
+  it("rejects delivery-proof payloads larger than the server-side 8 MB limit", async () => {
+    const warehouseHero = { ...baseUser, id: 73, openId: "warehouse-hero-73", role: "warehouse_hero" as const, email: "hero@example.com" };
+    vi.spyOn(db, "hasManagerForWarehouseHero").mockResolvedValue(true);
+    const caller = appRouter.createCaller(contextFor(warehouseHero));
+    await expect(caller.operations.uploadWarehouseDeliveryProof({ fileName: "large.jpg", mimeType: "image/jpeg", base64: "A".repeat(11_200_000) })).rejects.toMatchObject({ code: "PAYLOAD_TOO_LARGE" });
+    expect(storagePut).not.toHaveBeenCalled();
   });
 
   it("blocks duplicate manager–delegate assignments", async () => {
