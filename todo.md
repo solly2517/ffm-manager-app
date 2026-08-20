@@ -191,7 +191,7 @@
 - [x] Expose Manager surgery quotation and invoice detail fields in edit mode
 - [x] Align the Manager Surgeries table headers with rendered detail and action cells
 - [x] Dashboard live delegate positions from privacy-approved recent visit GPS records
-- [ ] Fix Manager dashboard live-position panel incorrectly showing “Manager access required” for an authenticated Manager
-- [ ] Diagnose persistent live-position API denial after a Manager magic-link session refresh
-- [ ] Resolve magic-link session identity collision that refreshes the invited Manager as a Delegate
+- [x] Fix Manager dashboard live-position panel incorrectly showing “Manager access required” for an authenticated Manager
+- [x] Diagnose persistent live-position API denial after a Manager magic-link session refresh
+- [x] Resolve magic-link session identity collision that refreshes the invited Manager as a Delegate
 - [x] Change published FFM site visibility to public so invitation links can be opened outside Manus WebDev access
