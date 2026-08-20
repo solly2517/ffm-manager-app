@@ -62,6 +62,8 @@
 - [x] Add production-backed authenticated-client diagnostics storage, Administrator visibility, and operational health summary
 - [ ] Add end-to-end coverage for authentication, roles, task completion, evidence capture, and responsive navigation
 - [ ] Configure final deployment polish including favicon, custom domain readiness, and branded email templates
+- [x] Confirm FFM favicon/metadata readiness and current custom domain `ffmmanager-9wxfbeae.manus.space`
+- [ ] Configure branded email templates once an email delivery provider/connector is supplied
 - [x] Finalize FFM title, description, theme color, Open Graph metadata, mobile web-app metadata, and favicon link
 
 - [x] Add configurable date-range filters to reports and make CSV export respect the selected range
@@ -98,6 +100,8 @@
 - [ ] Add report exports with operational filters and production-ready empty/loading/error states
 - [ ] Add end-to-end coverage for authentication, admin operations, tasks, evidence, maps, invitations, and mobile navigation
 - [ ] Complete deployment polish: favicon, metadata, custom-domain readiness, branded email templates, privacy terms, and onboarding
+- [x] Complete favicon, metadata, custom-domain readiness, privacy terms, and onboarding portions of deployment polish
+- [ ] Complete branded email templates after email delivery provider configuration
 
 - [x] Persist Delegate visit reports with a real mutation and visible loading/error/success states
 - [x] Replace the Delegate visit screen static location and assignment display with live visit/client data and real map details
