@@ -1,6 +1,6 @@
 import { and, count, desc, eq, ne, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, invitations, clients, doctors, managerDelegateAssignments, tasks, visits, evidence, auditEvents, messages, surgeries, visitPlans, geography, clientErrorReports } from "../drizzle/schema";
+import { InsertUser, users, invitations, clients, doctors, managerDelegateAssignments, managerWarehouseHeroAssignments, warehouseHeroLocations, tasks, visits, evidence, auditEvents, messages, surgeries, visitPlans, geography, clientErrorReports } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -59,6 +59,7 @@ export async function updateNotificationPreferences(userId: number, input: { pus
 export async function listInvitations() { const db = await getDb(); if (!db) return []; return db.select().from(invitations).orderBy(invitations.createdAt); }
 
 export async function listDelegates() { const db = await getDb(); if (!db) return []; return db.select().from(users).where(eq(users.role, "delegate")).orderBy(users.name); }
+export async function listWarehouseHeroes() { const db = await getDb(); if (!db) return []; return db.select().from(users).where(eq(users.role, "warehouse_hero")).orderBy(users.name); }
 export async function listManagers() { const db = await getDb(); if (!db) return []; return db.select().from(users).where(eq(users.role, "manager")).orderBy(users.name); }
 export async function listManagerAssignments() { const db = await getDb(); if (!db) return []; const [assignments, allUsers] = await Promise.all([db.select().from(managerDelegateAssignments).orderBy(managerDelegateAssignments.createdAt), db.select().from(users)]); const byId = new Map(allUsers.map((user) => [user.id, user])); return assignments.map((assignment) => ({ ...assignment, managerName: byId.get(assignment.managerId)?.name || byId.get(assignment.managerId)?.email || `Manager #${assignment.managerId}`, delegateName: byId.get(assignment.delegateId)?.name || byId.get(assignment.delegateId)?.email || `Delegate #${assignment.delegateId}`, managerEmail: byId.get(assignment.managerId)?.email || null, delegateEmail: byId.get(assignment.delegateId)?.email || null })); }
 export async function createManagerDelegateAssignment(input: typeof managerDelegateAssignments.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database is not available"); const result = await db.insert(managerDelegateAssignments).values(input); return db.select().from(managerDelegateAssignments).where(eq(managerDelegateAssignments.id, Number(result[0].insertId))).limit(1).then((rows) => rows[0]); }
@@ -66,6 +67,12 @@ export async function removeManagerDelegateAssignment(id: number) { const db = a
 export async function isDelegateAssignedToManager(managerId: number, delegateId: number) { const db = await getDb(); if (!db) return false; const rows = await db.select({ id: managerDelegateAssignments.id }).from(managerDelegateAssignments).where(and(eq(managerDelegateAssignments.managerId, managerId), eq(managerDelegateAssignments.delegateId, delegateId))).limit(1); return rows.length > 0; }
 export async function listDelegateIdsForManager(managerId: number) { const db = await getDb(); if (!db) return []; const rows = await db.select({ delegateId: managerDelegateAssignments.delegateId }).from(managerDelegateAssignments).where(eq(managerDelegateAssignments.managerId, managerId)); return rows.map((row) => row.delegateId); }
 export async function listDelegatesForManager(managerId: number) { const ids = await listDelegateIdsForManager(managerId); if (!ids.length) return []; const delegates = await listDelegates(); return delegates.filter((delegate) => ids.includes(delegate.id)); }
+export async function listManagerWarehouseHeroAssignments() { const db = await getDb(); if (!db) return []; const [assignments, allUsers] = await Promise.all([db.select().from(managerWarehouseHeroAssignments).orderBy(managerWarehouseHeroAssignments.createdAt), db.select().from(users)]); const byId = new Map(allUsers.map((user) => [user.id, user])); return assignments.map((assignment) => ({ ...assignment, managerName: byId.get(assignment.managerId)?.name || byId.get(assignment.managerId)?.email || `Manager #${assignment.managerId}`, warehouseHeroName: byId.get(assignment.warehouseHeroId)?.name || byId.get(assignment.warehouseHeroId)?.email || `Warehouse Hero #${assignment.warehouseHeroId}`, managerEmail: byId.get(assignment.managerId)?.email || null, warehouseHeroEmail: byId.get(assignment.warehouseHeroId)?.email || null })); }
+export async function createManagerWarehouseHeroAssignment(input: typeof managerWarehouseHeroAssignments.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database is not available"); const result = await db.insert(managerWarehouseHeroAssignments).values(input); return db.select().from(managerWarehouseHeroAssignments).where(eq(managerWarehouseHeroAssignments.id, Number(result[0].insertId))).limit(1).then((rows) => rows[0]); }
+export async function removeManagerWarehouseHeroAssignment(id: number) { const db = await getDb(); if (!db) throw new Error("Database is not available"); await db.delete(managerWarehouseHeroAssignments).where(eq(managerWarehouseHeroAssignments.id, id)); return { success: true } as const; }
+export async function isWarehouseHeroAssignedToManager(managerId: number, warehouseHeroId: number) { const db = await getDb(); if (!db) return false; const rows = await db.select({ id: managerWarehouseHeroAssignments.id }).from(managerWarehouseHeroAssignments).where(and(eq(managerWarehouseHeroAssignments.managerId, managerId), eq(managerWarehouseHeroAssignments.warehouseHeroId, warehouseHeroId))).limit(1); return rows.length > 0; }
+export async function listWarehouseHeroIdsForManager(managerId: number) { const db = await getDb(); if (!db) return []; const rows = await db.select({ warehouseHeroId: managerWarehouseHeroAssignments.warehouseHeroId }).from(managerWarehouseHeroAssignments).where(eq(managerWarehouseHeroAssignments.managerId, managerId)); return rows.map((row) => row.warehouseHeroId); }
+export async function listWarehouseHeroesForManager(managerId: number) { const ids = await listWarehouseHeroIdsForManager(managerId); if (!ids.length) return []; const heroes = await listWarehouseHeroes(); return heroes.filter((hero) => ids.includes(hero.id)); }
 export async function listUsers() {
   const db = await getDb(); if (!db) return [];
   return db.select().from(users).orderBy(users.createdAt);
@@ -81,7 +88,7 @@ export async function upsertInvitedUser(input: { email: string; name?: string | 
   return created[0];
 }
 
-export async function activateInvitedUser(input: { email: string; role: "user" | "manager" | "delegate" }) {
+export async function activateInvitedUser(input: { email: string; role: "user" | "manager" | "delegate" | "warehouse_hero" }) {
   const email = input.email.toLowerCase();
   const user = await upsertInvitedUser({ email });
   if (!user) throw new Error("Unable to create invited user");
@@ -91,7 +98,7 @@ export async function activateInvitedUser(input: { email: string; role: "user" |
   return getUserById(user.id);
 }
 
-export async function updateUserRole(id: number, role: "user" | "manager" | "delegate" | "admin") {
+export async function updateUserRole(id: number, role: "user" | "manager" | "delegate" | "warehouse_hero" | "admin") {
   const db = await getDb(); if (!db) throw new Error("Database is not available");
   await db.update(users).set({ role }).where(eq(users.id, id));
   return getUserById(id);
@@ -103,9 +110,9 @@ export async function removeUser(id: number) {
 }
 
 
-export function mergePendingInvitation<T extends { id: number; acceptedAt: Date | null; expiresAt: Date; role: "user" | "manager" | "delegate"; tokenHash: string; invitedBy: number }>(existing: T, input: { role: T["role"]; tokenHash: string; invitedBy: number; expiresAt: Date }) { return existing.acceptedAt === null && existing.expiresAt > new Date() ? { ...existing, ...input } : null; }
+export function mergePendingInvitation<T extends { id: number; acceptedAt: Date | null; expiresAt: Date; role: "user" | "manager" | "delegate" | "warehouse_hero"; tokenHash: string; invitedBy: number }>(existing: T, input: { role: T["role"]; tokenHash: string; invitedBy: number; expiresAt: Date }) { return existing.acceptedAt === null && existing.expiresAt > new Date() ? { ...existing, ...input } : null; }
 
-export async function createInvitation(input: { email: string; role: "user" | "manager" | "delegate"; invitedBy: number; tokenHash: string; expiresAt: Date }) {
+export async function createInvitation(input: { email: string; role: "user" | "manager" | "delegate" | "warehouse_hero"; invitedBy: number; tokenHash: string; expiresAt: Date }) {
   const db = await getDb(); if (!db) throw new Error("Database is not available");
   const existing = await db.select().from(invitations).where(eq(invitations.email, input.email)).limit(1);
   const merged = existing[0] && mergePendingInvitation(existing[0], input);
@@ -137,6 +144,8 @@ export async function getVisitPlanById(id: number) { const db = await getDb(); i
 export async function updateVisitPlan(id: number, input: Partial<typeof visitPlans.$inferInsert>) { const db = await getDb(); if (!db) throw new Error("Database is not available"); await db.update(visitPlans).set(input).where(eq(visitPlans.id, id)); return db.select().from(visitPlans).where(eq(visitPlans.id, id)).limit(1).then((rows) => rows[0]); }
 
 export async function listLiveDelegatePositionsForManager(managerId: number) { const allowed = await listDelegateIdsForManager(managerId); if (!allowed.length) return []; const db = await getDb(); if (!db) return []; const rows = await db.select({ delegateId: tasks.delegateId, delegateName: users.name, delegateEmail: users.email, locationSharing: users.locationSharing, checkInAt: visits.checkInAt, checkOutAt: visits.checkOutAt, checkInLat: visits.checkInLat, checkInLng: visits.checkInLng, checkOutLat: visits.checkOutLat, checkOutLng: visits.checkOutLng, updatedAt: visits.updatedAt }).from(visits).innerJoin(tasks, eq(visits.taskId, tasks.id)).innerJoin(users, eq(tasks.delegateId, users.id)).where(eq(users.locationSharing, true)).orderBy(desc(visits.updatedAt)); const latest = new Map<number, typeof rows[number]>(); for (const row of rows) if (allowed.includes(row.delegateId) && !latest.has(row.delegateId)) latest.set(row.delegateId, row); return Array.from(latest.values()).flatMap((row) => { const latitude = row.checkOutLat ?? row.checkInLat; const longitude = row.checkOutLng ?? row.checkInLng; if (latitude == null || longitude == null) return []; return [{ delegateId: row.delegateId, delegateName: row.delegateName, delegateEmail: row.delegateEmail, latitude, longitude, capturedAt: row.checkOutAt ?? row.checkInAt ?? row.updatedAt }]; }); }
+export async function upsertWarehouseHeroLocation(input: typeof warehouseHeroLocations.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database is not available"); const existing = (await db.select().from(warehouseHeroLocations).where(eq(warehouseHeroLocations.warehouseHeroId, input.warehouseHeroId)).limit(1))[0]; if (existing) { await db.update(warehouseHeroLocations).set({ latitude: input.latitude, longitude: input.longitude, capturedAt: input.capturedAt ?? new Date() }).where(eq(warehouseHeroLocations.id, existing.id)); return (await db.select().from(warehouseHeroLocations).where(eq(warehouseHeroLocations.id, existing.id)).limit(1))[0]; } const result = await db.insert(warehouseHeroLocations).values(input); return (await db.select().from(warehouseHeroLocations).where(eq(warehouseHeroLocations.id, Number(result[0].insertId))).limit(1))[0]; }
+export async function listWarehouseHeroLocationsForManager(managerId: number, includeAll = false) { const allowed = includeAll ? undefined : await listWarehouseHeroIdsForManager(managerId); if (!includeAll && !allowed?.length) return []; const db = await getDb(); if (!db) return []; const rows = await db.select({ warehouseHeroId: warehouseHeroLocations.warehouseHeroId, warehouseHeroName: users.name, warehouseHeroEmail: users.email, latitude: warehouseHeroLocations.latitude, longitude: warehouseHeroLocations.longitude, capturedAt: warehouseHeroLocations.capturedAt, locationSharing: users.locationSharing }).from(warehouseHeroLocations).innerJoin(users, eq(warehouseHeroLocations.warehouseHeroId, users.id)).where(eq(users.locationSharing, true)).orderBy(desc(warehouseHeroLocations.capturedAt)); return rows.filter((row) => includeAll || allowed?.includes(row.warehouseHeroId)); }
 
 export async function listSurgeriesForDelegate(delegateId: number) { const db = await getDb(); if (!db) return []; return db.select().from(surgeries).where(eq(surgeries.delegateId, delegateId)).orderBy(surgeries.surgeryDate); }
 export async function listSurgeriesForManager(managerId: number) { const allowed = await listDelegateIdsForManager(managerId); if (!allowed.length) return []; const db = await getDb(); if (!db) return []; const rows = await db.select().from(surgeries).orderBy(surgeries.surgeryDate); return rows.filter((row) => allowed.includes(row.delegateId)); }

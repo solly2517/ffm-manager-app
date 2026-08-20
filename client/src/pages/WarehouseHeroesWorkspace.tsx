@@ -1,0 +1,53 @@
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { MapView } from "@/components/Map";
+import { trpc } from "@/lib/trpc";
+import { Input } from "@/components/ui/input";
+import { buildPublicInviteLink } from "@/lib/inviteLink";
+import { ArrowLeft, MapPin, PackageCheck, Truck, UserPlus } from "lucide-react";
+import { useState } from "react";
+
+type WarehouseHeroesWorkspaceProps = {
+  isAdmin: boolean;
+  onBack: () => void;
+};
+
+export function WarehouseHeroesWorkspace({ isAdmin, onBack }: WarehouseHeroesWorkspaceProps) {
+  const heroesQuery = trpc.operations.warehouseHeroes.useQuery();
+  const locationsQuery = trpc.operations.warehouseHeroLocations.useQuery(undefined, { refetchInterval: 30_000 });
+  const managersQuery = trpc.admin.managers.useQuery(undefined, { enabled: isAdmin });
+  const adminHeroesQuery = trpc.admin.warehouseHeroes.useQuery(undefined, { enabled: isAdmin });
+  const assignmentsQuery = trpc.admin.managerWarehouseHeroAssignments.useQuery(undefined, { enabled: isAdmin });
+  const [managerId, setManagerId] = useState("");
+  const [heroId, setHeroId] = useState("");
+  const [heroEmail, setHeroEmail] = useState("");
+  const [inviteUrl, setInviteUrl] = useState("");
+  const [notice, setNotice] = useState("");
+  const assign = trpc.admin.assignWarehouseHero.useMutation({ onSuccess: () => { setHeroId(""); setNotice("Warehouse Hero assigned to Manager."); assignmentsQuery.refetch(); heroesQuery.refetch(); locationsQuery.refetch(); } });
+  const unassign = trpc.admin.unassignWarehouseHero.useMutation({ onSuccess: () => { setNotice("Warehouse Hero assignment removed."); assignmentsQuery.refetch(); heroesQuery.refetch(); locationsQuery.refetch(); } });
+  const inviteHero = trpc.admin.createInvitation.useMutation({ onSuccess: (result) => { setHeroEmail(""); setInviteUrl(buildPublicInviteLink(window.location, result.inviteUrl)); setNotice(`Warehouse Hero invitation created for ${result.invitation?.email || "the invited user"}.`); adminHeroesQuery.refetch(); } });
+  const markers = (locationsQuery.data ?? []).flatMap((location) => {
+    const latitude = Number(location.latitude); const longitude = Number(location.longitude);
+    return Number.isFinite(latitude) && Number.isFinite(longitude) ? [{ id: `warehouse-hero-${location.warehouseHeroId}`, position: { lat: latitude, lng: longitude }, title: location.warehouseHeroName || location.warehouseHeroEmail || `Warehouse Hero #${location.warehouseHeroId}` }] : [];
+  });
+
+  return <div className="manager-shell">
+    <aside className="manager-sidebar">
+      <div className="brand-lockup"><div className="logo-mark small">FFM</div><div><strong>FFM Manager</strong><span>Control Panel</span></div></div>
+      <div className="sidebar-rule" />
+      <p className="sidebar-kicker">Operations</p>
+      <button className="sidebar-link" onClick={onBack}><ArrowLeft size={17}/><span>Dashboard</span></button>
+      <button className="sidebar-link active"><Truck size={17}/><span>Warehouse Heroes</span></button>
+    </aside>
+    <main className="manager-main">
+      <header className="manager-topbar"><div><p className="topbar-kicker">FFM / LOGISTICS</p><h2>Warehouse Heroes</h2></div><Button variant="outline" size="sm" onClick={onBack}><ArrowLeft size={14}/> Back to dashboard</Button></header>
+      <section className="manager-content">
+        <div className="page-intro"><div><p className="eyebrow">Hospital logistics</p><h1>Warehouse Heroes</h1><p className="muted">Track warehouse-to-hospital delivery personnel assigned to your Manager account.</p></div><Badge className="status-live"><span /> LIVE GPS</Badge></div>
+        {notice && <div className="admin-feedback success">{notice}</div>}
+        <div className="dashboard-grid"><Card className="blueprint-card map-card"><CardHeader><div><CardTitle>Latest shared locations</CardTitle><p className="muted">Refreshes every 30 seconds. Positions appear only while the Hero has enabled location sharing.</p></div></CardHeader><CardContent><div className="map-placeholder"><div className="map-grid" />{locationsQuery.isLoading ? <div className="admin-feedback">Loading Warehouse Hero locations…</div> : locationsQuery.error ? <div className="admin-feedback error">{locationsQuery.error.message}</div> : markers.length ? <MapView className="manager-live-map" initialCenter={{ lat: 24.7136, lng: 46.6753 }} initialZoom={7} markers={markers} /> : <div className="admin-feedback">No recent shared Warehouse Hero GPS positions are available.</div>}</div></CardContent></Card><Card className="blueprint-card"><CardHeader><div><CardTitle>Assigned team</CardTitle><p className="muted">Warehouse Heroes allocated by the Administrator.</p></div></CardHeader><CardContent>{heroesQuery.isLoading ? <div className="admin-feedback">Loading Warehouse Heroes…</div> : heroesQuery.error ? <div className="admin-feedback error">{heroesQuery.error.message}</div> : heroesQuery.data?.length ? <div className="activity-list">{heroesQuery.data.map((hero) => <div className="activity-row" key={hero.id}><div className="task-icon active"><PackageCheck size={16}/></div><div><strong>{hero.name || hero.email || "Warehouse Hero"}</strong><span>{hero.locationSharing ? "GPS sharing enabled" : "GPS sharing currently off"}</span></div><MapPin size={16} className={hero.locationSharing ? "text-emerald-400" : "text-muted-foreground"} /></div>)}</div> : <div className="admin-feedback">No Warehouse Heroes are assigned to this Manager yet.</div>}</CardContent></Card></div>
+        {isAdmin && <Card className="blueprint-card section-card mt-4"><div className="section-heading"><div><p className="eyebrow">Administrator-only control</p><h2>Warehouse Hero onboarding and assignments</h2><p className="muted">Invite logistics personnel, then assign each Hero to the Manager responsible for their hospital deliveries.</p></div></div><div className="admin-add-row"><Input type="email" value={heroEmail} onChange={(event) => setHeroEmail(event.target.value)} placeholder="warehouse.hero@example.com"/><Button className="blueprint-button" disabled={!heroEmail || inviteHero.isPending} onClick={() => inviteHero.mutate({ email: heroEmail, role: "warehouse_hero" })}><UserPlus size={15}/>{inviteHero.isPending ? "Creating…" : "Invite Warehouse Hero"}</Button></div>{inviteHero.error && <div className="admin-feedback error">{inviteHero.error.message}</div>}{inviteUrl && <div className="invite-link-row"><Input value={inviteUrl} readOnly/><Button variant="outline" onClick={() => navigator.clipboard?.writeText(inviteUrl)}>Copy link</Button></div>}<div className="inline-form mt-4"><select className="admin-role-select" value={managerId} onChange={(event) => setManagerId(event.target.value)}><option value="">Choose manager</option>{managersQuery.data?.map((manager) => <option key={manager.id} value={manager.id}>{manager.name || manager.email || `Manager #${manager.id}`}</option>)}</select><select className="admin-role-select" value={heroId} onChange={(event) => setHeroId(event.target.value)}><option value="">Choose Warehouse Hero</option>{adminHeroesQuery.data?.map((hero) => <option key={hero.id} value={hero.id}>{hero.name || hero.email || `Warehouse Hero #${hero.id}`}</option>)}</select><Button className="blueprint-button" disabled={!managerId || !heroId || assign.isPending} onClick={() => assign.mutate({ managerId: Number(managerId), warehouseHeroId: Number(heroId) })}><UserPlus size={15}/>{assign.isPending ? "Assigning…" : "Assign Hero"}</Button></div>{assign.error && <div className="admin-feedback error">{assign.error.message}</div>}{assignmentsQuery.isLoading ? <div className="admin-feedback">Loading Warehouse Hero assignments…</div> : assignmentsQuery.error ? <div className="admin-feedback error">{assignmentsQuery.error.message}</div> : assignmentsQuery.data?.length ? <div className="data-table"><div className="table-row table-head"><span>Manager</span><span>Warehouse Hero</span><span>Assigned</span><span>Action</span></div>{assignmentsQuery.data.map((assignment) => <div className="table-row" key={assignment.id}><span>{assignment.managerName}</span><span>{assignment.warehouseHeroName}</span><span>{new Date(assignment.createdAt).toLocaleDateString()}</span><span><Button variant="ghost" size="sm" disabled={unassign.isPending} onClick={() => unassign.mutate({ id: assignment.id })}>{unassign.isPending ? "Removing…" : "Unassign"}</Button></span></div>)}</div> : <div className="admin-feedback">No Manager–Warehouse Hero assignments exist yet.</div>}</Card>}
+      </section>
+    </main>
+  </div>;
+}

@@ -123,6 +123,13 @@ describe("expanded FFM permissions", () => {
     expect(createMessage).not.toHaveBeenCalled();
   });
 
+  it("requires Warehouse Heroes to enable location sharing before publishing GPS", async () => {
+    const warehouseHero = { ...createContext("user").user!, id: 444, openId: "warehouse-hero-444", email: "hero@example.com", role: "warehouse_hero" as const, locationSharing: false };
+    vi.spyOn(db, "getUserById").mockResolvedValue(warehouseHero);
+    const caller = appRouter.createCaller({ ...createContext("user"), user: warehouseHero });
+    await expect(caller.operations.updateWarehouseHeroLocation({ latitude: "24.7136000", longitude: "46.6753000" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
   it("allows managers to access only assigned delegates", () => {
     expect(canManagerAccessDelegate("manager", 10, 20, [20, 21])).toBe(true);
     expect(canManagerAccessDelegate("manager", 10, 22, [20, 21])).toBe(false);

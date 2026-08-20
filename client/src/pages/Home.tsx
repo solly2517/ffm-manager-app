@@ -10,11 +10,13 @@ import { trpc } from "@/lib/trpc";
 import { DoctorEditor } from "@/components/DoctorEditor";
 import { buildPublicInviteLink } from "@/lib/inviteLink";
 import { MapView } from "@/components/Map";
-import { Users, Map, ClipboardList, MessageSquare, BarChart3, Globe2, Activity, AlertTriangle, Plus, LogOut, ShieldCheck, Search, Menu, X, Send, UserPlus, type LucideIcon } from "lucide-react";
+import { WarehouseHeroesWorkspace } from "@/pages/WarehouseHeroesWorkspace";
+import { Users, Map, ClipboardList, MessageSquare, BarChart3, Globe2, Activity, AlertTriangle, Plus, LogOut, ShieldCheck, Search, Menu, X, Send, UserPlus, Truck, type LucideIcon } from "lucide-react";
 
 const nav = [
   { id: "dashboard", label: "Dashboard", icon: Activity },
   { id: "delegates", label: "Delegates", icon: Users },
+  { id: "warehouse-heroes", label: "Warehouse Heroes", icon: Truck },
   { id: "clients", label: "Clients", icon: Globe2 },
   { id: "tasks", label: "Tasks", icon: ClipboardList },
   { id: "surgeries", label: "Surgeries", icon: Activity },
@@ -66,7 +68,7 @@ export default function Home() {
   const [taskDate, setTaskDate] = useState("");
   const [workspaceNotice, setWorkspaceNotice] = useState("");
   const [newUserEmail, setNewUserEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<"delegate" | "manager" | "user">("delegate");
+  const [inviteRole, setInviteRole] = useState<"delegate" | "manager" | "warehouse_hero" | "user">("delegate");
   const [assignmentManagerId, setAssignmentManagerId] = useState("");
   const [assignmentDelegateId, setAssignmentDelegateId] = useState("");
   const [adminNotice, setAdminNotice] = useState("");
@@ -132,6 +134,7 @@ export default function Home() {
   if (!isAuthenticated) return <div className="blueprint-page login-view"><div className="blueprint-grid" /><Card className="login-card blueprint-card"><div className="logo-mark">FFM</div><p className="eyebrow">FIELD FORCE MANAGEMENT</p><h1>FFM Manager</h1><p className="muted">Secure control panel for delegates, visits, clients, and clinical operations.</p><Button className="w-full mt-6 blueprint-button" onClick={() => startLogin()}>Sign in securely</Button><p className="login-note">Authentication is required for all app access.</p></Card></div>;
 
   const current = nav.find((item) => item.id === active) ?? nav[0];
+  if (active === "warehouse-heroes") return <WarehouseHeroesWorkspace isAdmin={isAdmin} onBack={() => setActive("dashboard")} />;
 
   return <div className="manager-shell">
     <aside className={`manager-sidebar ${mobileOpen ? "open" : ""}`}>

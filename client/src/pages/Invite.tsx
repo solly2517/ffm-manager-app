@@ -11,8 +11,8 @@ export default function Invite() {
   const preview = trpc.invitations.preview.useQuery({ token }, { enabled: Boolean(token) });
   const accept = trpc.invitations.accept.useMutation();
   const acceptMagic = trpc.invitations.acceptMagic.useMutation({
-    onSuccess: () => {
-      window.location.assign("/");
+    onSuccess: (result) => {
+      window.location.assign(result.role === "warehouse_hero" ? "/warehouse-hero" : result.role === "delegate" ? "/delegate" : "/");
     },
   });
   if (loading || preview.isLoading) return <div className="blueprint-page"><div className="blueprint-loader">Checking invitation…</div></div>;

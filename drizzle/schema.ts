@@ -6,7 +6,7 @@ export const users = mysqlTable("users", {
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["user", "manager", "delegate", "admin"]).default("user").notNull(),
+  role: mysqlEnum("role", ["user", "manager", "delegate", "warehouse_hero", "admin"]).default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -33,11 +33,28 @@ export const managerDelegateAssignments = mysqlTable("manager_delegate_assignmen
   assignedBy: int("assignedBy").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({ managerIdx: index("manager_delegate_manager_idx").on(table.managerId), delegateIdx: index("manager_delegate_delegate_idx").on(table.delegateId), pairUnique: uniqueIndex("manager_delegate_pair_unique").on(table.managerId, table.delegateId) }));
+
+export const managerWarehouseHeroAssignments = mysqlTable("manager_warehouse_hero_assignments", {
+  id: int("id").autoincrement().primaryKey(),
+  managerId: int("managerId").notNull(),
+  warehouseHeroId: int("warehouseHeroId").notNull(),
+  assignedBy: int("assignedBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({ managerIdx: index("manager_warehouse_hero_manager_idx").on(table.managerId), heroIdx: index("manager_warehouse_hero_hero_idx").on(table.warehouseHeroId), pairUnique: uniqueIndex("manager_warehouse_hero_pair_unique").on(table.managerId, table.warehouseHeroId) }));
+
+export const warehouseHeroLocations = mysqlTable("warehouse_hero_locations", {
+  id: int("id").autoincrement().primaryKey(),
+  warehouseHeroId: int("warehouseHeroId").notNull(),
+  latitude: decimal("latitude", { precision: 10, scale: 7 }).notNull(),
+  longitude: decimal("longitude", { precision: 10, scale: 7 }).notNull(),
+  capturedAt: timestamp("capturedAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({ heroUnique: uniqueIndex("warehouse_hero_location_unique").on(table.warehouseHeroId), capturedIdx: index("warehouse_hero_location_captured_idx").on(table.capturedAt) }));
 export const invitations = mysqlTable("invitations", {
   id: int("id").autoincrement().primaryKey(),
   email: varchar("email", { length: 320 }).notNull(),
   tokenHash: varchar("tokenHash", { length: 128 }).notNull().unique(),
-  role: mysqlEnum("role", ["user", "manager", "delegate"]).default("delegate").notNull(),
+  role: mysqlEnum("role", ["user", "manager", "delegate", "warehouse_hero"]).default("delegate").notNull(),
   invitedBy: int("invitedBy").notNull(),
   expiresAt: timestamp("expiresAt").notNull(),
   acceptedAt: timestamp("acceptedAt"),

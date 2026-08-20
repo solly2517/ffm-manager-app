@@ -50,6 +50,13 @@
       "when": 1787185330639,
       "tag": "0006_unknown_tyrannus",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1787223926746,
+      "tag": "0007_steady_tenebrous",
+      "breakpoints": true
     }
   ]
 }

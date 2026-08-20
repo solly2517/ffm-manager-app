@@ -63,6 +63,19 @@ describe("admin access control", () => {
     await expect(caller.admin.unassignDelegate({ id: 77 })).resolves.toEqual({ success: true });
   });
 
+  it("assigns and unassigns a manager–Warehouse Hero pair through the admin router", async () => {
+    const manager = { ...baseUser, id: 31, role: "manager" as const, email: "manager@example.com" };
+    const warehouseHero = { ...baseUser, id: 32, role: "warehouse_hero" as const, email: "hero@example.com" };
+    vi.spyOn(db, "getUserById").mockImplementation(async (id) => id === 31 ? manager : warehouseHero);
+    vi.spyOn(db, "isWarehouseHeroAssignedToManager").mockResolvedValue(false);
+    vi.spyOn(db, "createManagerWarehouseHeroAssignment").mockResolvedValue({ id: 78, managerId: 31, warehouseHeroId: 32, assignedBy: 1, createdAt: new Date() } as never);
+    vi.spyOn(db, "removeManagerWarehouseHeroAssignment").mockResolvedValue({ success: true });
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const caller = appRouter.createCaller(contextFor({ ...baseUser, role: "admin", email: "dr.seleam@gmail.com" }));
+    await expect(caller.admin.assignWarehouseHero({ managerId: 31, warehouseHeroId: 32 })).resolves.toMatchObject({ id: 78, managerId: 31, warehouseHeroId: 32 });
+    await expect(caller.admin.unassignWarehouseHero({ id: 78 })).resolves.toEqual({ success: true });
+  });
+
   it("blocks duplicate manager–delegate assignments", async () => {
     vi.spyOn(db, "getUserById").mockResolvedValue({ ...baseUser, role: "delegate" } as never);
     vi.spyOn(db, "isDelegateAssignedToManager").mockResolvedValue(true);
