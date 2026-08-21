@@ -15,6 +15,7 @@ import WarehouseHero from "@/pages/WarehouseHero";
 import SurgeryCalendar from "@/pages/SurgeryCalendar";
 import AdminDiagnostics from "@/pages/AdminDiagnostics";
 import SurgeryReadiness from "@/pages/SurgeryReadiness";
+import EvidenceCleanup from "@/pages/EvidenceCleanup";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -28,6 +29,7 @@ function Router() {
       <Route path="/surgery-calendar" component={SurgeryCalendar} />
       <Route path="/admin-diagnostics" component={AdminDiagnostics} />
       <Route path="/surgery-readiness" component={SurgeryReadiness} />
+      <Route path="/evidence-cleanup" component={EvidenceCleanup} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

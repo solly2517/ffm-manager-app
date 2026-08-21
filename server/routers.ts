@@ -9,11 +9,11 @@ import { acceptInvitation, activateInvitedUser, addAuditEvent, addEvidence, crea
 import { storagePut } from "./storage";
 import { sdk } from "./_core/sdk";
 import { createGoogleDriveBackupArchive } from "./googleDriveBackup";
+import { previewGoogleDriveBackupRestore, restoreGoogleDriveBackupArchive } from "./googleDriveBackup";
 import { getGoogleDriveBackupConnection, listBackupArchives } from "./db";
-import { getDb } from "./db";
-import { warehouseDeliveryProofs, surgeryDeliveryProofs } from "../drizzle/schema";
-import { eq } from "drizzle-orm";
 import { calculateSurgeryImplantTotals, createSurgeryDeliveryProof, createSurgeryImplant, createImplantCatalogueItem, getImplantCatalogueItem, listImplantCatalogue, listSurgeryDeliveryProofs, listSurgeryImplants, searchImplantCatalogue } from "./db";
+import { getSurgeryDeliveryProofById, getWarehouseDeliveryProofById, listSurgeryDeliveryProofsForCleanup, listWarehouseDeliveryProofsForCleanup, removeSurgeryDeliveryProof, removeWarehouseDeliveryProof } from "./db";
+import { evidenceCleanupRouter } from "./evidenceCleanupRouter";
 
 const ADMIN_EMAIL = "dr.seleam@gmail.com";
 const isAdmin = (user: { email?: string | null; role?: string }) => user.email?.toLowerCase() === ADMIN_EMAIL || user.role === "admin";
@@ -41,6 +41,7 @@ export const appRouter = router({
     markAllRead: protectedProcedure.mutation(({ ctx }) => markAllNotificationsRead(ctx.user.id)),
     markRead: protectedProcedure.input(z.object({ id: z.number().int().positive() })).mutation(({ input, ctx }) => markNotificationRead(ctx.user.id, input.id)),
   }),
+  evidenceCleanup: evidenceCleanupRouter,
   invitations: router({
     preview: publicProcedure.input(z.object({ token: z.string().min(20) })).query(async ({ input }) => { const invitation = await getInvitationByHash(tokenHash(input.token)); if (!invitation || invitation.acceptedAt || invitation.expiresAt < new Date()) throw new TRPCError({ code: "NOT_FOUND", message: "Invitation is invalid or expired" }); return { email: invitation.email, role: invitation.role, expiresAt: invitation.expiresAt }; }),
     accept: protectedProcedure.input(z.object({ token: z.string().min(20) })).mutation(async ({ input, ctx }) => { const invitation = await getInvitationByHash(tokenHash(input.token)); if (!invitation || invitation.acceptedAt || invitation.expiresAt < new Date()) throw new TRPCError({ code: "BAD_REQUEST", message: "Invitation is invalid or expired" }); if (ctx.user.email?.toLowerCase() !== invitation.email.toLowerCase()) throw new TRPCError({ code: "FORBIDDEN", message: "This invitation belongs to a different email address" }); await upsertUser({ openId: ctx.user.openId, email: ctx.user.email, name: ctx.user.name, role: invitation.role, loginMethod: ctx.user.loginMethod }); await acceptInvitation(invitation.id); await addAuditEvent({ actorId: ctx.user.id, action: "invitation.accepted", entityType: "invitation", entityId: invitation.id }); return { success: true, role: invitation.role } as const; }),
@@ -52,8 +53,6 @@ export const appRouter = router({
     managers: adminOnly.query(async () => listManagers()),
     delegates: adminOnly.query(async () => listDelegates()),
     warehouseHeroes: adminOnly.query(async () => listWarehouseHeroes()),
-    removeWarehouseDeliveryProof: adminOnly.input(z.object({ id: z.number().int().positive() })).mutation(async ({ input, ctx }) => { const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database is not available" }); const proof = (await db.select().from(warehouseDeliveryProofs).where(eq(warehouseDeliveryProofs.id, input.id)).limit(1))[0]; if (!proof) throw new TRPCError({ code: "NOT_FOUND", message: "Warehouse Hero delivery proof not found" }); await db.delete(warehouseDeliveryProofs).where(eq(warehouseDeliveryProofs.id, input.id)); await addAuditEvent({ actorId: ctx.user.id, action: "warehouse_hero.delivery_proof_removed", entityType: "warehouseDeliveryProof", entityId: input.id, metadata: JSON.stringify({ warehouseHeroId: proof.warehouseHeroId, storageKey: proof.storageKey, sizeBytes: proof.sizeBytes, cleanup: "reference_removed" }) }); return { success: true as const, bytesUnlinked: proof.sizeBytes }; }),
-    removeSurgeryDeliveryProof: adminOnly.input(z.object({ id: z.number().int().positive() })).mutation(async ({ input, ctx }) => { const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database is not available" }); const proof = (await db.select().from(surgeryDeliveryProofs).where(eq(surgeryDeliveryProofs.id, input.id)).limit(1))[0]; if (!proof) throw new TRPCError({ code: "NOT_FOUND", message: "Surgery patient-sheet proof not found" }); await db.delete(surgeryDeliveryProofs).where(eq(surgeryDeliveryProofs.id, input.id)); await addAuditEvent({ actorId: ctx.user.id, action: "surgery.delivery_proof_removed", entityType: "surgery", entityId: proof.surgeryId, metadata: JSON.stringify({ proofId: proof.id, storageKey: proof.storageKey, originalName: proof.originalName, sizeBytes: proof.sizeBytes, cleanup: "reference_removed" }) }); return { success: true as const, bytesUnlinked: proof.sizeBytes }; }),
     implantCatalogue: adminOnly.query(async () => listImplantCatalogue(true)),
     addImplantCatalogueItem: adminOnly.input(z.object({ name: z.string().trim().min(2).max(220), manufacturer: z.string().trim().max(180).optional(), productCode: z.string().trim().max(160).optional(), description: z.string().trim().max(2000).optional() })).mutation(async ({ input, ctx }) => { const result = await createImplantCatalogueItem({ name: input.name, manufacturer: input.manufacturer || null, productCode: input.productCode || null, description: input.description || null, createdBy: ctx.user.id }); await addAuditEvent({ actorId: ctx.user.id, action: "implant_catalogue.created", entityType: "implantCatalogue", entityId: result?.id }); return result; }),
     managerAssignments: adminOnly.query(async () => listManagerAssignments()),
@@ -77,6 +76,8 @@ export const appRouter = router({
   backup: router({
     status: adminOnly.query(async ({ ctx }) => ({ connected: Boolean(await getGoogleDriveBackupConnection(ctx.user.id)), archives: await listBackupArchives(ctx.user.id) })),
     create: adminOnly.mutation(async ({ ctx }) => { const connection = await getGoogleDriveBackupConnection(ctx.user.id); if (!connection) return { connected: false as const, authorizeUrl: "/api/oauth/google-drive/start" }; const archive = await createGoogleDriveBackupArchive(ctx.user.id); return { connected: true as const, archive }; }),
+    previewRestore: adminOnly.input(z.object({ archiveId: z.number().int().positive() })).query(({ input, ctx }) => previewGoogleDriveBackupRestore(ctx.user.id, input.archiveId)),
+    restore: adminOnly.input(z.object({ archiveId: z.number().int().positive(), confirmation: z.string().trim().max(80) })).mutation(({ input, ctx }) => restoreGoogleDriveBackupArchive(ctx.user.id, input.archiveId, input.confirmation)),
   }),
   monitoring: router({
     captureClientError: protectedProcedure.input(z.object({ message: z.string().min(1).max(500), stack: z.string().max(20000).optional(), componentStack: z.string().max(20000).optional(), route: z.string().max(255).optional() })).mutation(async ({ input, ctx }) => { if (isExpectedInvitationProbe(input)) return { success: true, ignored: true } as const; await captureClientError({ ...input, userId: ctx.user.id }); return { success: true } as const; }),

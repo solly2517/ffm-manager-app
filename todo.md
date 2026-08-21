@@ -349,6 +349,8 @@
 - [x] Guide the Administrator through creating Google OAuth application credentials for the automated FFM backup integration
 - [x] Add dr.seleam@gmail.com as an approved Google OAuth test user and validate the direct FFM backup authorization flow
 - [x] Diagnose and resolve the missing first FFM backup archive after Google Drive authorization — enabled Google Drive API and verified a completed 12,164,961-byte archive
-- [x] Diagnose and restore the development preview after the reported Vite WebSocket connection failure
-- [x] Add Administrator-only Evidence Cleanup for Warehouse Hero delivery proofs and surgery patient-sheet records, with audit-preserved access removal
-- [x] Delete all currently registered surgeries and linked implant and patient-sheet metadata, then complete final live verification
+- [x] Clarify notification read status and remove misleading unread-style markers from the Administration audit activity list
+- [x] Display a visible Administrator Restore Backup control in the live Administration backup area and verify published access
+- [x] Add an Administrator-only FFM operational backup restore workflow with archive preview, typed confirmation, audit history, and rollback-safe recovery controls
+- [x] Clarify notification read status and remove misleading unread-style markers from the Administration audit activity list
+- [x] Add audited Administrator-only deletion of Warehouse Hero delivery proofs and surgery patient-sheet files with storage cleanup
