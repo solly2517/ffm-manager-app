@@ -343,3 +343,4 @@
 - [x] Add a Warehouse Hero Messages workspace that uses the shared recipient-only read acknowledgement flow
 - [x] Verify the weekly FFM backup reminder and official point-in-time backup export readiness without modifying live operational data — reminder configuration and handler are verified; the external export remains a manual Administrator action through the official portal
 - [x] Add an Administrator-only Backup Data button that opens the official point-in-time FFM website backup process with clear snapshot guidance
+- [x] Configure the Administrator backup workflow to save the official FFM export directly to Google Drive for dr.seleam@gmail.com — created and verified the FFM Backups folder; the official export still requires Google Drive destination selection in the external backup portal
