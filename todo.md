@@ -341,3 +341,5 @@
 - [x] Resolve the Delegate-specific direct-message unread badge regression after message viewing
 - [x] Verify recipient-only direct-message read acknowledgement for Manager and Warehouse Hero sessions
 - [x] Add a Warehouse Hero Messages workspace that uses the shared recipient-only read acknowledgement flow
+- [x] Verify the weekly FFM backup reminder and official point-in-time backup export readiness without modifying live operational data — reminder configuration and handler are verified; the external export remains a manual Administrator action through the official portal
+- [x] Add an Administrator-only Backup Data button that opens the official point-in-time FFM website backup process with clear snapshot guidance
