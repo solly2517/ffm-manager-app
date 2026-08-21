@@ -46,7 +46,7 @@ export default function Delegate() {
   const messagesReadWorkspaceRef = useRef(false);
   const tasksQuery = trpc.operations.tasks.useQuery();
   const messagesQuery = trpc.operations.messages.useQuery(undefined, { enabled: isAuthenticated && active === "messages" });
-  const markMessagesRead = trpc.operations.markMessagesRead.useMutation({ onSuccess: () => messagesQuery.refetch() });
+  const markMessagesRead = trpc.operations.markMessagesRead.useMutation({ onSuccess: () => messagesQuery.refetch(), onError: () => { messagesReadWorkspaceRef.current = false; } });
   const clientsQuery = trpc.operations.clients.useQuery(undefined, { enabled: isAuthenticated && (active === "surgery" || active === "plan") });
   const visitPlansQuery = trpc.operations.visitPlans.useQuery(undefined, { enabled: isAuthenticated && active === "plan" });
   const submitVisitPlan = trpc.operations.submitVisitPlan.useMutation({ onSuccess: () => visitPlansQuery.refetch() });
@@ -71,9 +71,8 @@ export default function Delegate() {
   useEffect(() => { if (preferencesQuery.data) { setPushNotifications(preferencesQuery.data.pushNotifications); setEmailNotifications(preferencesQuery.data.emailNotifications); setLocationSharing(preferencesQuery.data.locationSharing); } }, [preferencesQuery.data]);
   useEffect(() => {
     if (active !== "messages") { messagesReadWorkspaceRef.current = false; return; }
-    const hasUnreadRecipientMessage = messagesQuery.data?.some((item) => item.recipientId === user?.id && !item.readAt) ?? false;
-    if (isAuthenticated && hasUnreadRecipientMessage && !messagesReadWorkspaceRef.current && !markMessagesRead.isPending) { messagesReadWorkspaceRef.current = true; markMessagesRead.mutate(); }
-  }, [active, isAuthenticated, markMessagesRead.isPending, markMessagesRead.mutate, messagesQuery.data, user?.id]);
+    if (isAuthenticated && !messagesReadWorkspaceRef.current && !markMessagesRead.isPending) { messagesReadWorkspaceRef.current = true; markMessagesRead.mutate(); }
+  }, [active, isAuthenticated, markMessagesRead.isPending, markMessagesRead.mutate]);
   const guardOffline = () => { if (!isOffline) return false; setOfflineAction("Reconnect to the internet before sending changes. Your visit draft remains saved locally."); return true; };
   const queueVisitReport = (taskId: number, report: string) => { localStorage.setItem("ffm-pending-visit-report", JSON.stringify({ taskId, report, queuedAt: Date.now() })); setOfflineAction("Visit report queued on this device and will send automatically when you reconnect."); };
   const updatePreference = (key: "pushNotifications" | "emailNotifications" | "locationSharing", value: boolean) => { if (guardOffline()) return; if (key === "pushNotifications") setPushNotifications(value); else if (key === "emailNotifications") setEmailNotifications(value); else setLocationSharing(value); updatePreferences.mutate(key === "pushNotifications" ? { pushNotifications: value } : key === "emailNotifications" ? { emailNotifications: value } : { locationSharing: value }); };
