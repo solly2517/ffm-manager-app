@@ -349,3 +349,4 @@
 - [x] Guide the Administrator through creating Google OAuth application credentials for the automated FFM backup integration
 - [x] Add dr.seleam@gmail.com as an approved Google OAuth test user and validate the direct FFM backup authorization flow
 - [x] Diagnose and resolve the missing first FFM backup archive after Google Drive authorization — enabled Google Drive API and verified a completed 12,164,961-byte archive
+- [x] Add an Administrator-only FFM operational backup restore workflow with archive preview, typed confirmation, audit history, and rollback-safe recovery controls
