@@ -57,6 +57,13 @@ describe("expanded FFM permissions", () => {
     expect(markAll).toHaveBeenCalledWith(999999);
   });
 
+  it("marks only the signed-in recipient's unread messages as read", async () => {
+    const markMessages = vi.spyOn(db, "markMessagesRead").mockResolvedValue({ updated: 1 });
+    const caller = appRouter.createCaller(createContext("delegate"));
+    await expect(caller.operations.markMessagesRead()).resolves.toEqual({ updated: 1 });
+    expect(markMessages).toHaveBeenCalledWith(999999);
+  });
+
   it("rejects invalid invitation tokens", async () => {
     const caller = appRouter.createCaller(createContext("user"));
     await expect(caller.invitations.preview({ token: "x".repeat(64) })).rejects.toMatchObject({ code: "NOT_FOUND" });

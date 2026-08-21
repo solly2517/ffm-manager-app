@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
 import { Button } from "@/components/ui/button";
@@ -95,6 +95,7 @@ export default function Home() {
   const [profileName, setProfileName] = useState("");
   const [profileNotice, setProfileNotice] = useState("");
   const [showWelcome, setShowWelcome] = useState(() => localStorage.getItem("ffm-manager-onboarding") !== "1");
+  const messagesReadWorkspaceRef = useRef(false);
   const isAdmin = user?.role === "admin" || user?.email?.toLowerCase() === "dr.seleam@gmail.com";
   const visibleNav = useMemo(() => nav.filter((item) => (item.id !== "admin" && item.id !== "diagnostics") || isAdmin), [isAdmin]);
   useEffect(() => { setProfileName(user?.name || ""); }, [user?.name]);
@@ -170,6 +171,12 @@ export default function Home() {
   const updateSurgery = trpc.operations.updateSurgery.useMutation({ onSuccess: () => { setEditingSurgeryId(null); setSurgeryQuotation(""); setSurgeryInvoice(""); setSurgeryNotes(""); setWorkspaceNotice("Surgery details updated."); surgeriesQuery.refetch(); }, onError: (error) => setWorkspaceNotice(error.message) });
   const removeSurgery = trpc.operations.removeSurgery.useMutation({ onSuccess: () => { setEditingSurgeryId(null); setWorkspaceNotice("Surgery and its registered implant and proof metadata were deleted."); surgeriesQuery.refetch(); }, onError: (error) => setWorkspaceNotice(error.message) });
   const sendMessage = trpc.operations.sendMessage.useMutation({ onSuccess: () => { setMessage(""); setMessageRecipientId(""); setWorkspaceNotice("Message sent to the selected FFM member."); messagesQuery.refetch(); } });
+  const markMessagesRead = trpc.operations.markMessagesRead.useMutation({ onSuccess: () => messagesQuery.refetch() });
+  useEffect(() => {
+    if (active !== "messages") { messagesReadWorkspaceRef.current = false; return; }
+    const hasUnreadRecipientMessage = messagesQuery.data?.some((item) => item.recipientId === user?.id && !item.readAt) ?? false;
+    if (isAuthenticated && hasUnreadRecipientMessage && !messagesReadWorkspaceRef.current && !markMessagesRead.isPending) { messagesReadWorkspaceRef.current = true; markMessagesRead.mutate(); }
+  }, [active, isAuthenticated, markMessagesRead.isPending, markMessagesRead.mutate, messagesQuery.data, user?.id]);
   const reportFilters = useMemo(() => ({ from: fromDate || undefined, to: toDate || undefined }), [fromDate, toDate]);
   const summaryQuery = trpc.reports.summary.useQuery(reportFilters, { enabled: isAuthenticated && active === "reports" });
   const reportTasksQuery = trpc.reports.tasks.useQuery(reportFilters, { enabled: isAuthenticated && active === "reports" });
