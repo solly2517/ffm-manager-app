@@ -326,3 +326,8 @@
 - [x] Preserve message audit history, unread status, and protected user-account safeguards across expanded messaging
 - [x] Add regression coverage for cross-role messaging, Warehouse Hero participation, and unauthorized recipient rejection
 - [x] Verify and publish all-member role-aware messaging
+- [x] Let every authenticated member save a display name with email fallback across FFM identity labels
+- [x] Add a clear self-service profile control for changing the current member display name
+- [x] Hide the Administration sidebar item and prevent the Administration workspace from rendering for non-Administrators
+- [x] Add regression coverage for display-name updates, identity fallback, and non-Administrator Administration navigation blocking
+- [x] Verify and publish member identity and Administrator-visibility improvements

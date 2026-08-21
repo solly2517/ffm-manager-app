@@ -106,6 +106,12 @@ export async function updateUserRole(id: number, role: "user" | "manager" | "del
   return getUserById(id);
 }
 
+export async function updateUserDisplayName(id: number, name: string) {
+  const db = await getDb(); if (!db) throw new Error("Database is not available");
+  await db.update(users).set({ name }).where(eq(users.id, id));
+  return getUserById(id);
+}
+
 export async function removeUser(id: number) {
   const db = await getDb(); if (!db) throw new Error("Database is not available");
   await db.delete(users).where(eq(users.id, id));

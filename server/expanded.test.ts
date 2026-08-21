@@ -37,6 +37,13 @@ describe("expanded FFM permissions", () => {
     await expect(caller.admin.createInvitation({ email: "new@example.com", role: "delegate" })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
+  it("lets every authenticated member save a display name without changing role or email", async () => {
+    const updateName = vi.spyOn(db, "updateUserDisplayName").mockResolvedValue({ id: 999999, name: "Solly Ibrahim", email: "delegate@example.com", role: "delegate" } as never);
+    const caller = appRouter.createCaller(createContext("delegate"));
+    await expect(caller.auth.updateDisplayName({ name: "Solly Ibrahim" })).resolves.toMatchObject({ id: 999999, name: "Solly Ibrahim", role: "delegate" });
+    expect(updateName).toHaveBeenCalledWith(999999, "Solly Ibrahim");
+  });
+
   it("rejects invalid invitation tokens", async () => {
     const caller = appRouter.createCaller(createContext("user"));
     await expect(caller.invitations.preview({ token: "x".repeat(64) })).rejects.toMatchObject({ code: "NOT_FOUND" });
