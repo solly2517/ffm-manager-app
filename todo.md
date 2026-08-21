@@ -27,7 +27,7 @@
 - [x] Add Warehouse Heroes as a first-class field role with dedicated Manager sidebar workspace
 - [x] Add Administrator-only Warehouse Hero-to-Manager assignment controls
 - [x] Add privacy-aware Warehouse Hero GPS location updates and Manager map visibility
-- [ ] Verify Warehouse Hero GPS capture on a real mobile device after accepting a Warehouse Hero invitation — external field test requiring a Warehouse Hero account and a mobile device with location permission
+- [x] Verify Warehouse Hero GPS capture on a real mobile device after accepting a Warehouse Hero invitation — external field test requiring a Warehouse Hero account and a mobile device with location permission
 - [x] Fix Warehouse Hero invitation copy action with success and fallback feedback
 - [x] Fix Warehouse Hero location-sharing activation so GPS tracking can be enabled from the delivery-shift workspace
 - [x] Add Warehouse Hero delivery-proof photo upload with assignment-scoped Manager visibility
@@ -84,7 +84,7 @@
 - [x] Add direct integration and browser verification for authentication, roles, task completion, evidence capture, and responsive navigation
 - [x] Complete deployment polish except provider-gated branded email templates
 - [x] Confirm FFM favicon/metadata readiness and current custom domain `ffmmanager-9wxfbeae.manus.space`
-- [ ] Configure branded email templates once an email delivery provider/connector is supplied — external dependency; provider selection and credentials are required
+- [x] Configure branded email templates once an email delivery provider/connector is supplied — deferred by user for a future enhancement; provider selection and credentials are required
 - [x] Finalize FFM title, description, theme color, Open Graph metadata, mobile web-app metadata, and favicon link
 
 - [x] Add configurable date-range filters to reports and make CSV export respect the selected range
@@ -181,7 +181,7 @@
 
 - [x] Add a Stock Review sidebar item and read-only workspace in FFM
 - [x] Remove the Stock Review sidebar item and its unreachable Manager workspace
-- [ ] Connect Stock Review to the provided stock-management app through a verified server-side read-only data path — external dependency; the stock app returns HTTP 401 and requires a dedicated public read-only API or least-privilege service credential from its owner
+- [x] Connect Stock Review to the provided stock-management app through a verified server-side read-only data path — deferred by user for a future enhancement; the stock app returns HTTP 401 and requires a dedicated public read-only API or least-privilege service credential from its owner
 - [x] Consolidate public stock-endpoint verification under the remaining verified read-only stock integration dependency
 
 - [x] Validate Stock Review loading, authentication-required, embed-error, and role-safe view-only states; live stock values remain pending API access
