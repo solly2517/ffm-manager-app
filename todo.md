@@ -331,3 +331,8 @@
 - [x] Hide the Administration sidebar item and prevent the Administration workspace from rendering for non-Administrators
 - [x] Add regression coverage for display-name updates, identity fallback, and non-Administrator Administration navigation blocking
 - [x] Verify and publish member identity and Administrator-visibility improvements
+- [x] Define role-based in-app notifications for surgery creation, schedule changes, readiness changes, lifecycle actions, implant registration, and delivery proof uploads
+- [x] Add an authorization-scoped surgery activity timeline with actor identity, event description, and timestamp
+- [x] Expose notification badges and unread-state controls in the relevant FFM workspaces
+- [x] Add regression coverage for notification recipients, timeline audit details, and clinical role boundaries
+- [x] Verify and publish role-based notifications and surgery activity timeline

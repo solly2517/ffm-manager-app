@@ -44,6 +44,19 @@ describe("expanded FFM permissions", () => {
     expect(updateName).toHaveBeenCalledWith(999999, "Solly Ibrahim");
   });
 
+  it("returns only a member's notifications and allows that member to mark them read", async () => {
+    const list = vi.spyOn(db, "listUserNotifications").mockResolvedValue([{ id: 91, userId: 999999, title: "Surgery schedule updated", body: "The appointment changed.", readAt: null, createdAt: new Date(), actorName: "Manager" }] as never);
+    const markOne = vi.spyOn(db, "markNotificationRead").mockResolvedValue({ updated: 1 });
+    const markAll = vi.spyOn(db, "markAllNotificationsRead").mockResolvedValue({ updated: 2 });
+    const caller = appRouter.createCaller(createContext("delegate"));
+    await expect(caller.notifications.list()).resolves.toMatchObject([{ id: 91, userId: 999999 }]);
+    await expect(caller.notifications.markRead({ id: 91 })).resolves.toEqual({ updated: 1 });
+    await expect(caller.notifications.markAllRead()).resolves.toEqual({ updated: 2 });
+    expect(list).toHaveBeenCalledWith(999999);
+    expect(markOne).toHaveBeenCalledWith(999999, 91);
+    expect(markAll).toHaveBeenCalledWith(999999);
+  });
+
   it("rejects invalid invitation tokens", async () => {
     const caller = appRouter.createCaller(createContext("user"));
     await expect(caller.invitations.preview({ token: "x".repeat(64) })).rejects.toMatchObject({ code: "NOT_FOUND" });

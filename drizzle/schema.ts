@@ -148,6 +148,19 @@ export const messages = mysqlTable("messages", {
   readAt: timestamp("readAt"),
 }, (table) => ({ recipientIdx: index("messages_recipient_idx").on(table.recipientId), createdIdx: index("messages_created_idx").on(table.createdAt) }));
 
+export const userNotifications = mysqlTable("userNotifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  actorId: int("actorId"),
+  kind: varchar("kind", { length: 120 }).notNull(),
+  title: varchar("title", { length: 220 }).notNull(),
+  body: text("body").notNull(),
+  entityType: varchar("entityType", { length: 80 }),
+  entityId: int("entityId"),
+  readAt: timestamp("readAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({ userReadIdx: index("user_notification_user_read_idx").on(table.userId, table.readAt), createdIdx: index("user_notification_created_idx").on(table.createdAt), entityIdx: index("user_notification_entity_idx").on(table.entityType, table.entityId) }));
+
 export const surgeries = mysqlTable("surgeries", {
   id: int("id").autoincrement().primaryKey(),
   clientId: int("clientId").notNull(),

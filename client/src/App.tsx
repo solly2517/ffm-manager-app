@@ -5,6 +5,7 @@ import { trpc } from "./lib/trpc";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { NotificationCenter } from "./components/NotificationCenter";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Delegate from "./pages/Delegate";
@@ -63,6 +64,7 @@ function App() {
       >
         <TooltipProvider>
           <Toaster />
+          <NotificationCenter />
           <Router />
         </TooltipProvider>
       </ThemeProvider>
