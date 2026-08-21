@@ -1,0 +1,25 @@
+.notification-read-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #84e7bd;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Administration audit records are retained history, never unread notifications. */
+.audit-strip:has(+ .admin-activity-list .activity-dot.blue) + .admin-activity-list::before {
+  content: "Retained audit records — not unread alerts";
+  display: block;
+  margin-bottom: -0.2rem;
+  color: #8db8df;
+  font: 10px 'IBM Plex Mono', monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.audit-strip:has(+ .admin-activity-list .activity-dot.blue) + .admin-activity-list .activity-dot.blue {
+  border: 1px solid #58c7ff;
+  border-radius: 1px;
+  background: transparent;
+}

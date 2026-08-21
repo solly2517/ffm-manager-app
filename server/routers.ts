@@ -9,7 +9,6 @@ import { acceptInvitation, activateInvitedUser, addAuditEvent, addEvidence, crea
 import { storagePut } from "./storage";
 import { sdk } from "./_core/sdk";
 import { createGoogleDriveBackupArchive } from "./googleDriveBackup";
-import { previewGoogleDriveBackupRestore, restoreGoogleDriveBackupArchive } from "./googleDriveBackup";
 import { getGoogleDriveBackupConnection, listBackupArchives } from "./db";
 import { calculateSurgeryImplantTotals, createSurgeryDeliveryProof, createSurgeryImplant, createImplantCatalogueItem, getImplantCatalogueItem, listImplantCatalogue, listSurgeryDeliveryProofs, listSurgeryImplants, searchImplantCatalogue } from "./db";
 
@@ -73,8 +72,6 @@ export const appRouter = router({
   backup: router({
     status: adminOnly.query(async ({ ctx }) => ({ connected: Boolean(await getGoogleDriveBackupConnection(ctx.user.id)), archives: await listBackupArchives(ctx.user.id) })),
     create: adminOnly.mutation(async ({ ctx }) => { const connection = await getGoogleDriveBackupConnection(ctx.user.id); if (!connection) return { connected: false as const, authorizeUrl: "/api/oauth/google-drive/start" }; const archive = await createGoogleDriveBackupArchive(ctx.user.id); return { connected: true as const, archive }; }),
-    previewRestore: adminOnly.input(z.object({ archiveId: z.number().int().positive() })).query(({ input, ctx }) => previewGoogleDriveBackupRestore(ctx.user.id, input.archiveId)),
-    restore: adminOnly.input(z.object({ archiveId: z.number().int().positive(), confirmation: z.string().trim().max(80) })).mutation(({ input, ctx }) => restoreGoogleDriveBackupArchive(ctx.user.id, input.archiveId, input.confirmation)),
   }),
   monitoring: router({
     captureClientError: protectedProcedure.input(z.object({ message: z.string().min(1).max(500), stack: z.string().max(20000).optional(), componentStack: z.string().max(20000).optional(), route: z.string().max(255).optional() })).mutation(async ({ input, ctx }) => { if (isExpectedInvitationProbe(input)) return { success: true, ignored: true } as const; await captureClientError({ ...input, userId: ctx.user.id }); return { success: true } as const; }),
