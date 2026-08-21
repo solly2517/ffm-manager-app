@@ -351,3 +351,4 @@
 - [x] Diagnose and resolve the missing first FFM backup archive after Google Drive authorization — enabled Google Drive API and verified a completed 12,164,961-byte archive
 - [x] Diagnose and restore the development preview after the reported Vite WebSocket connection failure
 - [x] Add Administrator-only Evidence Cleanup for Warehouse Hero delivery proofs and surgery patient-sheet records, with audit-preserved access removal
+- [x] Delete all currently registered surgeries and linked implant and patient-sheet metadata, then complete final live verification
