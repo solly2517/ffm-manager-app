@@ -10,6 +10,9 @@ import { storagePut } from "./storage";
 import { sdk } from "./_core/sdk";
 import { createGoogleDriveBackupArchive } from "./googleDriveBackup";
 import { getGoogleDriveBackupConnection, listBackupArchives } from "./db";
+import { getDb } from "./db";
+import { warehouseDeliveryProofs, surgeryDeliveryProofs } from "../drizzle/schema";
+import { eq } from "drizzle-orm";
 import { calculateSurgeryImplantTotals, createSurgeryDeliveryProof, createSurgeryImplant, createImplantCatalogueItem, getImplantCatalogueItem, listImplantCatalogue, listSurgeryDeliveryProofs, listSurgeryImplants, searchImplantCatalogue } from "./db";
 
 const ADMIN_EMAIL = "dr.seleam@gmail.com";
@@ -49,6 +52,8 @@ export const appRouter = router({
     managers: adminOnly.query(async () => listManagers()),
     delegates: adminOnly.query(async () => listDelegates()),
     warehouseHeroes: adminOnly.query(async () => listWarehouseHeroes()),
+    removeWarehouseDeliveryProof: adminOnly.input(z.object({ id: z.number().int().positive() })).mutation(async ({ input, ctx }) => { const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database is not available" }); const proof = (await db.select().from(warehouseDeliveryProofs).where(eq(warehouseDeliveryProofs.id, input.id)).limit(1))[0]; if (!proof) throw new TRPCError({ code: "NOT_FOUND", message: "Warehouse Hero delivery proof not found" }); await db.delete(warehouseDeliveryProofs).where(eq(warehouseDeliveryProofs.id, input.id)); await addAuditEvent({ actorId: ctx.user.id, action: "warehouse_hero.delivery_proof_removed", entityType: "warehouseDeliveryProof", entityId: input.id, metadata: JSON.stringify({ warehouseHeroId: proof.warehouseHeroId, storageKey: proof.storageKey, sizeBytes: proof.sizeBytes, cleanup: "reference_removed" }) }); return { success: true as const, bytesUnlinked: proof.sizeBytes }; }),
+    removeSurgeryDeliveryProof: adminOnly.input(z.object({ id: z.number().int().positive() })).mutation(async ({ input, ctx }) => { const db = await getDb(); if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database is not available" }); const proof = (await db.select().from(surgeryDeliveryProofs).where(eq(surgeryDeliveryProofs.id, input.id)).limit(1))[0]; if (!proof) throw new TRPCError({ code: "NOT_FOUND", message: "Surgery patient-sheet proof not found" }); await db.delete(surgeryDeliveryProofs).where(eq(surgeryDeliveryProofs.id, input.id)); await addAuditEvent({ actorId: ctx.user.id, action: "surgery.delivery_proof_removed", entityType: "surgery", entityId: proof.surgeryId, metadata: JSON.stringify({ proofId: proof.id, storageKey: proof.storageKey, originalName: proof.originalName, sizeBytes: proof.sizeBytes, cleanup: "reference_removed" }) }); return { success: true as const, bytesUnlinked: proof.sizeBytes }; }),
     implantCatalogue: adminOnly.query(async () => listImplantCatalogue(true)),
     addImplantCatalogueItem: adminOnly.input(z.object({ name: z.string().trim().min(2).max(220), manufacturer: z.string().trim().max(180).optional(), productCode: z.string().trim().max(160).optional(), description: z.string().trim().max(2000).optional() })).mutation(async ({ input, ctx }) => { const result = await createImplantCatalogueItem({ name: input.name, manufacturer: input.manufacturer || null, productCode: input.productCode || null, description: input.description || null, createdBy: ctx.user.id }); await addAuditEvent({ actorId: ctx.user.id, action: "implant_catalogue.created", entityType: "implantCatalogue", entityId: result?.id }); return result; }),
     managerAssignments: adminOnly.query(async () => listManagerAssignments()),

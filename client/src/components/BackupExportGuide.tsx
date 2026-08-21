@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckCircle2, FolderOpen, HardDriveUpload, ShieldCheck } from "lucide-react";
+import { CheckCircle2, FileX2, FolderOpen, HardDriveUpload, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { GOOGLE_DRIVE_FFM_BACKUPS_FOLDER_URL } from "@/lib/backupAccess";
@@ -16,6 +16,7 @@ export function BackupExportGuide() {
   return <>
     <Button className="blueprint-button" onClick={() => setOpen(true)}><HardDriveUpload size={16}/> Backup FFM data</Button>
     <Button variant="destructive" onClick={() => setOpen(true)}>Restore FFM backup</Button>
+    <Button variant="outline" onClick={() => window.location.assign("/evidence-cleanup")}><FileX2 size={16}/> Evidence cleanup</Button>
     <Button variant="outline" onClick={() => openExternal(GOOGLE_DRIVE_FFM_BACKUPS_FOLDER_URL)}><FolderOpen size={16}/> Open FFM Backups folder</Button>
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-2xl border-blue-400/40 bg-slate-950 text-slate-100">

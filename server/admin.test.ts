@@ -392,4 +392,29 @@ describe("admin access control", () => {
     await expect(caller.admin.setRole({ id: 0, role: "manager" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
     await expect(caller.admin.removeUser({ id: 0 })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
+
+  it("allows only the Administrator to remove a Warehouse Hero delivery proof and keeps an audit record", async () => {
+    const admin = appRouter.createCaller(contextFor({ ...baseUser, id: 91, role: "admin", email: "dr.seleam@gmail.com" }));
+    vi.spyOn(db, "getWarehouseDeliveryProofById").mockResolvedValue({ id: 501, warehouseHeroId: 72, storageKey: "warehouse-delivery-proofs/72/proof.jpg", sizeBytes: 2200 } as never);
+    vi.spyOn(db, "removeWarehouseDeliveryProof").mockResolvedValue({ success: true } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+
+    await expect(admin.evidenceCleanup.removeWarehouseDeliveryProof({ id: 501 })).resolves.toEqual({ success: true, bytesUnlinked: 2200 });
+    expect(db.removeWarehouseDeliveryProof).toHaveBeenCalledWith(501);
+    expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "warehouse_hero.delivery_proof_removed", entityId: 501 }));
+
+    const nonAdmin = appRouter.createCaller(contextFor(baseUser));
+    await expect(nonAdmin.evidenceCleanup.removeWarehouseDeliveryProof({ id: 501 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("allows the Administrator to remove a patient-sheet proof and records the surgery-scoped audit event", async () => {
+    const admin = appRouter.createCaller(contextFor({ ...baseUser, id: 91, role: "admin", email: "dr.seleam@gmail.com" }));
+    vi.spyOn(db, "getSurgeryDeliveryProofById").mockResolvedValue({ id: 601, surgeryId: 124, storageKey: "surgery-delivery-proofs/124/patient-sheet.pdf", originalName: "patient-sheet.pdf", sizeBytes: 3400 } as never);
+    vi.spyOn(db, "removeSurgeryDeliveryProof").mockResolvedValue({ success: true } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+
+    await expect(admin.evidenceCleanup.removeSurgeryDeliveryProof({ id: 601 })).resolves.toEqual({ success: true, bytesUnlinked: 3400 });
+    expect(db.removeSurgeryDeliveryProof).toHaveBeenCalledWith(601);
+    expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "surgery.delivery_proof_removed", entityId: 124 }));
+  });
 });
