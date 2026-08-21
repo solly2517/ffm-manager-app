@@ -345,3 +345,5 @@
 - [x] Add an Administrator-only Backup Data button that opens the official point-in-time FFM website backup process with clear snapshot guidance
 - [x] Configure the Administrator backup workflow to save the official FFM export directly to Google Drive for dr.seleam@gmail.com — created and verified the FFM Backups folder; the official export still requires Google Drive destination selection in the external backup portal
 - [x] Improve the Administrator backup handoff so FFM presents a clear in-app guided export flow before the required official authorization page opens
+- [ ] Replace the unavailable Manus data-separation export handoff with an Administrator-triggered FFM application backup archive uploaded to the verified Google Drive destination
+- [ ] Guide the Administrator through creating Google OAuth application credentials for the automated FFM backup integration

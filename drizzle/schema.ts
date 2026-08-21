@@ -265,6 +265,28 @@ export const weeklyBackupReminderSchedules = mysqlTable("weeklyBackupReminderSch
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({ taskUidIdx: index("weekly_backup_reminder_task_uid_idx").on(table.scheduleCronTaskUid) }));
 
+export const googleDriveBackupConnections = mysqlTable("googleDriveBackupConnections", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  googleEmail: varchar("googleEmail", { length: 320 }),
+  folderId: varchar("folderId", { length: 160 }).notNull(),
+  encryptedRefreshToken: text("encryptedRefreshToken").notNull(),
+  connectedAt: timestamp("connectedAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({ userIdx: index("google_drive_backup_connection_user_idx").on(table.userId) }));
+
+export const backupArchives = mysqlTable("backupArchives", {
+  id: int("id").autoincrement().primaryKey(),
+  createdBy: int("createdBy").notNull(),
+  googleDriveFileId: varchar("googleDriveFileId", { length: 160 }),
+  fileName: varchar("fileName", { length: 300 }).notNull(),
+  sizeBytes: int("sizeBytes"),
+  status: mysqlEnum("status", ["running", "completed", "failed"]).default("running").notNull(),
+  errorMessage: text("errorMessage"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  completedAt: timestamp("completedAt"),
+}, (table) => ({ creatorIdx: index("backup_archive_creator_idx").on(table.createdBy), createdIdx: index("backup_archive_created_idx").on(table.createdAt) }));
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type Invitation = typeof invitations.$inferSelect;

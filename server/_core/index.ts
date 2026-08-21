@@ -10,6 +10,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { sdk } from "./sdk";
 import { runWeeklyBackupReminder } from "../backupReminder";
+import { registerGoogleDriveBackupOAuthRoutes } from "../googleDriveBackupOAuth";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -38,6 +39,7 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
   registerOAuthRoutes(app);
+  registerGoogleDriveBackupOAuthRoutes(app);
   app.post("/api/scheduled/weekly-backup-reminder", async (req, res) => {
     try {
       const user = await sdk.authenticateRequest(req);
