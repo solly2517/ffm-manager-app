@@ -339,3 +339,5 @@
 - [x] Restore independent sidebar scrolling and keyboard-accessible navigation so all workspace links remain reachable at short desktop and mobile viewport heights
 - [x] Mark recipient messages as read when the Messages workspace is opened and immediately clear the unread sidebar badge
 - [x] Resolve the Delegate-specific direct-message unread badge regression after message viewing
+- [x] Verify recipient-only direct-message read acknowledgement for Manager and Warehouse Hero sessions
+- [x] Add a Warehouse Hero Messages workspace that uses the shared recipient-only read acknowledgement flow

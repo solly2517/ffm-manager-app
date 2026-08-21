@@ -64,6 +64,17 @@ describe("expanded FFM permissions", () => {
     expect(markMessages).toHaveBeenCalledWith(999999);
   });
 
+  it("allows Managers and Warehouse Heroes to acknowledge only their own recipient messages", async () => {
+    const markMessages = vi.spyOn(db, "markMessagesRead").mockResolvedValue({ updated: 1 });
+    const manager = appRouter.createCaller(createContext("manager"));
+    const warehouseHeroContext = createContext("user");
+    const warehouseHero = appRouter.createCaller({ ...warehouseHeroContext, user: { ...warehouseHeroContext.user!, role: "warehouse_hero" } });
+    await expect(manager.operations.markMessagesRead()).resolves.toEqual({ updated: 1 });
+    await expect(warehouseHero.operations.markMessagesRead()).resolves.toEqual({ updated: 1 });
+    expect(markMessages).toHaveBeenNthCalledWith(1, 999999);
+    expect(markMessages).toHaveBeenNthCalledWith(2, 999999);
+  });
+
   it("rejects invalid invitation tokens", async () => {
     const caller = appRouter.createCaller(createContext("user"));
     await expect(caller.invitations.preview({ token: "x".repeat(64) })).rejects.toMatchObject({ code: "NOT_FOUND" });
