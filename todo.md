@@ -336,3 +336,4 @@
 - [x] Expose notification badges and unread-state controls in the relevant FFM workspaces
 - [x] Add regression coverage for notification recipients, timeline audit details, and clinical role boundaries
 - [x] Verify and publish role-based notifications and surgery activity timeline
+- [x] Restore independent sidebar scrolling and keyboard-accessible navigation so all workspace links remain reachable at short desktop and mobile viewport heights

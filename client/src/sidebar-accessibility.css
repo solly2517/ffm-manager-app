@@ -1,0 +1,45 @@
+/* Keep the profile area visible while the FFM workspace list scrolls independently. */
+.manager-sidebar {
+  height: 100dvh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+.manager-sidebar nav {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 14px;
+  scrollbar-gutter: stable;
+  scrollbar-color: #4d95dc rgba(7, 24, 50, 0.72);
+  -webkit-overflow-scrolling: touch;
+}
+
+.manager-sidebar nav::-webkit-scrollbar {
+  width: 10px;
+}
+
+.manager-sidebar nav::-webkit-scrollbar-track {
+  background: rgba(7, 24, 50, 0.72);
+}
+
+.manager-sidebar nav::-webkit-scrollbar-thumb {
+  background: #376fae;
+  border: 2px solid rgba(7, 24, 50, 0.72);
+  border-radius: 999px;
+}
+
+.manager-sidebar nav::-webkit-scrollbar-thumb:hover {
+  background: #5fc4ff;
+}
+
+.sidebar-user {
+  flex: 0 0 auto;
+}
+
+.sidebar-link:focus-visible {
+  outline: 2px solid #7ed4ff;
+  outline-offset: 2px;
+  color: #fff;
+}

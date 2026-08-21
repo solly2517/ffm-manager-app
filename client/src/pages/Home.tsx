@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { WarehouseHeroesWorkspace } from "@/pages/WarehouseHeroesWorkspace";
 import SurgeryCalendar from "@/pages/SurgeryCalendar";
 import AdminDiagnostics from "@/pages/AdminDiagnostics";
 import SurgeryReadiness from "@/pages/SurgeryReadiness";
+import { getSidebarTargetIndex } from "@/lib/sidebarNavigation";
 import { Users, Map, ClipboardList, MessageSquare, BarChart3, Globe2, Activity, AlertTriangle, Plus, LogOut, ShieldCheck, Search, Menu, X, Send, UserPlus, Truck, type LucideIcon } from "lucide-react";
 
 const nav = [
@@ -95,6 +96,7 @@ export default function Home() {
   const [profileNotice, setProfileNotice] = useState("");
   const [showWelcome, setShowWelcome] = useState(() => localStorage.getItem("ffm-manager-onboarding") !== "1");
   const isAdmin = user?.role === "admin" || user?.email?.toLowerCase() === "dr.seleam@gmail.com";
+  const visibleNav = useMemo(() => nav.filter((item) => (item.id !== "admin" && item.id !== "diagnostics") || isAdmin), [isAdmin]);
   useEffect(() => { setProfileName(user?.name || ""); }, [user?.name]);
   useEffect(() => { if (!isAdmin && (active === "admin" || active === "diagnostics")) setActive("dashboard"); }, [active, isAdmin]);
   const usersQuery = trpc.admin.users.useQuery(undefined, { enabled: isAdmin && active === "admin" });
@@ -178,6 +180,14 @@ export default function Home() {
   const downloadSurgeryReport = async () => { const result = await surgeryReportQuery.refetch(); if (result.data) { downloadSurgeryReportWorkbook(result.data); setReportNotice("Surgery detail Excel file downloaded."); } else setReportNotice("Unable to prepare the surgery report. Please retry."); };
   const downloadImplantReport = async () => { const result = await surgeryReportQuery.refetch(); if (result.data) { downloadImplantReportWorkbook(result.data); setReportNotice("Implant detail Excel file downloaded."); } else setReportNotice("Unable to prepare the implant detail report. Please retry."); };
   const copyInviteLink = async () => { if (!inviteUrl) return; try { if (navigator.clipboard?.writeText) { await navigator.clipboard.writeText(inviteUrl); } else { const field = document.createElement("textarea"); field.value = inviteUrl; field.setAttribute("readonly", ""); field.style.position = "fixed"; field.style.opacity = "0"; document.body.appendChild(field); field.select(); const copied = document.execCommand("copy"); field.remove(); if (!copied) throw new Error("Clipboard permission was denied"); } setCopyNotice("Invite link copied."); } catch { setCopyNotice("Copy was blocked. Select the link and copy it manually."); } };
+  const handleSidebarKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    const links = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>("button.sidebar-link"));
+    const targetIndex = getSidebarTargetIndex(links.indexOf(document.activeElement as HTMLButtonElement), links.length, event.key);
+    if (targetIndex === null) return;
+    event.preventDefault();
+    links[targetIndex]?.focus();
+    links[targetIndex]?.scrollIntoView({ block: "nearest" });
+  };
   const liveStats = stats.map((item) => item.label === "Active Delegates" ? { ...item, value: delegatesQuery.isLoading ? "—" : String(delegatesQuery.data?.length ?? 0), detail: delegatesQuery.isLoading ? "Syncing database" : "Assigned live delegates" } : item.label === "Visits Today" ? { ...item, value: tasksQuery.isLoading ? "—" : String(tasksQuery.data?.length ?? 0), detail: tasksQuery.isLoading ? "Syncing database" : "Live task records" } : item.label === "Pending Tasks" ? { ...item, value: tasksQuery.isLoading ? "—" : String(tasksQuery.data?.filter((task) => task.status === "pending").length ?? 0), detail: tasksQuery.isLoading ? "Syncing database" : "Live pending tasks" } : item.label === "Coverage" ? { ...item, value: clientsQuery.isLoading ? "—" : String(clientsQuery.data?.length ?? 0), detail: clientsQuery.isLoading ? "Syncing database" : "Live client records" } : item);
 
   if (loading) return <div className="blueprint-page"><div className="blueprint-loader">Loading FFM Manager…</div></div>;
@@ -194,7 +204,7 @@ export default function Home() {
       <div className="brand-lockup"><div className="logo-mark small">FFM</div><div><strong>FFM Manager</strong><span>Control Panel</span></div><button className="mobile-close" onClick={() => setMobileOpen(false)}><X size={18}/></button></div>
       <div className="sidebar-rule" />
       <p className="sidebar-kicker">Operations</p>
-      <nav>{nav.filter((item) => (item.id !== "admin" && item.id !== "diagnostics") || isAdmin).map((item) => { const Icon = item.icon; return <button key={item.id} className={`sidebar-link ${active === item.id ? "active" : ""}`} onClick={() => { setActive(item.id); setMobileOpen(false); }}><Icon size={17}/><span>{item.label}</span>{item.id === "messages" && messagesQuery.data && unreadMessageCount > 0 ? <b>{unreadMessageCount}</b> : null}</button>; })}</nav>
+      <nav aria-label="FFM workspace navigation" onKeyDown={handleSidebarKeyDown}>{visibleNav.map((item) => { const Icon = item.icon; return <button key={item.id} className={`sidebar-link ${active === item.id ? "active" : ""}`} onClick={() => { setActive(item.id); setMobileOpen(false); }}><Icon size={17}/><span>{item.label}</span>{item.id === "messages" && messagesQuery.data && unreadMessageCount > 0 ? <b>{unreadMessageCount}</b> : null}</button>; })}</nav>
       <div className="sidebar-user"><div className="avatar">{initials(user?.name || user?.email || "FFM")}</div><div className="user-copy"><strong>{user?.name || "Authenticated user"}</strong><span>{isAdmin ? "Administrator" : user?.email || "Delegate"}</span></div><button className="logout-icon" onClick={() => logout()} title="Sign out"><LogOut size={16}/></button></div>
     </aside>
     {mobileOpen && <button className="sidebar-scrim" onClick={() => setMobileOpen(false)} aria-label="Close navigation"/>}
