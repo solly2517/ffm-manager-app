@@ -372,3 +372,5 @@
 - [x] Change Delegate Work Log weeks to Saturday through Thursday, with Friday as the only weekend day
 - [x] Create or refresh a secure Delegate invitation for e.alhasby@altamammed.com
 - [x] Fix direct FFM invitation activation for e.alhasby@altamammed.com so no external verification code is required
+- [x] Restore Delegate ability to message all appropriate FFM team members
+- [x] Ensure the Delegate activation link opens directly on a phone without external verification-code sign-in
