@@ -358,3 +358,4 @@
 - [x] Ensure Delegates are routed to a distinct Delegate-only dashboard without Manager workspaces
 - [x] Add Delegate-authored weekly visit plans with Manager review inside FFM
 - [x] Add Delegate-authored daily activity reports with Manager review inside FFM, without Delegate report exports
+- [x] Add database-backed hospital/client and linked doctor selections to Delegate weekly plans and daily reports

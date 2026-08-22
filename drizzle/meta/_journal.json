@@ -134,6 +134,13 @@
       "when": 1787385231411,
       "tag": "0018_curved_gunslinger",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1787385920584,
+      "tag": "0019_heavy_roland_deschain",
+      "breakpoints": true
     }
   ]
 }
