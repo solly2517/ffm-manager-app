@@ -13,6 +13,10 @@ export function scheduleIsComplete(schedule: ScheduledClinicalVisit[]) {
   return schedule.length === 6 && schedule.every((visit) => Boolean(visit.date && visit.clientId && visit.doctorId));
 }
 
+export function hasAtLeastHospitals(schedule: ScheduledClinicalVisit[], minimum = 3) {
+  return new Set(schedule.map((visit) => visit.clientId).filter(Boolean)).size >= minimum;
+}
+
 export function scheduleAsText(schedule: ScheduledClinicalVisit[], clientName: (id: string) => string, doctorName: (id: string) => string) {
   return schedule.map((visit) => `${visit.date} — ${clientName(visit.clientId)} — ${doctorName(visit.doctorId)}`).join("\n");
 }

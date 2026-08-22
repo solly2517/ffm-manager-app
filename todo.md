@@ -363,3 +363,5 @@
 - [x] Add a direct one-click Delegate GPS activation control inside the app
 - [x] Replace single-entry weekly plans with six daily hospital-and-linked-doctor visit selections
 - [x] Diagnose and fix Delegate weekly-plan and daily-report submissions that do not save after completed entry
+- [x] Move Delegate GPS activation into the normal mobile interface and remove the overlay covering bottom navigation
+- [x] Support at least three hospital entries with multiple linked doctors in each Delegate weekly plan and daily report
