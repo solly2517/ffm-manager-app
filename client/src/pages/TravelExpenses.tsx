@@ -8,9 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, CheckCircle2, ClipboardList, CircleDollarSign, Loader2, Plus, Printer, Send, Trash2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ClipboardList, CircleDollarSign, Download, FileSpreadsheet, Loader2, Plus, Printer, Send, Trash2 } from "lucide-react";
 import { calculateTravelExpenseClaimTotal, calculateTravelExpenseLineTotal } from "@/lib/travelExpenseCalculations";
 import { buildTravelExpensePrintDocument, type PrintableTravelExpenseClaim } from "@/lib/travelExpensePrint";
+import { downloadTravelExpenseAccountingWorkbook, downloadTravelExpenseClaimsCsv } from "@/lib/travelExpenseExport";
 
 type TransportMode = "car" | "plane" | "car_and_plane" | "other";
 type ExpenseCategory = "hotel" | "car_taxi" | "fuel_invoice" | "maintenance" | "food" | "air_ticket" | "others";
@@ -45,6 +46,8 @@ export default function TravelExpenses() {
   const [managerApproverId, setManagerApproverId] = useState<number | null>(null);
   const [segments, setSegments] = useState<TripSegment[]>([blankSegment()]);
   const [lines, setLines] = useState<ExpenseLine[]>([blankLine()]);
+  const [accountingMonth, setAccountingMonth] = useState(() => new Date().toISOString().slice(0, 7));
+  const monthlyAccountingExport = trpc.travelExpenses.monthlyAccountingExport.useQuery({ month: accountingMonth }, { enabled: false });
 
   useEffect(() => {
     if (!managerApproverId && approversQuery.data?.[0]) setManagerApproverId(approversQuery.data[0].id);
@@ -59,6 +62,13 @@ export default function TravelExpenses() {
     printWindow.document.close();
     printWindow.focus();
     window.setTimeout(() => printWindow.print(), 250);
+  };
+  const downloadMonthlyAccounting = async (format: "xlsx" | "csv") => {
+    const result = await monthlyAccountingExport.refetch();
+    if (!result.data) { setNotice("Unable to prepare the monthly accounting export. Please retry."); return; }
+    if (format === "xlsx") downloadTravelExpenseAccountingWorkbook(result.data, accountingMonth);
+    else downloadTravelExpenseClaimsCsv(result.data, accountingMonth);
+    setNotice(`${format === "xlsx" ? "Excel" : "CSV"} accounting export downloaded for ${accountingMonth}.`);
   };
   const refresh = async () => { await Promise.all([utils.travelExpenses.claims.invalidate(), utils.travelExpenses.managerApprovers.invalidate()]); };
   const submit = trpc.travelExpenses.submit.useMutation({
@@ -85,6 +95,7 @@ export default function TravelExpenses() {
   if (!isAuthenticated) return <div className="blueprint-page login-view"><Card className="login-card blueprint-card"><div className="logo-mark">FFM</div><p className="eyebrow">FINANCE WORKFLOW</p><h1>Travel Expenses</h1><p className="muted">Sign in to submit and track your FFM travel claims.</p><Button className="w-full mt-6 blueprint-button" onClick={() => startLogin()}>Sign in securely</Button></Card></div>;
 
   const isOperationalManager = user?.email?.trim().toLowerCase() === operationalEmail;
+  const isAccountingExporter = isOperationalManager || user?.role === "admin";
   const currentUserId = user?.id;
   const claims = claimsQuery.data ?? [];
 
@@ -99,7 +110,8 @@ export default function TravelExpenses() {
       <header className="manager-topbar"><div><p className="topbar-kicker">FFM / FINANCE WORKFLOW</p><h2>Travel Expenses</h2></div><div className="topbar-actions"><div className="live-indicator"><span /> Secure approval trail</div></div></header>
       <section className="manager-content space-y-6">
         <div className="page-intro"><div><p className="eyebrow">Travel expense sheet</p><h1>Submit a clear claim. Track the approval. Record the release.</h1><p className="muted">Every FFM member can submit their own travel expenses. A claim stays pending until the claimant’s Manager and the designated Operational Manager approve it. The release date is recorded automatically when the released amount is confirmed.</p></div></div>
-        {notice && <div className={/submitted|recorded|released/i.test(notice) ? "admin-feedback success" : "admin-feedback error"}>{notice}</div>}
+        {notice && <div className={/submitted|recorded|released|downloaded/i.test(notice) ? "admin-feedback success" : "admin-feedback error"}>{notice}</div>}
+        {isAccountingExporter && <Card className="blueprint-card"><CardHeader><CardTitle className="flex items-center gap-2"><FileSpreadsheet size={20} /> Monthly accounting export</CardTitle><p className="muted">Download the selected month’s Travel Expense claim summary and detailed expense lines. Excel contains separate claims and expense-line sheets; CSV contains the claim summary.</p></CardHeader><CardContent className="flex flex-wrap items-end gap-3"><div className="space-y-2"><Label htmlFor="accounting-month">Claim month</Label><Input id="accounting-month" type="month" value={accountingMonth} onChange={event => setAccountingMonth(event.target.value)} /></div><Button className="blueprint-button" disabled={monthlyAccountingExport.isFetching} onClick={() => downloadMonthlyAccounting("xlsx")}><FileSpreadsheet size={16} /> {monthlyAccountingExport.isFetching ? "Preparing…" : "Download Excel"}</Button><Button variant="outline" disabled={monthlyAccountingExport.isFetching} onClick={() => downloadMonthlyAccounting("csv")}><Download size={16} /> Download CSV</Button></CardContent></Card>}
         <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.25fr)_minmax(380px,0.75fr)]">
           <Card className="blueprint-card"><CardHeader><CardTitle className="flex items-center gap-2"><CircleDollarSign size={20} /> New travel claim</CardTitle><p className="muted">Fields follow the attached FFM Travel Expense sheet. Totals are recalculated securely by FFM when submitted.</p></CardHeader><CardContent className="space-y-7">
             <section className="grid gap-4 md:grid-cols-2"><div className="space-y-2"><Label htmlFor="claim-date">Date</Label><Input id="claim-date" type="date" value={claimDate} onChange={event => setClaimDate(event.target.value)} /></div><div className="space-y-2"><Label htmlFor="manager-approver">Manager approver</Label><select id="manager-approver" className="ffm-select" value={managerApproverId ?? ""} onChange={event => setManagerApproverId(Number(event.target.value))}><option value="" disabled>Select Manager</option>{(approversQuery.data ?? []).map(approver => <option key={approver.id} value={approver.id}>{approver.name || approver.email}</option>)}</select>{approversQuery.isLoading && <small className="muted">Loading the permitted approver…</small>}{!approversQuery.isLoading && !approversQuery.data?.length && <small className="text-amber-300">No permitted Manager approver is available. Ask the Administrator to confirm your assignment.</small>}</div><div className="space-y-2"><Label htmlFor="department">Department</Label><Input id="department" value={department} onChange={event => setDepartment(event.target.value)} placeholder="e.g. Clinical" /></div><div className="space-y-2"><Label htmlFor="job-nature">Job nature</Label><Input id="job-nature" value={jobNature} onChange={event => setJobNature(event.target.value)} placeholder="e.g. Hospital follow-up" /></div><div className="space-y-2"><Label htmlFor="transport-mode">Primary transportation</Label><select id="transport-mode" className="ffm-select" value={transportMode} onChange={event => setTransportMode(event.target.value as TransportMode)}>{Object.entries(transportLabels).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></div><div className="space-y-2"><Label htmlFor="estimated-days">Estimated number of days</Label><Input id="estimated-days" min={1} max={365} type="number" value={estimatedDays} onChange={event => setEstimatedDays(Math.max(1, Number(event.target.value)))} /></div><div className="space-y-2"><Label htmlFor="ticket-reference">Ticket reference</Label><Input id="ticket-reference" value={ticketReference} onChange={event => setTicketReference(event.target.value)} placeholder="Optional ticket / booking reference" /></div><div className="space-y-2"><Label htmlFor="currency">Currency</Label><Input id="currency" maxLength={3} value={currency} onChange={event => setCurrency(event.target.value.toUpperCase())} placeholder="SAR" /></div></section>

@@ -157,6 +157,7 @@ import {
   parseWeeklySchedule,
   weeklyPlanValidationError,
 } from "../shared/workLogRules";
+import { overdueWorkLogSummary } from "../shared/workLogOverdue";
 
 const ADMIN_EMAIL = "dr.seleam@gmail.com";
 const OPERATIONAL_MANAGER_EMAIL = "amreslam@altamammed.com";
@@ -443,6 +444,15 @@ export const appRouter = router({
           ? listAllDailyActivityReports()
         : listDailyActivityReportsForManager(ctx.user.id)
     ),
+    overdueSummary: managerOnly.query(async ({ ctx }) => {
+      const allAccess = isAdmin(ctx.user);
+      const [delegates, weeklyPlans, dailyReports] = await Promise.all([
+        allAccess ? listDelegates() : listDelegatesForManager(ctx.user.id),
+        allAccess ? listAllWeeklyVisitPlans() : listWeeklyVisitPlansForManager(ctx.user.id),
+        allAccess ? listAllDailyActivityReports() : listDailyActivityReportsForManager(ctx.user.id),
+      ]);
+      return overdueWorkLogSummary({ delegates, weeklyPlans, dailyReports });
+    }),
     submitWeeklyPlan: fieldUserOnly
       .input(
         z.object({
@@ -710,6 +720,22 @@ export const appRouter = router({
         );
       return claims.filter(claim => claim.claimantId === ctx.user.id);
     }),
+    monthlyAccountingExport: protectedProcedure
+      .input(z.object({ month: z.string().regex(/^\d{4}-\d{2}$/) }))
+      .query(async ({ ctx, input }) => {
+        const isOperationalManager = ctx.user.email?.trim().toLowerCase() === OPERATIONAL_MANAGER_EMAIL;
+        if (!isAdmin(ctx.user) && !isOperationalManager)
+          throw new TRPCError({ code: "FORBIDDEN", message: "Monthly Travel Expense accounting export is restricted to Finance administration." });
+        const [year, month] = input.month.split("-").map(Number);
+        const start = new Date(Date.UTC(year, month - 1, 1));
+        const end = new Date(Date.UTC(year, month, 1));
+        const claims = (await listTravelExpenseClaims()).filter(claim => {
+          const date = new Date(claim.claimDate);
+          return date >= start && date < end;
+        });
+        await addAuditEvent({ actorId: ctx.user.id, action: "travel_expense.monthly_exported", entityType: "travelExpenseClaim", metadata: JSON.stringify({ month: input.month, claimCount: claims.length }) });
+        return claims;
+      }),
     managerApprovers: protectedProcedure.query(async ({ ctx }) => {
       const people = await listUsers();
       const managers = people.filter(

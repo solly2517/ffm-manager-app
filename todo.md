@@ -382,3 +382,6 @@
 - [x] Add dual approval by each claimant's Manager and amreslam@altamammed.com, then controlled release with automatic release date
 - [x] Add printable and browser PDF-ready Travel Expense claim output with complete claim, line, approval, and release details
 - [x] Allow both Managers and Administrators to open and author Work Log weekly plans and daily reports while retaining assignment-scoped Delegate review
+- [x] Package the FFM travel, approval, printable-claim, and Work Log workflow as a reusable skill
+- [x] Add a Manager dashboard widget for assigned Delegates with overdue weekly plans and daily reports
+- [x] Add a monthly Travel Expense claims export in Excel and CSV formats for accounting
