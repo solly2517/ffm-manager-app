@@ -359,3 +359,4 @@
 - [x] Add Delegate-authored weekly visit plans with Manager review inside FFM
 - [x] Add Delegate-authored daily activity reports with Manager review inside FFM, without Delegate report exports
 - [x] Add database-backed hospital/client and linked doctor selections to Delegate weekly plans and daily reports
+- [x] Fix Android Delegate GPS activation so live location permission can be requested and confirmed reliably
