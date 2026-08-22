@@ -56,6 +56,7 @@ describe("admin access control", () => {
     const heroCaller = appRouter.createCaller(contextFor({ ...baseUser, id: 89, role: "warehouse_hero", email: "hero@example.com" }));
     await expect(heroCaller.operations.submitVisitPlan({ clientId: 5, proposedAt: new Date("2026-09-01") })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(heroCaller.operations.addSurgery({ clientId: 5, surgeryDate: new Date("2026-09-01"), procedureName: "Knee replacement" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(heroCaller.operations.addSurgeryImplant({ surgeryId: 61, implantName: "Cortical screw", quantity: 1, unitPrice: 25, currency: "SAR" })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(heroCaller.operations.updateSurgery({ id: 61, status: "collected" })).rejects.toMatchObject({ code: "FORBIDDEN" });
 
     vi.spyOn(db, "getSurgeryById").mockResolvedValue({ id: 61, delegateId: 7, status: "pending" } as never);
@@ -256,6 +257,21 @@ describe("admin access control", () => {
     const manager = appRouter.createCaller(contextFor({ ...baseUser, id: 74, role: "manager" as const, email: "manager@example.com" }));
     await expect(manager.operations.addSurgeryImplant({ surgeryId: 123, implantCatalogueId: 8, quantity: 1, unitPrice: 1250.5, currency: "sar", lotNumber: "LOT-9" })).resolves.toMatchObject({ id: 10, implantName: "Femoral stem" });
     expect(db.createSurgeryImplant).toHaveBeenCalledWith(expect.objectContaining({ surgeryId: 123, implantCatalogueId: 8, implantName: "Femoral stem", unitPrice: "1250.50", currency: "SAR", registeredBy: 74, lotNumber: "LOT-9" }));
+  });
+
+  it("allows clinical users to register multiple separate implant lines for one surgery", async () => {
+    const surgery = { id: 124, delegateId: 75, surgeryDate: new Date("2026-09-01"), calendarStatus: "confirmed" };
+    vi.spyOn(db, "getSurgeryById").mockResolvedValue(surgery as never);
+    vi.spyOn(db, "listDelegateIdsForManager").mockResolvedValue([75]);
+    vi.spyOn(db, "getImplantCatalogueItem").mockImplementation(async (id) => ({ id, name: id === 18 ? "Locking plate" : "Cancellous screw", isActive: true }) as never);
+    vi.spyOn(db, "createSurgeryImplant").mockImplementation(async (input) => ({ id: input.implantCatalogueId === 18 ? 18 : 19, surgeryId: input.surgeryId, implantName: input.implantName, quantity: input.quantity }) as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const manager = appRouter.createCaller(contextFor({ ...baseUser, id: 74, role: "manager" as const, email: "manager@example.com" }));
+    await expect(manager.operations.addSurgeryImplant({ surgeryId: 124, implantCatalogueId: 18, quantity: 1, unitPrice: 1200, currency: "SAR" })).resolves.toMatchObject({ surgeryId: 124 });
+    await expect(manager.operations.addSurgeryImplant({ surgeryId: 124, implantCatalogueId: 19, quantity: 6, unitPrice: 55, currency: "SAR" })).resolves.toMatchObject({ surgeryId: 124 });
+    expect(db.createSurgeryImplant).toHaveBeenCalledTimes(2);
+    expect(db.createSurgeryImplant).toHaveBeenNthCalledWith(1, expect.objectContaining({ surgeryId: 124, implantName: "Locking plate", quantity: 1 }));
+    expect(db.createSurgeryImplant).toHaveBeenNthCalledWith(2, expect.objectContaining({ surgeryId: 124, implantName: "Cancellous screw", quantity: 6 }));
   });
 
   it("calculates surgery implant totals separately for each recorded currency", () => {

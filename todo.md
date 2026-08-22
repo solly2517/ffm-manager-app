@@ -376,3 +376,4 @@
 - [x] Ensure the Delegate activation link opens directly on a phone without external verification-code sign-in
 - [x] Allow Delegates to add hospitals/clients and linked doctors from their FFM workspace
 - [x] Enable Delegates to create surgeries and register the implants used in their own surgery records
+- [x] Support an unrestricted number of separate implant entries per surgery for Administrators, Managers, and Delegates, while excluding Warehouse Heroes
