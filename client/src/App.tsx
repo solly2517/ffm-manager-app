@@ -15,6 +15,8 @@ import WarehouseHero from "@/pages/WarehouseHero";
 import SurgeryCalendar from "@/pages/SurgeryCalendar";
 import AdminDiagnostics from "@/pages/AdminDiagnostics";
 import SurgeryReadiness from "@/pages/SurgeryReadiness";
+import DelegateWorkLog from "@/pages/DelegateWorkLog";
+import { WorkLogLauncher } from "@/components/WorkLogLauncher";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -28,6 +30,7 @@ function Router() {
       <Route path="/surgery-calendar" component={SurgeryCalendar} />
       <Route path="/admin-diagnostics" component={AdminDiagnostics} />
       <Route path="/surgery-readiness" component={SurgeryReadiness} />
+      <Route path="/work-log" component={DelegateWorkLog} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
@@ -65,6 +68,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <NotificationCenter />
+          <WorkLogLauncher />
           <Router />
         </TooltipProvider>
       </ThemeProvider>

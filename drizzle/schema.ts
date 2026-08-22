@@ -238,6 +238,37 @@ export const visitPlans = mysqlTable("visitPlans", {
   reviewedAt: timestamp("reviewedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({ delegateIdx: index("visit_plans_delegate_idx").on(table.delegateId), statusIdx: index("visit_plans_status_idx").on(table.status) }));
+
+export const weeklyVisitPlans = mysqlTable("weeklyVisitPlans", {
+  id: int("id").autoincrement().primaryKey(),
+  delegateId: int("delegateId").notNull(),
+  weekOf: timestamp("weekOf").notNull(),
+  objectives: text("objectives").notNull(),
+  plannedVisits: text("plannedVisits").notNull(),
+  supportNeeded: text("supportNeeded"),
+  status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  reviewedBy: int("reviewedBy"),
+  reviewedAt: timestamp("reviewedAt"),
+  reviewNote: text("reviewNote"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({ delegateIdx: index("weekly_visit_plans_delegate_idx").on(table.delegateId), statusIdx: index("weekly_visit_plans_status_idx").on(table.status), weekIdx: index("weekly_visit_plans_week_idx").on(table.weekOf) }));
+
+export const dailyActivityReports = mysqlTable("dailyActivityReports", {
+  id: int("id").autoincrement().primaryKey(),
+  delegateId: int("delegateId").notNull(),
+  reportDate: timestamp("reportDate").notNull(),
+  summary: text("summary").notNull(),
+  outcomes: text("outcomes").notNull(),
+  challenges: text("challenges"),
+  nextActions: text("nextActions"),
+  status: mysqlEnum("status", ["submitted", "reviewed"]).default("submitted").notNull(),
+  reviewedBy: int("reviewedBy"),
+  reviewedAt: timestamp("reviewedAt"),
+  managerNote: text("managerNote"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({ delegateIdx: index("daily_activity_reports_delegate_idx").on(table.delegateId), statusIdx: index("daily_activity_reports_status_idx").on(table.status), dateIdx: index("daily_activity_reports_date_idx").on(table.reportDate) }));
 export const geography = mysqlTable("geography", {
   id: int("id").autoincrement().primaryKey(),
   kind: mysqlEnum("kind", ["province", "city"]).notNull(),

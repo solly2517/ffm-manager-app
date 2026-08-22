@@ -127,6 +127,13 @@
       "when": 1787317760757,
       "tag": "0017_freezing_cammi",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1787385231411,
+      "tag": "0018_curved_gunslinger",
+      "breakpoints": true
     }
   ]
 }
