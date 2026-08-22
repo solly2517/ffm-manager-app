@@ -3,6 +3,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { getCatalogueSearchInput } from "@/lib/implantCatalogue";
+import { selectedSurgeryIdFromSearch } from "@/lib/surgeryWorkspace";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,7 +27,7 @@ export default function SurgeryCalendar() {
   const { user, loading, isAuthenticated, logout } = useAuth();
   const utils = trpc.useUtils();
   const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(() => selectedSurgeryIdFromSearch(window.location.search));
   const [notice, setNotice] = useState("");
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleStatus, setScheduleStatus] = useState<ScheduleStatus>("notified");
@@ -74,6 +75,7 @@ export default function SurgeryCalendar() {
   const uploadProof = trpc.operations.uploadSurgeryDeliveryProof.useMutation({ onSuccess: () => { setProofNote(""); refresh("Patient-sheet delivery proof uploaded securely."); }, onError: (error) => setNotice(error.message) });
 
   useEffect(() => { if (!selected) return; setScheduleDate(localDateTime(selected.surgeryDate)); setScheduleStatus(selected.calendarStatus === "confirmed" ? "confirmed" : "notified"); setLifecycleReason(""); setRescheduledDate(""); }, [selected?.id]);
+  useEffect(() => { if (selected) setMonth(new Date(selected.surgeryDate)); }, [selected?.id]);
 
   const uploadPatientSheet = (file?: File) => {
     if (!file || !selected) return;
@@ -92,7 +94,7 @@ export default function SurgeryCalendar() {
   if (loading) return <div className="blueprint-page"><div className="blueprint-loader">Loading surgery calendar…</div></div>;
   if (!isAuthenticated) return <div className="blueprint-page login-view"><Card className="login-card blueprint-card"><div className="logo-mark">FFM</div><p className="eyebrow">SHARED SURGERY CALENDAR</p><h1>FFM Surgery Calendar</h1><p className="muted">Sign in to view the current surgery schedule.</p><Button className="w-full mt-6 blueprint-button" onClick={() => startLogin()}>Sign in securely</Button></Card></div>;
 
-  return <div className="manager-shell"><aside className="manager-sidebar"><div className="brand-lockup"><div className="logo-mark small">FFM</div><div><strong>FFM Calendar</strong><span>Surgery planning</span></div></div><div className="sidebar-rule"/><a className="sidebar-link" href="/"><ArrowLeft size={17}/><span>Back to workspace</span></a><div className="sidebar-user"><div className="avatar">{(user?.name || user?.email || "F")[0].toUpperCase()}</div><div className="user-copy"><strong>{user?.name || user?.email || "Authenticated user"}</strong><span>{user?.role?.replace("_", " ")}</span></div><button className="logout-icon" onClick={() => logout()} title="Sign out">Sign out</button></div></aside>
+  return <div className="manager-shell"><aside className="manager-sidebar"><div className="brand-lockup"><div className="logo-mark small">FFM</div><div><strong>FFM Calendar</strong><span>Surgery planning</span></div></div><div className="sidebar-rule"/><a className="sidebar-link" href={user?.role === "delegate" ? "/delegate" : "/"}><ArrowLeft size={17}/><span>Back to {user?.role === "delegate" ? "Delegate workspace" : "workspace"}</span></a><div className="sidebar-user"><div className="avatar">{(user?.name || user?.email || "F")[0].toUpperCase()}</div><div className="user-copy"><strong>{user?.name || user?.email || "Authenticated user"}</strong><span>{user?.role?.replace("_", " ")}</span></div><button className="logout-icon" onClick={() => logout()} title="Sign out">Sign out</button></div></aside>
     <main className="manager-main"><header className="manager-topbar"><div><p className="topbar-kicker">FFM / SHARED PLANNING</p><h2>Surgery calendar</h2></div><div className="live-indicator"><span/> All roles can view</div></header><section className="manager-content">
       <div className="page-intro"><div><p className="eyebrow">Day-of-surgery control</p><h1>Plan early. Resolve only on the surgery day.</h1><p className="muted">Choose from the supplied product catalogue or enter a missing implant directly. Pricing is recorded only on the surgery record.</p></div><Badge variant="outline">{calendarQuery.data?.length ?? 0} live surgeries</Badge></div>
       {notice && <div className={notice.includes("updated") || notice.includes("registered") || notice.includes("uploaded") || notice.includes("deleted") ? "admin-feedback success" : "admin-feedback error"}>{notice}</div>}

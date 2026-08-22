@@ -29,6 +29,7 @@ import {
 } from "@/lib/mobileLocation";
 import { opensWorkLog, WORK_LOG_PATH } from "@/lib/workLogNavigation";
 import { canSendTeamMessage, formatMemberRole } from "@/lib/teamMessaging";
+import { surgeryCalendarPath } from "@/lib/surgeryWorkspace";
 
 const tabs = [
   { id: "tasks", label: "My Tasks", icon: ClipboardList },
@@ -1045,6 +1046,13 @@ export default function Delegate() {
                     <option value="partial">Partial</option>
                     <option value="collected">Collected</option>
                   </select>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => window.location.assign(surgeryCalendarPath(record.id))}
+                  >
+                    Implants & details
+                  </Button>
                 </div>
               ))
             ) : (
