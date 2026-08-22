@@ -117,8 +117,10 @@ import {
   getDailyActivityReportById,
   getWeeklyVisitPlanById,
   listDailyActivityReportsForDelegate,
+  listDailyActivityReportsForAuthor,
   listDailyActivityReportsForManager,
   listWeeklyVisitPlansForDelegate,
+  listWeeklyVisitPlansForAuthor,
   listWeeklyVisitPlansForManager,
   updateDailyActivityReport,
   updateWeeklyVisitPlan,
@@ -435,7 +437,7 @@ export const appRouter = router({
         ? listDailyActivityReportsForDelegate(ctx.user.id)
         : listDailyActivityReportsForManager(ctx.user.id)
     ),
-    submitWeeklyPlan: delegateOnly
+    submitWeeklyPlan: delegateOrManagerOnly
       .input(
         z.object({
           weekOf: z.date(),
@@ -477,8 +479,10 @@ export const appRouter = router({
             });
         }
         const first = visits[0]!;
+        const managerRecord = ctx.user.role === "manager";
         const result = await createWeeklyVisitPlan({
-          delegateId: ctx.user.id,
+          authorId: ctx.user.id,
+          delegateId: managerRecord ? null : ctx.user.id,
           clientId: first.clientId,
           doctorId: first.doctorId,
           weekOf: input.weekOf,
@@ -486,10 +490,13 @@ export const appRouter = router({
           plannedVisits: input.plannedVisits,
           scheduleJson: JSON.stringify(input.schedule),
           supportNeeded: input.supportNeeded || null,
+          status: managerRecord ? "manager_recorded" : "pending",
         });
         await addAuditEvent({
           actorId: ctx.user.id,
-          action: "weekly_visit_plan.submitted",
+          action: managerRecord
+            ? "weekly_visit_plan.manager_recorded"
+            : "weekly_visit_plan.submitted",
           entityType: "weeklyVisitPlan",
           entityId: result?.id,
           metadata: JSON.stringify({
@@ -513,6 +520,11 @@ export const appRouter = router({
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Weekly visit plan not found",
+          });
+        if (existing.delegateId == null || existing.authorId === ctx.user.id)
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Manager-authored weekly plans do not require Manager review.",
           });
         const allowed = await listDelegateIdsForManager(ctx.user.id);
         if (
@@ -542,7 +554,7 @@ export const appRouter = router({
         });
         return result;
       }),
-    submitDailyReport: delegateOnly
+    submitDailyReport: delegateOrManagerOnly
       .input(
         z.object({
           reportDate: z.date(),
@@ -554,7 +566,7 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input, ctx }) => {
-        const submittedPlans = await listWeeklyVisitPlansForDelegate(
+        const submittedPlans = await listWeeklyVisitPlansForAuthor(
           ctx.user.id
         );
         const plannedHospitalIds = submittedPlans
@@ -597,6 +609,7 @@ export const appRouter = router({
             });
         }
         const first = input.visits[0]!;
+        const managerRecord = ctx.user.role === "manager";
         const visitText = input.visits
           .map(
             visit =>
@@ -604,7 +617,8 @@ export const appRouter = router({
           )
           .join("\n");
         const result = await createDailyActivityReport({
-          delegateId: ctx.user.id,
+          authorId: ctx.user.id,
+          delegateId: managerRecord ? null : ctx.user.id,
           clientId: first.clientId,
           doctorId: first.doctorId,
           reportDate: input.reportDate,
@@ -612,10 +626,13 @@ export const appRouter = router({
           outcomes: input.outcomes,
           challenges: input.challenges || null,
           nextActions: input.nextActions || null,
+          status: managerRecord ? "manager_recorded" : "submitted",
         });
         await addAuditEvent({
           actorId: ctx.user.id,
-          action: "daily_activity_report.submitted",
+          action: managerRecord
+            ? "daily_activity_report.manager_recorded"
+            : "daily_activity_report.submitted",
           entityType: "dailyActivityReport",
           entityId: result?.id,
           metadata: JSON.stringify({
@@ -638,6 +655,11 @@ export const appRouter = router({
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "Daily activity report not found",
+          });
+        if (existing.delegateId == null || existing.authorId === ctx.user.id)
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Manager-authored daily reports do not require Manager review.",
           });
         const allowed = await listDelegateIdsForManager(ctx.user.id);
         if (

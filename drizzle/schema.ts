@@ -241,7 +241,8 @@ export const visitPlans = mysqlTable("visitPlans", {
 
 export const weeklyVisitPlans = mysqlTable("weeklyVisitPlans", {
   id: int("id").autoincrement().primaryKey(),
-  delegateId: int("delegateId").notNull(),
+  authorId: int("authorId").notNull(),
+  delegateId: int("delegateId"),
   clientId: int("clientId").notNull(),
   doctorId: int("doctorId").notNull(),
   weekOf: timestamp("weekOf").notNull(),
@@ -249,17 +250,18 @@ export const weeklyVisitPlans = mysqlTable("weeklyVisitPlans", {
   plannedVisits: text("plannedVisits").notNull(),
   scheduleJson: text("scheduleJson").notNull(),
   supportNeeded: text("supportNeeded"),
-  status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  status: mysqlEnum("status", ["pending", "approved", "rejected", "manager_recorded"]).default("pending").notNull(),
   reviewedBy: int("reviewedBy"),
   reviewedAt: timestamp("reviewedAt"),
   reviewNote: text("reviewNote"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-}, (table) => ({ delegateIdx: index("weekly_visit_plans_delegate_idx").on(table.delegateId), clientIdx: index("weekly_visit_plans_client_idx").on(table.clientId), doctorIdx: index("weekly_visit_plans_doctor_idx").on(table.doctorId), statusIdx: index("weekly_visit_plans_status_idx").on(table.status), weekIdx: index("weekly_visit_plans_week_idx").on(table.weekOf) }));
+}, (table) => ({ authorIdx: index("weekly_visit_plans_author_idx").on(table.authorId), delegateIdx: index("weekly_visit_plans_delegate_idx").on(table.delegateId), clientIdx: index("weekly_visit_plans_client_idx").on(table.clientId), doctorIdx: index("weekly_visit_plans_doctor_idx").on(table.doctorId), statusIdx: index("weekly_visit_plans_status_idx").on(table.status), weekIdx: index("weekly_visit_plans_week_idx").on(table.weekOf) }));
 
 export const dailyActivityReports = mysqlTable("dailyActivityReports", {
   id: int("id").autoincrement().primaryKey(),
-  delegateId: int("delegateId").notNull(),
+  authorId: int("authorId").notNull(),
+  delegateId: int("delegateId"),
   clientId: int("clientId").notNull(),
   doctorId: int("doctorId").notNull(),
   reportDate: timestamp("reportDate").notNull(),
@@ -267,13 +269,13 @@ export const dailyActivityReports = mysqlTable("dailyActivityReports", {
   outcomes: text("outcomes").notNull(),
   challenges: text("challenges"),
   nextActions: text("nextActions"),
-  status: mysqlEnum("status", ["submitted", "reviewed"]).default("submitted").notNull(),
+  status: mysqlEnum("status", ["submitted", "reviewed", "manager_recorded"]).default("submitted").notNull(),
   reviewedBy: int("reviewedBy"),
   reviewedAt: timestamp("reviewedAt"),
   managerNote: text("managerNote"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-}, (table) => ({ delegateIdx: index("daily_activity_reports_delegate_idx").on(table.delegateId), clientIdx: index("daily_activity_reports_client_idx").on(table.clientId), doctorIdx: index("daily_activity_reports_doctor_idx").on(table.doctorId), statusIdx: index("daily_activity_reports_status_idx").on(table.status), dateIdx: index("daily_activity_reports_date_idx").on(table.reportDate) }));
+}, (table) => ({ authorIdx: index("daily_activity_reports_author_idx").on(table.authorId), delegateIdx: index("daily_activity_reports_delegate_idx").on(table.delegateId), clientIdx: index("daily_activity_reports_client_idx").on(table.clientId), doctorIdx: index("daily_activity_reports_doctor_idx").on(table.doctorId), statusIdx: index("daily_activity_reports_status_idx").on(table.status), dateIdx: index("daily_activity_reports_date_idx").on(table.reportDate) }));
 
 export const travelExpenseClaims = mysqlTable("travelExpenseClaims", {
   id: int("id").autoincrement().primaryKey(),

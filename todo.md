@@ -377,6 +377,6 @@
 - [x] Allow Delegates to add hospitals/clients and linked doctors from their FFM workspace
 - [x] Enable Delegates to create surgeries and register the implants used in their own surgery records
 - [x] Support an unrestricted number of separate implant entries per surgery for Administrators, Managers, and Delegates, while excluding Warehouse Heroes
-- [ ] Make Weekly Visits and Daily Reports clearly accessible to Managers with assignment-scoped review controls
+- [x] Make Weekly Visits and Daily Reports clearly accessible to Managers with assignment-scoped review controls
 - [x] Extract the attached Travel Expense sheet fields and implement shared expense entry for all FFM members
 - [x] Add dual approval by each claimant's Manager and amreslam@altamammed.com, then controlled release with automatic release date

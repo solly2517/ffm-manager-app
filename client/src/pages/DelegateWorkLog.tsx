@@ -29,7 +29,7 @@ import { parseWeeklySchedule } from "@shared/workLogRules";
 
 const localDate = () => new Date().toISOString().slice(0, 10);
 const statusTone = (status: string) =>
-  status === "approved" || status === "reviewed"
+  status === "approved" || status === "reviewed" || status === "manager_recorded"
     ? "badge-success"
     : "badge-warning";
 const blankHospital = (doctorSlots = 1): ScheduledHospital => ({
@@ -368,6 +368,7 @@ export default function DelegateWorkLog() {
   });
   const isDelegate = user?.role === "delegate";
   const isManager = user?.role === "manager";
+  const canAuthor = isDelegate || isManager;
   const clients = clientsQuery.data ?? [];
   const doctors = doctorsQuery.data ?? [];
   const busy = clientsQuery.isLoading || doctorsQuery.isLoading;
@@ -383,6 +384,7 @@ export default function DelegateWorkLog() {
       Array.from(
         new Set(
           (weeklyPlans.data ?? [])
+            .filter(plan => plan.authorId === user?.id)
             .filter(plan => plan.status !== "rejected")
             .flatMap(plan =>
               parseWeeklySchedule(plan.scheduleJson)
@@ -391,7 +393,7 @@ export default function DelegateWorkLog() {
             )
         )
       ),
-    [reportDate, weeklyPlans.data]
+    [reportDate, user?.id, weeklyPlans.data]
   );
   const plannedClients = useMemo(
     () => clients.filter(client => plannedHospitalIds.includes(client.id)),
@@ -417,7 +419,7 @@ export default function DelegateWorkLog() {
     submitWeekly.mutate(
       {
         weekOf: new Date(`${weekOf}T12:00:00`),
-        objectives: "Six-day Delegate hospital and doctor visit plan",
+        objectives: `Six-day ${isManager ? "Manager" : "Delegate"} hospital and doctor visit plan`,
         plannedVisits: formatPlan(weekEntries, clientName, doctorName),
         schedule,
       },
@@ -425,7 +427,7 @@ export default function DelegateWorkLog() {
         onSuccess: () => {
           setNoticeError(false);
           setNotice(
-            "Six-day plan submitted. Daily reports can now use the planned hospitals and their registered doctors on matching dates."
+            `Six-day ${isManager ? "Manager" : "Delegate"} plan submitted. Daily reports can now use the planned hospitals and their registered doctors on matching dates.`
           );
         },
         onError: error => {
@@ -504,7 +506,7 @@ export default function DelegateWorkLog() {
           setChallenges("");
           setNextActions("");
           setNoticeError(false);
-          setNotice("Daily doctor-visit report submitted for Manager review.");
+          setNotice(isManager ? "Manager daily doctor-visit report recorded." : "Daily doctor-visit report submitted for Manager review.");
         },
         onError: error => {
           setNoticeError(true);
@@ -545,13 +547,21 @@ export default function DelegateWorkLog() {
           <h1 className="text-4xl font-bold text-white">
             {isDelegate
               ? "My hospital plans & doctor visits"
-              : "Delegate plans & reports"}
+              : "My plans, reports & Delegate review"}
           </h1>
           <p className="muted mt-2">
             The Delegate workweek runs Saturday through Thursday; Friday is the
             only weekend day. Every plan day contains 3–6 hospitals, each with
             multiple registered doctors if needed.
           </p>
+          {isManager && (
+            <p className="admin-feedback mt-4 mb-0">
+              You can record your own weekly plans and daily reports here. Your
+              entries are labelled <strong>manager recorded</strong> and are not
+              sent to your own review queue; assigned Delegate submissions remain
+              available for approval and review below.
+            </p>
+          )}
         </div>
         {notice && (
           <div
@@ -560,7 +570,7 @@ export default function DelegateWorkLog() {
             {notice}
           </div>
         )}
-        {isDelegate && (
+        {canAuthor && (
           <section className="grid lg:grid-cols-2 gap-6 mb-6" aria-label="Add hospital and doctor">
             <Card className="blueprint-card">
               <CardHeader>
@@ -599,10 +609,10 @@ export default function DelegateWorkLog() {
             </Card>
           </section>
         )}
-        {isDelegate && directoryNotice && (
+        {canAuthor && directoryNotice && (
           <div className={`admin-feedback mb-5 ${directoryNoticeError ? "error" : "success"}`}>{directoryNotice}</div>
         )}
-        {isDelegate && (
+        {canAuthor && (
           <div className="grid lg:grid-cols-2 gap-6">
             <Card className="blueprint-card">
               <CardHeader>
@@ -740,7 +750,9 @@ export default function DelegateWorkLog() {
                     <div className="flex justify-between gap-3">
                       <strong>
                         {isManager
-                          ? plan.delegateName
+                          ? plan.authorId === user?.id
+                            ? `My plan · Week of ${new Date(plan.weekOf).toLocaleDateString()}`
+                            : `${plan.delegateName || plan.authorName || "Delegate"} · Week of ${new Date(plan.weekOf).toLocaleDateString()}`
                           : `Week of ${new Date(plan.weekOf).toLocaleDateString()}`}
                       </strong>
                       <Badge className={statusTone(plan.status)}>
@@ -750,7 +762,7 @@ export default function DelegateWorkLog() {
                     <p className="mt-2 muted whitespace-pre-wrap">
                       {plan.plannedVisits}
                     </p>
-                    {isManager && plan.status === "pending" && (
+                    {isManager && plan.delegateId != null && plan.authorId !== user?.id && plan.status === "pending" && (
                       <div className="flex gap-2 mt-3">
                         <Button
                           size="sm"
@@ -800,7 +812,9 @@ export default function DelegateWorkLog() {
                     <div className="flex justify-between gap-3">
                       <strong>
                         {isManager
-                          ? report.delegateName
+                          ? report.authorId === user?.id
+                            ? `My report · ${new Date(report.reportDate).toLocaleDateString()}`
+                            : `${report.delegateName || report.authorName || "Delegate"} · ${new Date(report.reportDate).toLocaleDateString()}`
                           : new Date(report.reportDate).toLocaleDateString()}
                       </strong>
                       <Badge className={statusTone(report.status)}>
@@ -814,7 +828,7 @@ export default function DelegateWorkLog() {
                     <p className="mt-2 muted">
                       <strong>Outcomes:</strong> {report.outcomes}
                     </p>
-                    {isManager && report.status === "submitted" && (
+                    {isManager && report.delegateId != null && report.authorId !== user?.id && report.status === "submitted" && (
                       <Button
                         size="sm"
                         className="blueprint-button mt-3"
