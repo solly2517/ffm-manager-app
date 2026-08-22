@@ -247,6 +247,7 @@ export const weeklyVisitPlans = mysqlTable("weeklyVisitPlans", {
   weekOf: timestamp("weekOf").notNull(),
   objectives: text("objectives").notNull(),
   plannedVisits: text("plannedVisits").notNull(),
+  scheduleJson: text("scheduleJson").notNull(),
   supportNeeded: text("supportNeeded"),
   status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
   reviewedBy: int("reviewedBy"),

@@ -366,3 +366,5 @@
 - [x] Move Delegate GPS activation into the normal mobile interface and remove the overlay covering bottom navigation
 - [x] Support at least three hospital entries with multiple linked doctors in each Delegate weekly plan and daily report
 - [x] Remove the Delegate Work Log overlay that covers the mobile bottom navigation and Profile entry
+- [x] Require each Delegate plan day to include three to six planned hospitals and linked doctors
+- [x] Restrict each daily report to that date's planned hospitals while allowing multiple registered doctor visits per hospital, with at least three doctor visits
