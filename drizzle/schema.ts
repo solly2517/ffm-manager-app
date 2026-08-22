@@ -274,6 +274,44 @@ export const dailyActivityReports = mysqlTable("dailyActivityReports", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({ delegateIdx: index("daily_activity_reports_delegate_idx").on(table.delegateId), clientIdx: index("daily_activity_reports_client_idx").on(table.clientId), doctorIdx: index("daily_activity_reports_doctor_idx").on(table.doctorId), statusIdx: index("daily_activity_reports_status_idx").on(table.status), dateIdx: index("daily_activity_reports_date_idx").on(table.reportDate) }));
+
+export const travelExpenseClaims = mysqlTable("travelExpenseClaims", {
+  id: int("id").autoincrement().primaryKey(),
+  claimantId: int("claimantId").notNull(),
+  managerApproverId: int("managerApproverId").notNull(),
+  operationalApproverId: int("operationalApproverId").notNull(),
+  claimDate: timestamp("claimDate").notNull(),
+  department: varchar("department", { length: 160 }),
+  jobNature: varchar("jobNature", { length: 240 }),
+  transportMode: mysqlEnum("transportMode", ["car", "plane", "car_and_plane", "other"]).default("other").notNull(),
+  ticketReference: varchar("ticketReference", { length: 180 }),
+  estimatedDays: int("estimatedDays"),
+  tripSegmentsJson: text("tripSegmentsJson").notNull(),
+  jobReport: text("jobReport"),
+  totalAmount: decimal("totalAmount", { precision: 12, scale: 2 }).default("0.00").notNull(),
+  currency: varchar("currency", { length: 3 }).default("SAR").notNull(),
+  status: mysqlEnum("status", ["pending", "accepted", "released"]).default("pending").notNull(),
+  managerApprovedAt: timestamp("managerApprovedAt"),
+  operationalApprovedAt: timestamp("operationalApprovedAt"),
+  releasedAt: timestamp("releasedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({ claimantIdx: index("travel_expense_claimant_idx").on(table.claimantId), managerApproverIdx: index("travel_expense_manager_approver_idx").on(table.managerApproverId), operationalApproverIdx: index("travel_expense_operational_approver_idx").on(table.operationalApproverId), statusIdx: index("travel_expense_status_idx").on(table.status), claimDateIdx: index("travel_expense_claim_date_idx").on(table.claimDate) }));
+
+export const travelExpenseLines = mysqlTable("travelExpenseLines", {
+  id: int("id").autoincrement().primaryKey(),
+  claimId: int("claimId").notNull(),
+  category: mysqlEnum("category", ["hotel", "car_taxi", "fuel_invoice", "maintenance", "food", "air_ticket", "others"]).notNull(),
+  description: varchar("description", { length: 240 }),
+  days: int("days"),
+  amountPerDay: decimal("amountPerDay", { precision: 12, scale: 2 }).default("0.00").notNull(),
+  totalAmount: decimal("totalAmount", { precision: 12, scale: 2 }).default("0.00").notNull(),
+  remarks: text("remarks"),
+  distanceKm: int("distanceKm"),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({ claimIdx: index("travel_expense_line_claim_idx").on(table.claimId), categoryIdx: index("travel_expense_line_category_idx").on(table.category) }));
+
 export const geography = mysqlTable("geography", {
   id: int("id").autoincrement().primaryKey(),
   kind: mysqlEnum("kind", ["province", "city"]).notNull(),

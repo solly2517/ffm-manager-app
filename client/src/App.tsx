@@ -16,6 +16,7 @@ import SurgeryCalendar from "@/pages/SurgeryCalendar";
 import AdminDiagnostics from "@/pages/AdminDiagnostics";
 import SurgeryReadiness from "@/pages/SurgeryReadiness";
 import DelegateWorkLog from "@/pages/DelegateWorkLog";
+import TravelExpenses from "@/pages/TravelExpenses";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/admin-diagnostics" component={AdminDiagnostics} />
       <Route path="/surgery-readiness" component={SurgeryReadiness} />
       <Route path="/work-log" component={DelegateWorkLog} />
+      <Route path="/travel-expenses" component={TravelExpenses} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

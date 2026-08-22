@@ -20,7 +20,7 @@ import SurgeryReadiness from "@/pages/SurgeryReadiness";
 import { getSidebarTargetIndex } from "@/lib/sidebarNavigation";
 import { getRoleLandingPath } from "@/lib/delegateExperience";
 import { opensWorkLog, WORK_LOG_PATH } from "@/lib/workLogNavigation";
-import { Users, Map, ClipboardList, MessageSquare, BarChart3, Globe2, Activity, AlertTriangle, Plus, LogOut, ShieldCheck, Search, Menu, X, Send, UserPlus, Truck, type LucideIcon } from "lucide-react";
+import { Users, Map, ClipboardList, MessageSquare, BarChart3, Globe2, Activity, AlertTriangle, Plus, LogOut, ShieldCheck, Search, Menu, X, Send, UserPlus, Truck, CircleDollarSign, type LucideIcon } from "lucide-react";
 
 const nav = [
   { id: "dashboard", label: "Dashboard", icon: Activity },
@@ -33,7 +33,8 @@ const nav = [
   { id: "surgery-calendar", label: "Surgery Calendar", icon: Activity },
   { id: "surgery-readiness", label: "Pre-op Readiness", icon: ClipboardList },
   { id: "plans", label: "Visit Plans", icon: ClipboardList },
-  { id: "work-log", label: "Delegate Work Log", icon: ClipboardList },
+  { id: "work-log", label: "Weekly Visits & Daily Reports", icon: ClipboardList },
+  { id: "travel-expenses", label: "Travel Expenses", icon: CircleDollarSign },
   { id: "messages", label: "Messages", icon: MessageSquare },
   { id: "reports", label: "Reports", icon: BarChart3 },
   { id: "geography", label: "Geography", icon: Map },
@@ -220,7 +221,7 @@ export default function Home() {
       <div className="brand-lockup"><div className="logo-mark small">FFM</div><div><strong>FFM Manager</strong><span>Control Panel</span></div><button className="mobile-close" onClick={() => setMobileOpen(false)}><X size={18}/></button></div>
       <div className="sidebar-rule" />
       <p className="sidebar-kicker">Operations</p>
-      <nav aria-label="FFM workspace navigation" onKeyDown={handleSidebarKeyDown}>{visibleNav.map((item) => { const Icon = item.icon; return <button key={item.id} className={`sidebar-link ${active === item.id ? "active" : ""}`} onClick={() => { setActive(item.id); setMobileOpen(false); }}><Icon size={17}/><span>{item.label}</span>{item.id === "messages" && messagesQuery.data && unreadMessageCount > 0 ? <b>{unreadMessageCount}</b> : null}</button>; })}</nav>
+      <nav aria-label="FFM workspace navigation" onKeyDown={handleSidebarKeyDown}>{visibleNav.map((item) => { const Icon = item.icon; return <button key={item.id} className={`sidebar-link ${active === item.id ? "active" : ""}`} onClick={() => { if (item.id === "travel-expenses") window.location.assign("/travel-expenses"); else { setActive(item.id); setMobileOpen(false); } }}><Icon size={17}/><span>{item.label}</span>{item.id === "messages" && messagesQuery.data && unreadMessageCount > 0 ? <b>{unreadMessageCount}</b> : null}</button>; })}</nav>
       <div className="sidebar-user"><div className="avatar">{initials(user?.name || user?.email || "FFM")}</div><div className="user-copy"><strong>{user?.name || "Authenticated user"}</strong><span>{isAdmin ? "Administrator" : user?.email || "Delegate"}</span></div><button className="logout-icon" onClick={() => logout()} title="Sign out"><LogOut size={16}/></button></div>
     </aside>
     {mobileOpen && <button className="sidebar-scrim" onClick={() => setMobileOpen(false)} aria-label="Close navigation"/>}

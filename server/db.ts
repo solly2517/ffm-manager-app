@@ -1,6 +1,6 @@
 import { and, count, desc, eq, isNull, like, ne, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, invitations, clients, doctors, managerDelegateAssignments, managerWarehouseHeroAssignments, warehouseHeroLocations, warehouseDeliveryProofs, tasks, visits, evidence, auditEvents, messages, userNotifications, surgeries, implantCatalogue, surgeryImplants, surgeryDeliveryProofs, visitPlans, weeklyVisitPlans, dailyActivityReports, geography, clientErrorReports, weeklyBackupReminderSchedules, googleDriveBackupConnections, backupArchives } from "../drizzle/schema";
+import { InsertUser, users, invitations, clients, doctors, managerDelegateAssignments, managerWarehouseHeroAssignments, warehouseHeroLocations, warehouseDeliveryProofs, tasks, visits, evidence, auditEvents, messages, userNotifications, surgeries, implantCatalogue, surgeryImplants, surgeryDeliveryProofs, visitPlans, weeklyVisitPlans, dailyActivityReports, geography, clientErrorReports, weeklyBackupReminderSchedules, googleDriveBackupConnections, backupArchives, travelExpenseClaims, travelExpenseLines } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -162,16 +162,91 @@ export async function updateVisitPlan(id: number, input: Partial<typeof visitPla
 function enrichDelegateAuthoredRows<T extends { delegateId: number; reviewedBy: number | null }>(rows: T[], people: Array<{ id: number; name: string | null; email: string | null }>) { const byId = new Map(people.map((person) => [person.id, person])); return rows.map((row) => { const delegate = byId.get(row.delegateId); const reviewer = row.reviewedBy ? byId.get(row.reviewedBy) : undefined; return { ...row, delegateName: delegate?.name || delegate?.email || "Delegate", delegateEmail: delegate?.email || null, reviewerName: reviewer?.name || reviewer?.email || null, reviewerEmail: reviewer?.email || null }; }); }
 export async function listAllWeeklyVisitPlans() { const db = await getDb(); if (!db) return []; const [rows, people] = await Promise.all([db.select().from(weeklyVisitPlans).orderBy(desc(weeklyVisitPlans.weekOf)), db.select().from(users)]); return enrichDelegateAuthoredRows(rows, people); }
 export async function listWeeklyVisitPlansForDelegate(delegateId: number) { return (await listAllWeeklyVisitPlans()).filter((row) => row.delegateId === delegateId); }
-export async function listWeeklyVisitPlansForManager(managerId: number) { const allowed = await listDelegateIdsForManager(managerId); return (await listAllWeeklyVisitPlans()).filter((row) => allowed.includes(row.delegateId)); }
+export async function listWeeklyVisitPlansForManager(managerId: number) { const allowed = await listDelegateIdsForManager(managerId); return (await listAllWeeklyVisitPlans()).filter((row) => row.delegateId === managerId || allowed.includes(row.delegateId)); }
 export async function createWeeklyVisitPlan(input: typeof weeklyVisitPlans.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database is not available"); const result = await db.insert(weeklyVisitPlans).values(input); return (await db.select().from(weeklyVisitPlans).where(eq(weeklyVisitPlans.id, Number(result[0].insertId))).limit(1))[0]; }
 export async function getWeeklyVisitPlanById(id: number) { const db = await getDb(); if (!db) return undefined; return (await db.select().from(weeklyVisitPlans).where(eq(weeklyVisitPlans.id, id)).limit(1))[0]; }
 export async function updateWeeklyVisitPlan(id: number, input: Partial<typeof weeklyVisitPlans.$inferInsert>) { const db = await getDb(); if (!db) throw new Error("Database is not available"); await db.update(weeklyVisitPlans).set(input).where(eq(weeklyVisitPlans.id, id)); return getWeeklyVisitPlanById(id); }
 export async function listAllDailyActivityReports() { const db = await getDb(); if (!db) return []; const [rows, people] = await Promise.all([db.select().from(dailyActivityReports).orderBy(desc(dailyActivityReports.reportDate), desc(dailyActivityReports.createdAt)), db.select().from(users)]); return enrichDelegateAuthoredRows(rows, people); }
 export async function listDailyActivityReportsForDelegate(delegateId: number) { return (await listAllDailyActivityReports()).filter((row) => row.delegateId === delegateId); }
-export async function listDailyActivityReportsForManager(managerId: number) { const allowed = await listDelegateIdsForManager(managerId); return (await listAllDailyActivityReports()).filter((row) => allowed.includes(row.delegateId)); }
+export async function listDailyActivityReportsForManager(managerId: number) { const allowed = await listDelegateIdsForManager(managerId); return (await listAllDailyActivityReports()).filter((row) => row.delegateId === managerId || allowed.includes(row.delegateId)); }
 export async function createDailyActivityReport(input: typeof dailyActivityReports.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database is not available"); const result = await db.insert(dailyActivityReports).values(input); return (await db.select().from(dailyActivityReports).where(eq(dailyActivityReports.id, Number(result[0].insertId))).limit(1))[0]; }
 export async function getDailyActivityReportById(id: number) { const db = await getDb(); if (!db) return undefined; return (await db.select().from(dailyActivityReports).where(eq(dailyActivityReports.id, id)).limit(1))[0]; }
 export async function updateDailyActivityReport(id: number, input: Partial<typeof dailyActivityReports.$inferInsert>) { const db = await getDb(); if (!db) throw new Error("Database is not available"); await db.update(dailyActivityReports).set(input).where(eq(dailyActivityReports.id, id)); return getDailyActivityReportById(id); }
+
+export type TravelExpenseLineDraft = {
+  category: "hotel" | "car_taxi" | "fuel_invoice" | "maintenance" | "food" | "air_ticket" | "others";
+  description?: string | null;
+  days?: number | null;
+  amountPerDay: number;
+  remarks?: string | null;
+  distanceKm?: number | null;
+};
+
+export function travelExpenseLineTotal(line: Pick<TravelExpenseLineDraft, "days" | "amountPerDay">) {
+  const days = Math.max(1, Number(line.days ?? 1));
+  const amount = Number(line.amountPerDay ?? 0);
+  return Number((days * amount).toFixed(2));
+}
+
+export async function createTravelExpenseClaim(input: {
+  claim: Omit<typeof travelExpenseClaims.$inferInsert, "id" | "totalAmount" | "status" | "managerApprovedAt" | "operationalApprovedAt" | "releasedAt" | "createdAt" | "updatedAt">;
+  lines: TravelExpenseLineDraft[];
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const preparedLines = input.lines.map((line, sortOrder) => ({
+    ...line,
+    days: line.days ?? 1,
+    amountPerDay: Number(line.amountPerDay).toFixed(2),
+    totalAmount: travelExpenseLineTotal(line).toFixed(2),
+    sortOrder,
+  }));
+  const totalAmount = Number(preparedLines.reduce((sum, line) => sum + Number(line.totalAmount), 0).toFixed(2));
+  const result = await db.insert(travelExpenseClaims).values({ ...input.claim, totalAmount: totalAmount.toFixed(2), status: "pending" });
+  const claimId = Number(result[0].insertId);
+  await db.insert(travelExpenseLines).values(preparedLines.map((line) => ({ ...line, claimId })));
+  return getTravelExpenseClaimById(claimId);
+}
+
+export async function getTravelExpenseClaimById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  return (await db.select().from(travelExpenseClaims).where(eq(travelExpenseClaims.id, id)).limit(1))[0];
+}
+
+export async function listTravelExpenseClaims() {
+  const db = await getDb();
+  if (!db) return [];
+  const [claims, lines, people] = await Promise.all([
+    db.select().from(travelExpenseClaims).orderBy(desc(travelExpenseClaims.createdAt)),
+    db.select().from(travelExpenseLines).orderBy(travelExpenseLines.sortOrder),
+    db.select().from(users),
+  ]);
+  const peopleById = new Map(people.map((person) => [person.id, person]));
+  const linesByClaim = new Map<number, typeof lines>();
+  for (const line of lines) linesByClaim.set(line.claimId, [...(linesByClaim.get(line.claimId) ?? []), line]);
+  return claims.map((claim) => {
+    const claimant = peopleById.get(claim.claimantId);
+    const managerApprover = peopleById.get(claim.managerApproverId);
+    const operationalApprover = peopleById.get(claim.operationalApproverId);
+    return {
+      ...claim,
+      totalAmount: Number(claim.totalAmount),
+      claimantName: claimant?.name || claimant?.email || "FFM member",
+      claimantEmail: claimant?.email || null,
+      managerApproverName: managerApprover?.name || managerApprover?.email || "Manager",
+      operationalApproverName: operationalApprover?.name || operationalApprover?.email || "Operational Manager",
+      lines: (linesByClaim.get(claim.id) ?? []).map((line) => ({ ...line, amountPerDay: Number(line.amountPerDay), totalAmount: Number(line.totalAmount) })),
+    };
+  });
+}
+
+export async function updateTravelExpenseClaim(id: number, input: Partial<typeof travelExpenseClaims.$inferInsert>) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.update(travelExpenseClaims).set(input).where(eq(travelExpenseClaims.id, id));
+  return getTravelExpenseClaimById(id);
+}
 
 export async function listLiveDelegatePositionsForManager(managerId: number) { const allowed = await listDelegateIdsForManager(managerId); if (!allowed.length) return []; const db = await getDb(); if (!db) return []; const rows = await db.select({ delegateId: tasks.delegateId, delegateName: users.name, delegateEmail: users.email, locationSharing: users.locationSharing, checkInAt: visits.checkInAt, checkOutAt: visits.checkOutAt, checkInLat: visits.checkInLat, checkInLng: visits.checkInLng, checkOutLat: visits.checkOutLat, checkOutLng: visits.checkOutLng, updatedAt: visits.updatedAt }).from(visits).innerJoin(tasks, eq(visits.taskId, tasks.id)).innerJoin(users, eq(tasks.delegateId, users.id)).where(eq(users.locationSharing, true)).orderBy(desc(visits.updatedAt)); const latest = new Map<number, typeof rows[number]>(); for (const row of rows) if (allowed.includes(row.delegateId) && !latest.has(row.delegateId)) latest.set(row.delegateId, row); return Array.from(latest.values()).flatMap((row) => { const latitude = row.checkOutLat ?? row.checkInLat; const longitude = row.checkOutLng ?? row.checkInLng; if (latitude == null || longitude == null) return []; return [{ delegateId: row.delegateId, delegateName: row.delegateName, delegateEmail: row.delegateEmail, latitude, longitude, capturedAt: row.checkOutAt ?? row.checkInAt ?? row.updatedAt }]; }); }
 export async function upsertWarehouseHeroLocation(input: typeof warehouseHeroLocations.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database is not available"); const existing = (await db.select().from(warehouseHeroLocations).where(eq(warehouseHeroLocations.warehouseHeroId, input.warehouseHeroId)).limit(1))[0]; if (existing) { await db.update(warehouseHeroLocations).set({ latitude: input.latitude, longitude: input.longitude, capturedAt: input.capturedAt ?? new Date() }).where(eq(warehouseHeroLocations.id, existing.id)); return (await db.select().from(warehouseHeroLocations).where(eq(warehouseHeroLocations.id, existing.id)).limit(1))[0]; } const result = await db.insert(warehouseHeroLocations).values(input); return (await db.select().from(warehouseHeroLocations).where(eq(warehouseHeroLocations.id, Number(result[0].insertId))).limit(1))[0]; }

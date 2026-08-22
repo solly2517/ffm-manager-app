@@ -21,6 +21,7 @@ import {
   Navigation,
   Menu,
   X,
+  CircleDollarSign,
 } from "lucide-react";
 import { describeGeolocationError } from "@/lib/delegateExperience";
 import {
@@ -496,6 +497,9 @@ export default function Delegate() {
               {label}
             </button>
           ))}
+          <button onClick={() => window.location.assign("/travel-expenses")}>
+            <CircleDollarSign size={17} /> Travel Expenses
+          </button>
           <button onClick={() => logout()}>
             <LogOut size={17} /> Sign out
           </button>
