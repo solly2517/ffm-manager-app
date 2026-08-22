@@ -199,9 +199,17 @@ describe("expanded FFM permissions", () => {
     await expect(caller.operations.addTask({ delegateId: 1, clientId: 1, scheduledAt: new Date() })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
-  it("blocks delegates from doctor and geography creation", async () => {
+  it("allows Delegates to add hospitals and their doctors, while keeping geography management restricted", async () => {
+    const createClient = vi.spyOn(db, "createClient").mockResolvedValue({ id: 71, name: "New Hospital" } as never);
+    const createDoctor = vi.spyOn(db, "createDoctor").mockResolvedValue({ id: 72, clientId: 71, name: "Dr. New" } as never);
+    const audit = vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
     const caller = appRouter.createCaller(createContext("delegate"));
-    await expect(caller.operations.addDoctor({ clientId: 1, name: "Dr. Example" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.operations.addClient({ name: "New Hospital", city: "Jeddah" })).resolves.toMatchObject({ id: 71 });
+    await expect(caller.operations.addDoctor({ clientId: 71, name: "Dr. New" })).resolves.toMatchObject({ id: 72 });
+    expect(createClient).toHaveBeenCalledWith(expect.objectContaining({ name: "New Hospital", createdBy: 999999 }));
+    expect(createDoctor).toHaveBeenCalledWith(expect.objectContaining({ clientId: 71, name: "Dr. New", createdBy: 999999 }));
+    expect(audit).toHaveBeenCalledWith(expect.objectContaining({ actorId: 999999, action: "client.created" }));
+    expect(audit).toHaveBeenCalledWith(expect.objectContaining({ actorId: 999999, action: "doctor.created" }));
     await expect(caller.operations.addGeography({ kind: "province", name: "Example Province" })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
   it("returns persisted notification preferences and updates only the requested setting", async () => {

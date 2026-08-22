@@ -374,3 +374,4 @@
 - [x] Fix direct FFM invitation activation for e.alhasby@altamammed.com so no external verification code is required
 - [x] Restore Delegate ability to message all appropriate FFM team members
 - [x] Ensure the Delegate activation link opens directly on a phone without external verification-code sign-in
+- [x] Allow Delegates to add hospitals/clients and linked doctors from their FFM workspace
