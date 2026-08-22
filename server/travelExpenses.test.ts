@@ -139,4 +139,19 @@ describe("Travel Expenses workflow", () => {
     await expect(adminCaller.travelExpenses.monthlyAccountingExport({ month: "2026-08" })).resolves.toHaveLength(1);
     expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "travel_expense.monthly_exported", metadata: expect.stringContaining("2026-08") }));
   });
+
+  it("exports an inclusive accounting date range only for Finance administration", async () => {
+    vi.spyOn(db, "listTravelExpenseClaims").mockResolvedValue([
+      { ...pendingClaim, claimDate: new Date("2026-08-01T00:00:00.000Z"), lines: [] },
+      { ...pendingClaim, id: 72, claimDate: new Date("2026-08-31T23:00:00.000Z"), lines: [] },
+      { ...pendingClaim, id: 73, claimDate: new Date("2026-09-01T00:00:00.000Z"), lines: [] },
+    ] as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const adminCaller = appRouter.createCaller(contextFor(administrator));
+    const managerCaller = appRouter.createCaller(contextFor(manager));
+    await expect(managerCaller.travelExpenses.accountingExport({ from: "2026-08-01", to: "2026-08-31" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(adminCaller.travelExpenses.accountingExport({ from: "2026-08-01", to: "2026-08-31" })).resolves.toHaveLength(2);
+    await expect(adminCaller.travelExpenses.accountingExport({ from: "2026-08-31", to: "2026-08-01" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "travel_expense.range_exported", metadata: expect.stringContaining("2026-08-31") }));
+  });
 });

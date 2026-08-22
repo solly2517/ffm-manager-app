@@ -385,3 +385,7 @@
 - [x] Package the FFM travel, approval, printable-claim, and Work Log workflow as a reusable skill
 - [x] Add a Manager dashboard widget for assigned Delegates with overdue weekly plans and daily reports
 - [x] Add a monthly Travel Expense claims export in Excel and CSV formats for accounting
+- [x] Extend the reusable FFM workflow skill with dashboard expense-summary, Delegate-filter, and date-range-export guidance
+- [x] Add a dashboard monthly Travel Expense summary by department and currency
+- [x] Add an assigned-Delegate dropdown filter to the Manager overdue Work Log widget
+- [x] Add a validated date-range selector to Finance Travel Expense Excel and CSV exports

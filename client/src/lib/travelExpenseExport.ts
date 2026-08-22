@@ -59,8 +59,8 @@ export function buildTravelExpenseAccountingWorkbook(claims: AccountingClaim[]) 
   return workbook;
 }
 
-export function downloadTravelExpenseAccountingWorkbook(claims: AccountingClaim[], month: string) {
-  writeFileXLSX(buildTravelExpenseAccountingWorkbook(claims), `ffm-travel-expenses-${month}.xlsx`);
+export function downloadTravelExpenseAccountingWorkbook(claims: AccountingClaim[], rangeLabel: string) {
+  writeFileXLSX(buildTravelExpenseAccountingWorkbook(claims), `ffm-travel-expenses-${rangeLabel}.xlsx`);
 }
 
 export function travelExpenseClaimsCsv(claims: AccountingClaim[]) {
@@ -70,12 +70,12 @@ export function travelExpenseClaimsCsv(claims: AccountingClaim[]) {
   return [headers.map(quoted).join(","), ...rows.map(row => { const record = row as Record<string, unknown>; return headers.map(header => quoted(record[header])).join(","); })].join("\n");
 }
 
-export function downloadTravelExpenseClaimsCsv(claims: AccountingClaim[], month: string) {
+export function downloadTravelExpenseClaimsCsv(claims: AccountingClaim[], rangeLabel: string) {
   const blob = new Blob([travelExpenseClaimsCsv(claims)], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `ffm-travel-expenses-${month}.csv`;
+  link.download = `ffm-travel-expenses-${rangeLabel}.csv`;
   document.body.appendChild(link);
   link.click();
   link.remove();

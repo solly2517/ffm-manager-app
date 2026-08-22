@@ -158,6 +158,7 @@ import {
   weeklyPlanValidationError,
 } from "../shared/workLogRules";
 import { overdueWorkLogSummary } from "../shared/workLogOverdue";
+import { claimsWithinTravelExpenseRange, travelExpenseDateRangeError, travelExpenseDepartmentCurrencySummary } from "../shared/travelExpenseAnalytics";
 
 const ADMIN_EMAIL = "dr.seleam@gmail.com";
 const OPERATIONAL_MANAGER_EMAIL = "amreslam@altamammed.com";
@@ -720,6 +721,26 @@ export const appRouter = router({
         );
       return claims.filter(claim => claim.claimantId === ctx.user.id);
     }),
+    dashboardSummary: managerOnly.query(async ({ ctx }) => {
+      const month = new Date().toISOString().slice(0, 7);
+      const [year, monthNumber] = month.split("-").map(Number);
+      const monthEnd = new Date(Date.UTC(year, monthNumber, 0)).toISOString().slice(0, 10);
+      const claims = await listTravelExpenseClaims();
+      const isOperationalManager = ctx.user.email?.trim().toLowerCase() === OPERATIONAL_MANAGER_EMAIL;
+      const scopedClaims = isAdmin(ctx.user) || isOperationalManager ? claims : claims.filter(claim => claim.claimantId === ctx.user.id || claim.managerApproverId === ctx.user.id);
+      return { month, rows: travelExpenseDepartmentCurrencySummary(claimsWithinTravelExpenseRange(scopedClaims, `${month}-01`, monthEnd)) };
+    }),
+    accountingExport: protectedProcedure
+      .input(z.object({ from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }))
+      .query(async ({ ctx, input }) => {
+        const isOperationalManager = ctx.user.email?.trim().toLowerCase() === OPERATIONAL_MANAGER_EMAIL;
+        if (!isAdmin(ctx.user) && !isOperationalManager) throw new TRPCError({ code: "FORBIDDEN", message: "Travel Expense accounting export is restricted to Finance administration." });
+        const dateError = travelExpenseDateRangeError(input.from, input.to);
+        if (dateError) throw new TRPCError({ code: "BAD_REQUEST", message: dateError });
+        const claims = claimsWithinTravelExpenseRange(await listTravelExpenseClaims(), input.from, input.to);
+        await addAuditEvent({ actorId: ctx.user.id, action: "travel_expense.range_exported", entityType: "travelExpenseClaim", metadata: JSON.stringify({ from: input.from, to: input.to, claimCount: claims.length }) });
+        return claims;
+      }),
     monthlyAccountingExport: protectedProcedure
       .input(z.object({ month: z.string().regex(/^\d{4}-\d{2}$/) }))
       .query(async ({ ctx, input }) => {
