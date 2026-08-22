@@ -370,3 +370,5 @@
 - [x] Restrict each daily report to that date's planned hospitals while allowing multiple registered doctor visits per hospital, with at least three doctor visits
 - [x] Group multiple registered doctors under each hospital in Delegate weekly plans and daily reports
 - [x] Change Delegate Work Log weeks to Saturday through Thursday, with Friday as the only weekend day
+- [x] Create or refresh a secure Delegate invitation for e.alhasby@altamammed.com
+- [x] Fix direct FFM invitation activation for e.alhasby@altamammed.com so no external verification code is required
