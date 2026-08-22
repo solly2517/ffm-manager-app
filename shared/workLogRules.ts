@@ -23,10 +23,11 @@ export function expectedPlanDates(weekOf: Date) {
 
 export function weeklyPlanValidationError(days: WorkLogPlanDay[], weekOf: Date) {
   const expectedDates = expectedPlanDates(weekOf);
+  if (weekOf.getDay() !== 6) return "The Delegate workweek must start on Saturday.";
   if (days.length !== WEEKLY_PLAN_DAYS) return "A weekly plan must contain six consecutive days.";
   for (let index = 0; index < days.length; index += 1) {
     const day = days[index]!;
-    if (day.date !== expectedDates[index]) return "Each weekly-plan day must match the selected Monday through Saturday dates.";
+    if (day.date !== expectedDates[index]) return "Each weekly-plan day must match the selected Saturday through Thursday dates.";
     const hospitalIds = new Set<number>();
     const seenDoctorVisits = new Set<string>();
     for (const visit of day.visits) {
@@ -43,6 +44,7 @@ export function weeklyPlanValidationError(days: WorkLogPlanDay[], weekOf: Date) 
 
 export function dailyReportValidationError(visits: WorkLogVisit[], reportDate: Date, plannedHospitalIds: number[]) {
   const reportDateText = dateText(reportDate);
+  if (reportDate.getDay() === 5) return "Friday is the Delegate weekend day; daily reports are available Saturday through Thursday.";
   if (visits.length < MIN_DAILY_DOCTOR_VISITS) return `Record at least ${MIN_DAILY_DOCTOR_VISITS} doctor visits in the daily report.`;
   if (!plannedHospitalIds.length) return "No submitted weekly plan covers this report date. Submit the plan first.";
   const allowedHospitals = new Set(plannedHospitalIds);

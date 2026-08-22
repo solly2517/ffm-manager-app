@@ -369,3 +369,4 @@
 - [x] Require each Delegate plan day to include three to six planned hospitals and linked doctors
 - [x] Restrict each daily report to that date's planned hospitals while allowing multiple registered doctor visits per hospital, with at least three doctor visits
 - [x] Group multiple registered doctors under each hospital in Delegate weekly plans and daily reports
+- [x] Change Delegate Work Log weeks to Saturday through Thursday, with Friday as the only weekend day

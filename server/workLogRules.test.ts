@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { dailyReportValidationError, expectedPlanDates, weeklyPlanValidationError, type WorkLogPlanDay } from "../shared/workLogRules";
 
-const weekOf = new Date("2026-08-17T12:00:00");
+const weekOf = new Date("2026-08-15T12:00:00");
 
 function validPlan(): WorkLogPlanDay[] {
   return expectedPlanDates(weekOf).map((date) => ({
@@ -62,5 +62,15 @@ describe("Delegate Work Log rules", () => {
       { date: "2026-08-19", clientId: 2, doctorId: 21 },
     ];
     expect(dailyReportValidationError(duplicateDoctor, reportDate, [1, 2])).toContain("only once");
+  });
+
+  it("treats Friday as the only weekend day", () => {
+    const friday = new Date("2026-08-21T12:00:00");
+    const visits = [
+      { date: "2026-08-21", clientId: 1, doctorId: 11 },
+      { date: "2026-08-21", clientId: 2, doctorId: 21 },
+      { date: "2026-08-21", clientId: 3, doctorId: 31 },
+    ];
+    expect(dailyReportValidationError(visits, friday, [1, 2, 3])).toContain("Friday");
   });
 });

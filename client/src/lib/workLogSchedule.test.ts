@@ -2,22 +2,22 @@ import { describe, expect, it } from "vitest";
 import { MAX_HOSPITALS_PER_DAY, MIN_HOSPITALS_PER_DAY, hasAtLeastHospitals, planIsComplete, sixDayHospitalPlan, scheduleIsComplete, sixDaySchedule } from "./workLogSchedule";
 
 describe("six-day Delegate visit schedule", () => {
-  it("creates six consecutive working-plan rows from the selected Monday", () => {
-    const schedule = sixDaySchedule("2026-08-17");
+  it("creates Saturday-through-Thursday working-plan rows", () => {
+    const schedule = sixDaySchedule("2026-08-15");
     expect(schedule).toHaveLength(6);
-    expect(schedule[0].date).toBe("2026-08-17");
-    expect(schedule[5].date).toBe("2026-08-22");
+    expect(schedule[0].date).toBe("2026-08-15");
+    expect(schedule[5].date).toBe("2026-08-20");
   });
 
   it("requires a date, hospital, and doctor for every scheduled day", () => {
-    const schedule = sixDaySchedule("2026-08-17");
+    const schedule = sixDaySchedule("2026-08-15");
     expect(scheduleIsComplete(schedule)).toBe(false);
     for (const day of schedule) { day.clientId = "1"; day.doctorId = "2"; }
     expect(scheduleIsComplete(schedule)).toBe(true);
   });
 
   it("requires at least three hospitals when the field plan needs broader coverage", () => {
-    const schedule = sixDaySchedule("2026-08-17");
+    const schedule = sixDaySchedule("2026-08-15");
     for (const day of schedule) { day.clientId = "1"; day.doctorId = "2"; }
     expect(hasAtLeastHospitals(schedule)).toBe(false);
     schedule[2].clientId = "3"; schedule[3].clientId = "3"; schedule[4].clientId = "4"; schedule[5].clientId = "4";
@@ -25,7 +25,7 @@ describe("six-day Delegate visit schedule", () => {
   });
 
   it("starts each of six plan days with three hospital rows and permits no more than six", () => {
-    const plan = sixDayHospitalPlan("2026-08-17");
+    const plan = sixDayHospitalPlan("2026-08-15");
     expect(plan).toHaveLength(6);
     expect(plan.every((day) => day.hospitals.length === MIN_HOSPITALS_PER_DAY)).toBe(true);
     expect(plan[0].hospitals).toHaveLength(MIN_HOSPITALS_PER_DAY);
