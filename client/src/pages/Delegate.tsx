@@ -11,13 +11,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { ClipboardList, MapPin, MessageSquare, UserRound, Stethoscope, CalendarPlus, LogOut, CheckCircle2, Clock3, Navigation, Menu, X } from "lucide-react";
 import { describeGeolocationError } from "@/lib/delegateExperience";
 import { androidLocationRecovery, requestMobileLocation } from "@/lib/mobileLocation";
+import { opensWorkLog, WORK_LOG_PATH } from "@/lib/workLogNavigation";
 
 const tabs = [
   { id: "tasks", label: "My Tasks", icon: ClipboardList },
   { id: "visit", label: "Visit", icon: MapPin },
   { id: "messages", label: "Messages", icon: MessageSquare },
   { id: "surgery", label: "Surgeries", icon: Stethoscope },
-  { id: "plan", label: "Plan", icon: CalendarPlus },
+  { id: "plan", label: "Work Log", icon: CalendarPlus },
   { id: "profile", label: "Profile", icon: UserRound },
 ] as const;
 type DelegateTabId = (typeof tabs)[number]["id"];
@@ -69,6 +70,7 @@ export default function Delegate() {
   const visitQuery = trpc.operations.visit.useQuery({ taskId: currentTask?.id || 0 }, { enabled: Boolean(currentTask?.id) });
   const current = tabs.find((tab) => tab.id === active) ?? tabs[0];
   useEffect(() => { localStorage.setItem("ffm-visit-draft", notes); }, [notes]);
+  useEffect(() => { if (opensWorkLog(active)) window.location.assign(WORK_LOG_PATH); }, [active]);
   useEffect(() => { const handleOffline = () => setIsOffline(true); const handleOnline = () => { setIsOffline(false); setOfflineAction(""); tasksQuery.refetch(); messagesQuery.refetch(); visitPlansQuery.refetch(); surgeriesQuery.refetch(); preferencesQuery.refetch(); const queued = localStorage.getItem("ffm-pending-visit-report"); if (queued) { try { const pending = JSON.parse(queued) as { taskId: number; report: string }; saveVisitReport.mutate(pending, { onSuccess: () => localStorage.removeItem("ffm-pending-visit-report"), onError: () => setOfflineAction("A queued visit report could not be sent yet. Please retry from the Visit workspace.") }); } catch { localStorage.removeItem("ffm-pending-visit-report"); } } }; window.addEventListener("offline", handleOffline); window.addEventListener("online", handleOnline); return () => { window.removeEventListener("offline", handleOffline); window.removeEventListener("online", handleOnline); }; }, [messagesQuery, preferencesQuery, saveVisitReport, surgeriesQuery, tasksQuery, visitPlansQuery]);
   useEffect(() => { if (preferencesQuery.data) { setPushNotifications(preferencesQuery.data.pushNotifications); setEmailNotifications(preferencesQuery.data.emailNotifications); setLocationSharing(preferencesQuery.data.locationSharing); } }, [preferencesQuery.data]);
   useEffect(() => { if (!isAuthenticated) return; const existing = document.getElementById("ffm-direct-gps"); existing?.remove(); const host = document.querySelector(".delegate-topbar"); if (!host) return; const button = document.createElement("button"); button.id = "ffm-direct-gps"; button.type = "button"; button.textContent = locationSharing ? "GPS active" : "Activate GPS"; button.style.cssText = "position:static;margin-left:auto;margin-right:8px;padding:8px 10px;border:1px solid #67e8f9;border-radius:8px;background:#0b5ed7;color:#fff;font-weight:700;font-size:12px;white-space:nowrap;"; button.disabled = locationSharing; button.onclick = () => activateDelegateGps(); host.appendChild(button); return () => button.remove(); }, [isAuthenticated, locationSharing]);

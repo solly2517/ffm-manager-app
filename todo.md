@@ -365,3 +365,4 @@
 - [x] Diagnose and fix Delegate weekly-plan and daily-report submissions that do not save after completed entry
 - [x] Move Delegate GPS activation into the normal mobile interface and remove the overlay covering bottom navigation
 - [x] Support at least three hospital entries with multiple linked doctors in each Delegate weekly plan and daily report
+- [x] Remove the Delegate Work Log overlay that covers the mobile bottom navigation and Profile entry

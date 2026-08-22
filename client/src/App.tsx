@@ -16,7 +16,6 @@ import SurgeryCalendar from "@/pages/SurgeryCalendar";
 import AdminDiagnostics from "@/pages/AdminDiagnostics";
 import SurgeryReadiness from "@/pages/SurgeryReadiness";
 import DelegateWorkLog from "@/pages/DelegateWorkLog";
-import { WorkLogLauncher } from "@/components/WorkLogLauncher";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -68,7 +67,6 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <NotificationCenter />
-          <WorkLogLauncher />
           <Router />
         </TooltipProvider>
       </ThemeProvider>

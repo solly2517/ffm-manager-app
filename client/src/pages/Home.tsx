@@ -19,6 +19,7 @@ import AdminDiagnostics from "@/pages/AdminDiagnostics";
 import SurgeryReadiness from "@/pages/SurgeryReadiness";
 import { getSidebarTargetIndex } from "@/lib/sidebarNavigation";
 import { getRoleLandingPath } from "@/lib/delegateExperience";
+import { opensWorkLog, WORK_LOG_PATH } from "@/lib/workLogNavigation";
 import { Users, Map, ClipboardList, MessageSquare, BarChart3, Globe2, Activity, AlertTriangle, Plus, LogOut, ShieldCheck, Search, Menu, X, Send, UserPlus, Truck, type LucideIcon } from "lucide-react";
 
 const nav = [
@@ -32,6 +33,7 @@ const nav = [
   { id: "surgery-calendar", label: "Surgery Calendar", icon: Activity },
   { id: "surgery-readiness", label: "Pre-op Readiness", icon: ClipboardList },
   { id: "plans", label: "Visit Plans", icon: ClipboardList },
+  { id: "work-log", label: "Delegate Work Log", icon: ClipboardList },
   { id: "messages", label: "Messages", icon: MessageSquare },
   { id: "reports", label: "Reports", icon: BarChart3 },
   { id: "geography", label: "Geography", icon: Map },
@@ -57,6 +59,7 @@ export default function Home() {
     if (isAuthenticated && landingPath && window.location.pathname === "/") window.location.replace(landingPath);
   }, [isAuthenticated, user?.role]);
   const [active, setActive] = useState(() => { const requested = new URLSearchParams(window.location.search).get("workspace"); return nav.some((item) => item.id === requested) ? requested! : "dashboard"; });
+  useEffect(() => { if (opensWorkLog(active)) window.location.assign(WORK_LOG_PATH); }, [active]);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState("");
