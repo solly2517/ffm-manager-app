@@ -1,0 +1,22 @@
+<slide id="manager_reports">
+  <background color="bg-navy"/>
+  <shape id="top-line" type="line" x="60" y="92" width="1160" height="0" stroke="grid-line" stroke-width="1"/>
+  <text id="section-label" x="80" y="48" width="280" height="22" font="mono" size="14" color="accent-cyan">06 / REPORTING</text>
+  <text id="slide-title" x="80" y="118" width="950" height="52" font="heading" size="38" color="text-main">Use reports for traceable decisions</text>
+  <text id="slide-intro" x="82" y="174" width="980" height="30" font="body" size="18" color="text-muted">Filter first, export the smallest useful dataset, and keep the live FFM record as the operational source of truth.</text>
+  <table id="report-table" x="80" y="250" width="680" height="280" columns="3,5" rows="48,58,58,58,58" font="body" size="17" color="text-main" padding="12 14" header-fill="accent-royal" border-h="1 grid-line" border-outer="1 grid-line">
+    <tr color="text-main"><td>REPORT</td><td>USE IT TO REVIEW</td></tr>
+    <tr><td><strong>Operational</strong></td><td>Live overview of field activity and filters.</td></tr>
+    <tr><td><strong>Task detail</strong></td><td>Assigned work, dates, status, and follow-up.</td></tr>
+    <tr><td><strong>Surgery detail</strong></td><td>Date, Delegate, Manager, hospital, surgeon, and outcome.</td></tr>
+    <tr><td><strong>Implant detail</strong></td><td>Item, quantity, price, currency, and total.</td></tr>
+  </table>
+  <shape id="protocol-frame" type="rect" x="830" y="250" width="350" height="280" fill="none" stroke="accent-royal" stroke-width="2"/>
+  <text id="protocol-label" x="860" y="276" width="250" height="22" font="mono" size="14" color="accent-cyan">EXPORT PROTOCOL</text>
+  <text id="protocol-body" x="860" y="326" width="270" height="154" font="body" size="18" color="text-main" line-height="1.45"><ol><li>Set the date range.</li><li>Export only the report needed.</li><li>Store the Excel file securely.</li></ol></text>
+  <text id="protocol-note" x="860" y="485" width="280" height="26" font="body" size="15" color="text-muted">Never rely on an old export when the live record has changed.</text>
+  <shape id="bottom-rule" type="line" x="80" y="582" width="1100" height="0" stroke="grid-line" stroke-width="1"/>
+  <text id="report-note" x="80" y="610" width="1040" height="28" font="body" size="18" color="text-muted">Surgery exports expose clinical and contact information—share only with authorized colleagues.</text>
+  <icon id="registration-icon" name="crosshair" x="1168" y="44" width="38" height="38" color="accent-cyan"/>
+  <text id="slide-number" x="80" y="670" width="70" height="20" font="mono" size="14" color="accent-cyan">07</text>
+</slide>

@@ -1,0 +1,27 @@
+<slide id="delegate_tasks">
+  <background color="bg-navy"/>
+  <shape id="top-line" type="line" x="60" y="92" width="1160" height="0" stroke="grid-line" stroke-width="1"/>
+  <text id="section-label" x="80" y="48" width="300" height="22" font="mono" size="14" color="accent-cyan">07 / DELEGATE EXECUTION</text>
+  <text id="slide-title" x="80" y="118" width="970" height="52" font="heading" size="38" color="text-main">Delegates execute the assigned route</text>
+  <text id="slide-intro" x="82" y="174" width="920" height="30" font="body" size="18" color="text-muted">Start from My Tasks. Confirm the client and timing before you travel, check in, or change a status.</text>
+  <icon id="route-icon" name="map-pin" x="82" y="254" width="42" height="42" color="accent-cyan"/>
+  <text id="action-one" x="152" y="258" width="520" height="30" font="body" size="23" color="text-main">1. Open My Tasks and select the correct assignment.</text>
+  <shape id="action-rule-one" type="line" x="152" y="304" width="530" height="0" stroke="grid-line" stroke-width="1"/>
+  <icon id="review-icon" name="search" x="82" y="326" width="42" height="42" color="accent-cyan"/>
+  <text id="action-two" x="152" y="330" width="520" height="30" font="body" size="23" color="text-main">2. Review client, time, city, and map before travel.</text>
+  <shape id="action-rule-two" type="line" x="152" y="376" width="530" height="0" stroke="grid-line" stroke-width="1"/>
+  <icon id="visit-icon" name="navigation" x="82" y="398" width="42" height="42" color="accent-cyan"/>
+  <text id="action-three" x="152" y="402" width="520" height="30" font="body" size="23" color="text-main">3. Move status as the real visit progresses.</text>
+  <shape id="action-rule-three" type="line" x="152" y="448" width="530" height="0" stroke="grid-line" stroke-width="1"/>
+  <icon id="message-icon" name="message-square" x="82" y="470" width="42" height="42" color="accent-cyan"/>
+  <text id="action-four" x="152" y="474" width="520" height="54" font="body" size="23" color="text-main">4. Message the Manager if the assignment is wrong, delayed, or unsafe.</text>
+  <shape id="status-frame" type="rect" x="800" y="248" width="380" height="330" fill="none" stroke="accent-royal" stroke-width="2"/>
+  <text id="status-label" x="830" y="276" width="260" height="22" font="mono" size="14" color="accent-cyan">TASK STATUS</text>
+  <text id="status-pending" x="830" y="330" width="300" height="24" font="body" size="21" color="text-main">PENDING</text><text id="status-pending-detail" x="830" y="358" width="290" height="24" font="body" size="16" color="text-muted">Not started.</text>
+  <text id="status-progress" x="830" y="402" width="300" height="24" font="body" size="21" color="text-main">IN PROGRESS</text><text id="status-progress-detail" x="830" y="430" width="290" height="24" font="body" size="16" color="text-muted">Travelling or completing the visit.</text>
+  <text id="status-complete" x="830" y="474" width="300" height="24" font="body" size="21" color="text-main">COMPLETED</text><text id="status-complete-detail" x="830" y="502" width="290" height="24" font="body" size="16" color="text-muted">Report and required evidence done.</text>
+  <text id="status-cancel" x="830" y="546" width="300" height="24" font="body" size="21" color="text-main">CANCELLED</text>
+  <text id="bottom-note" x="80" y="612" width="1030" height="28" font="body" size="18" color="text-muted">If the assignment is not correct, do not complete it—state the client, issue, timing, and help needed in Messages.</text>
+  <icon id="registration-icon" name="crosshair" x="1168" y="44" width="38" height="38" color="accent-cyan"/>
+  <text id="slide-number" x="80" y="670" width="70" height="20" font="mono" size="14" color="accent-cyan">08</text>
+</slide>

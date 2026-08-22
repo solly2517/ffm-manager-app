@@ -18,6 +18,7 @@ import SurgeryCalendar from "@/pages/SurgeryCalendar";
 import AdminDiagnostics from "@/pages/AdminDiagnostics";
 import SurgeryReadiness from "@/pages/SurgeryReadiness";
 import { getSidebarTargetIndex } from "@/lib/sidebarNavigation";
+import { getRoleLandingPath } from "@/lib/delegateExperience";
 import { Users, Map, ClipboardList, MessageSquare, BarChart3, Globe2, Activity, AlertTriangle, Plus, LogOut, ShieldCheck, Search, Menu, X, Send, UserPlus, Truck, type LucideIcon } from "lucide-react";
 
 const nav = [
@@ -51,6 +52,10 @@ function initials(name: string) { return name.split(" ").map((part) => part[0]).
 
 export default function Home() {
   const { user, loading, isAuthenticated, logout, refresh } = useAuth();
+  useEffect(() => {
+    const landingPath = getRoleLandingPath(user?.role);
+    if (isAuthenticated && landingPath && window.location.pathname === "/") window.location.replace(landingPath);
+  }, [isAuthenticated, user?.role]);
   const [active, setActive] = useState(() => { const requested = new URLSearchParams(window.location.search).get("workspace"); return nav.some((item) => item.id === requested) ? requested! : "dashboard"; });
   const [mobileOpen, setMobileOpen] = useState(false);
   const [query, setQuery] = useState("");

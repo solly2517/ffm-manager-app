@@ -1,0 +1,144 @@
+{
+  "project_info": {
+    "title": "FFM Operating Manual",
+    "created": 1787383705.554,
+    "last_updated": 1787383994.586,
+    "total_slides": 12
+  },
+  "slides": [
+    {
+      "id": "cover",
+      "state": "edited",
+      "pageNum": 1
+    },
+    {
+      "id": "roles",
+      "state": "edited",
+      "pageNum": 2
+    },
+    {
+      "id": "secure_start",
+      "state": "edited",
+      "pageNum": 3
+    },
+    {
+      "id": "manager_overview",
+      "state": "edited",
+      "pageNum": 4
+    },
+    {
+      "id": "manager_tasks",
+      "state": "edited",
+      "pageNum": 5
+    },
+    {
+      "id": "manager_clinical",
+      "state": "edited",
+      "pageNum": 6
+    },
+    {
+      "id": "manager_reports",
+      "state": "edited",
+      "pageNum": 7
+    },
+    {
+      "id": "delegate_tasks",
+      "state": "edited",
+      "pageNum": 8
+    },
+    {
+      "id": "delegate_visit",
+      "state": "edited",
+      "pageNum": 9
+    },
+    {
+      "id": "delegate_clinical",
+      "state": "edited",
+      "pageNum": 10
+    },
+    {
+      "id": "delegate_planning",
+      "state": "edited",
+      "pageNum": 11
+    },
+    {
+      "id": "closing",
+      "state": "edited",
+      "pageNum": 12
+    }
+  ],
+  "outline": [
+    {
+      "id": "cover",
+      "title": "FFM Operating Manual",
+      "summary": "Cover page for the Manager and Delegate role guide.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "roles",
+      "title": "Two roles, one operational record",
+      "summary": "Clarify Manager and Delegate responsibilities and boundaries; Administrator procedures are excluded.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "secure_start",
+      "title": "Start securely and stay aligned",
+      "summary": "Explain sign-in, display names, notifications, messages, and safe session habits.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "manager_overview",
+      "title": "Managers coordinate the field picture",
+      "summary": "Show the Manager daily routine and the core workspaces used to supervise assigned delegates.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "manager_tasks",
+      "title": "Turn plans into accountable tasks",
+      "summary": "Explain client and doctor data, task assignment, task monitoring, and visit-plan review.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "manager_clinical",
+      "title": "Run surgery coordination with discipline",
+      "summary": "Cover shared calendar, five-step readiness, implants, patient-sheet proof, and day-of-surgery outcomes.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "manager_reports",
+      "title": "Use reports for traceable decisions",
+      "summary": "Explain filtered operational, task, surgery, and implant Excel reports and secure export handling.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "delegate_tasks",
+      "title": "Delegates execute the assigned route",
+      "summary": "Explain My Tasks, status changes, task selection, and issue escalation.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "delegate_visit",
+      "title": "Complete every visit with evidence",
+      "summary": "Show GPS check-in, report writing, photo/audio/signature evidence, and GPS check-out.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "delegate_clinical",
+      "title": "Keep clinical records current",
+      "summary": "Explain surgery record updates, calendar lifecycle, implants, and patient-sheet proof requirements.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "delegate_planning",
+      "title": "Plan ahead and communicate early",
+      "summary": "Cover submitted visit plans, messages, offline behaviour, profile preferences, and daily close-out.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "closing",
+      "title": "Accurate records. Early escalation.",
+      "summary": "Close with the shared FFM operating standard and live platform link.",
+      "image_plan": "Use a suitable image if needed"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+<slide id="manager_clinical">
+  <background color="bg-navy"/>
+  <shape id="top-line" type="line" x="60" y="92" width="1160" height="0" stroke="grid-line" stroke-width="1"/>
+  <text id="section-label" x="80" y="48" width="330" height="22" font="mono" size="14" color="accent-cyan">05 / CLINICAL COORDINATION</text>
+  <text id="slide-title" x="80" y="118" width="1050" height="52" font="heading" size="38" color="text-main">Run surgery coordination with discipline</text>
+  <text id="slide-intro" x="82" y="174" width="950" height="30" font="body" size="18" color="text-muted">Use the shared calendar for visibility; use readiness to make responsibility gaps explicit before the surgery date.</text>
+  <text id="timeline-label" x="80" y="222" width="430" height="22" font="mono" size="14" color="accent-cyan">FIVE-STEP PREOPERATIVE READINESS</text>
+  <shape id="timeline-line" type="line" x="125" y="270" width="0" height="290" stroke="accent-royal" stroke-width="3"/>
+  <shape id="r1" type="ellipse" x="104" y="252" width="42" height="42" fill="accent-cyan"/><text id="r1n" x="104" y="260" width="42" height="24" font="mono" size="16" color="bg-navy" align="center">1</text><text id="r1t" x="182" y="258" width="500" height="30" font="body" size="21" color="text-main">Clinical information confirmed</text>
+  <shape id="r2" type="ellipse" x="104" y="317" width="42" height="42" fill="accent-cyan"/><text id="r2n" x="104" y="325" width="42" height="24" font="mono" size="16" color="bg-navy" align="center">2</text><text id="r2t" x="182" y="323" width="500" height="30" font="body" size="21" color="text-main">Implant planning completed</text>
+  <shape id="r3" type="ellipse" x="104" y="382" width="42" height="42" fill="accent-cyan"/><text id="r3n" x="104" y="390" width="42" height="24" font="mono" size="16" color="bg-navy" align="center">3</text><text id="r3t" x="182" y="388" width="500" height="30" font="body" size="21" color="text-main">Warehouse preparation completed</text>
+  <shape id="r4" type="ellipse" x="104" y="447" width="42" height="42" fill="accent-cyan"/><text id="r4n" x="104" y="455" width="42" height="24" font="mono" size="16" color="bg-navy" align="center">4</text><text id="r4t" x="182" y="453" width="500" height="30" font="body" size="21" color="text-main">Patient-sheet preparation completed</text>
+  <shape id="r5" type="ellipse" x="104" y="512" width="42" height="42" fill="accent-cyan"/><text id="r5n" x="104" y="520" width="42" height="24" font="mono" size="16" color="bg-navy" align="center">5</text><text id="r5t" x="182" y="518" width="500" height="30" font="body" size="21" color="text-main">Hospital delivery confirmed</text>
+  <shape id="outcome-frame" type="rect" x="790" y="246" width="390" height="330" fill="none" stroke="accent-royal" stroke-width="2"/>
+  <text id="outcome-label" x="820" y="274" width="300" height="22" font="mono" size="14" color="accent-cyan">DAY-OF-SURGERY OUTCOME</text>
+  <text id="outcome-one" x="820" y="330" width="300" height="28" font="body" size="22" color="text-main">Postponed</text><text id="outcome-one-detail" x="820" y="362" width="305" height="36" font="body" size="16" color="text-muted">Move to the new date and recheck readiness.</text>
+  <text id="outcome-two" x="820" y="421" width="300" height="28" font="body" size="22" color="text-main">Cancelled</text><text id="outcome-two-detail" x="820" y="453" width="305" height="36" font="body" size="16" color="text-muted">Record the reason and communicate impact.</text>
+  <text id="outcome-three" x="820" y="512" width="300" height="28" font="body" size="22" color="text-main">Surgery done</text><text id="outcome-three-detail" x="820" y="544" width="305" height="26" font="body" size="16" color="alert">Requires implant detail and patient-sheet proof.</text>
+  <text id="calendar-note" x="80" y="615" width="1050" height="26" font="body" size="17" color="text-muted">Calendar view: every authenticated member can see the plan; responsibility remains role-scoped.</text>
+  <icon id="registration-icon" name="crosshair" x="1168" y="44" width="38" height="38" color="accent-cyan"/>
+  <text id="slide-number" x="80" y="670" width="70" height="20" font="mono" size="14" color="accent-cyan">06</text>
+</slide>

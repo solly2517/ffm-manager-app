@@ -1,0 +1,23 @@
+<slide id="cover">
+  <background color="bg-navy"/>
+  <shape id="grid-v1" type="line" x="80" y="0" width="0" height="720" stroke="grid-line" stroke-width="1" opacity="0.55"/>
+  <shape id="grid-v2" type="line" x="240" y="0" width="0" height="720" stroke="grid-line" stroke-width="1" opacity="0.4"/>
+  <shape id="grid-v3" type="line" x="400" y="0" width="0" height="720" stroke="grid-line" stroke-width="1" opacity="0.4"/>
+  <shape id="grid-v4" type="line" x="560" y="0" width="0" height="720" stroke="grid-line" stroke-width="1" opacity="0.4"/>
+  <shape id="grid-v5" type="line" x="720" y="0" width="0" height="720" stroke="grid-line" stroke-width="1" opacity="0.4"/>
+  <shape id="grid-v6" type="line" x="880" y="0" width="0" height="720" stroke="grid-line" stroke-width="1" opacity="0.4"/>
+  <shape id="grid-v7" type="line" x="1040" y="0" width="0" height="720" stroke="grid-line" stroke-width="1" opacity="0.4"/>
+  <shape id="grid-h1" type="line" x="0" y="120" width="1280" height="0" stroke="grid-line" stroke-width="1" opacity="0.45"/>
+  <shape id="grid-h2" type="line" x="0" y="280" width="1280" height="0" stroke="grid-line" stroke-width="1" opacity="0.45"/>
+  <shape id="grid-h3" type="line" x="0" y="440" width="1280" height="0" stroke="grid-line" stroke-width="1" opacity="0.45"/>
+  <shape id="grid-h4" type="line" x="0" y="600" width="1280" height="0" stroke="grid-line" stroke-width="1" opacity="0.45"/>
+  <text id="cover-kicker" x="82" y="170" width="480" height="28" font="mono" size="16" color="accent-cyan" wrap="false">FFM / FIELD FORCE MANAGEMENT</text>
+  <shape id="title-rule" type="line" x="80" y="330" width="176" height="0" stroke="accent-cyan" stroke-width="5"/>
+  <text id="cover-title" x="80" y="360" width="900" height="126" font="title" size="58" color="text-main" line-height="1.05"><p>Operating Manual</p><p>Managers &amp; Delegates</p></text>
+  <text id="cover-subtitle" x="84" y="510" width="760" height="56" font="body" size="22" color="text-muted">A practical guide to secure field execution, visit evidence, clinical coordination, and accountable follow-through.</text>
+  <shape id="right-rule" type="line" x="1110" y="170" width="0" height="350" stroke="accent-royal" stroke-width="3"/>
+  <text id="audience-label" x="1130" y="230" width="105" height="180" font="mono" size="14" color="text-muted" rotation="90" wrap="false">ROLE-BASED TRAINING GUIDE</text>
+  <icon id="registration-icon" name="crosshair" x="1168" y="46" width="40" height="40" color="accent-cyan"/>
+  <text id="cover-footer" x="80" y="650" width="700" height="24" font="mono" size="14" color="accent-cyan" wrap="false">LIVE PLATFORM  /  ffmmanager-9wxfbeae.manus.space</text>
+  <text id="cover-version" x="1050" y="650" width="150" height="24" font="mono" size="14" color="text-muted" align="right" wrap="false">MANUAL / 2026</text>
+</slide>
