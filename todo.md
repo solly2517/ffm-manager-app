@@ -380,3 +380,5 @@
 - [x] Make Weekly Visits and Daily Reports clearly accessible to Managers with assignment-scoped review controls
 - [x] Extract the attached Travel Expense sheet fields and implement shared expense entry for all FFM members
 - [x] Add dual approval by each claimant's Manager and amreslam@altamammed.com, then controlled release with automatic release date
+- [x] Add printable and browser PDF-ready Travel Expense claim output with complete claim, line, approval, and release details
+- [x] Allow both Managers and Administrators to open and author Work Log weekly plans and daily reports while retaining assignment-scoped Delegate review

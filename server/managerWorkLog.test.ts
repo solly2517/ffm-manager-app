@@ -14,6 +14,7 @@ function contextFor(user: NonNullable<TrpcContext["user"]>): TrpcContext {
 const now = new Date("2026-08-22T12:00:00.000Z");
 const manager = { id: 11, openId: "manager-11", email: "manager@example.com", name: "Manager", loginMethod: "manus", role: "manager" as const, createdAt: now, updatedAt: now, lastSignedIn: now };
 const delegate = { ...manager, id: 12, openId: "delegate-12", email: "delegate@example.com", role: "delegate" as const };
+const administrator = { ...manager, id: 13, openId: "admin-13", email: "dr.seleam@gmail.com", role: "admin" as const };
 const schedule = ["2026-08-22", "2026-08-23", "2026-08-24", "2026-08-25", "2026-08-26", "2026-08-27"].map(date => ({ date, visits: [{ date, clientId: 1, doctorId: 10 }, { date, clientId: 2, doctorId: 20 }, { date, clientId: 3, doctorId: 30 }] }));
 const weeklyInput = { weekOf: new Date("2026-08-22T12:00:00.000Z"), objectives: "Manager coverage plan for the upcoming six-day workweek.", plannedVisits: "Hospital and doctor visits planned across the full Saturday-to-Thursday workweek.", schedule };
 const directories = () => {
@@ -41,6 +42,18 @@ describe("Manager Work Log authoring", () => {
     const caller = appRouter.createCaller(contextFor(delegate));
     await expect(caller.delegatePlanning.submitWeeklyPlan(weeklyInput)).resolves.toMatchObject({ id: 82, status: "pending" });
     expect(db.createWeeklyVisitPlan).toHaveBeenCalledWith(expect.objectContaining({ authorId: delegate.id, delegateId: delegate.id, status: "pending" }));
+  });
+
+  it("allows an Administrator to author a personal plan and view all Work Log records", async () => {
+    directories();
+    vi.spyOn(db, "createWeeklyVisitPlan").mockResolvedValue({ id: 83, authorId: administrator.id, delegateId: null, status: "manager_recorded" } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    vi.spyOn(db, "listAllWeeklyVisitPlans").mockResolvedValue([{ id: 7, authorId: delegate.id, delegateId: delegate.id }] as never);
+    const caller = appRouter.createCaller(contextFor(administrator));
+    await expect(caller.delegatePlanning.submitWeeklyPlan(weeklyInput)).resolves.toMatchObject({ id: 83, status: "manager_recorded" });
+    await expect(caller.delegatePlanning.weeklyPlans()).resolves.toHaveLength(1);
+    expect(db.createWeeklyVisitPlan).toHaveBeenCalledWith(expect.objectContaining({ authorId: administrator.id, delegateId: null, status: "manager_recorded" }));
+    expect(db.listAllWeeklyVisitPlans).toHaveBeenCalledOnce();
   });
 
   it("records a Manager daily report from that Manager's own approved plan context", async () => {

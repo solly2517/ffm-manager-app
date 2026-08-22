@@ -116,6 +116,8 @@ import {
   createWeeklyVisitPlan,
   getDailyActivityReportById,
   getWeeklyVisitPlanById,
+  listAllDailyActivityReports,
+  listAllWeeklyVisitPlans,
   listDailyActivityReportsForDelegate,
   listDailyActivityReportsForAuthor,
   listDailyActivityReportsForManager,
@@ -430,14 +432,18 @@ export const appRouter = router({
     weeklyPlans: fieldUserOnly.query(({ ctx }) =>
       ctx.user.role === "delegate"
         ? listWeeklyVisitPlansForDelegate(ctx.user.id)
+        : isAdmin(ctx.user)
+          ? listAllWeeklyVisitPlans()
         : listWeeklyVisitPlansForManager(ctx.user.id)
     ),
     dailyReports: fieldUserOnly.query(({ ctx }) =>
       ctx.user.role === "delegate"
         ? listDailyActivityReportsForDelegate(ctx.user.id)
+        : isAdmin(ctx.user)
+          ? listAllDailyActivityReports()
         : listDailyActivityReportsForManager(ctx.user.id)
     ),
-    submitWeeklyPlan: delegateOrManagerOnly
+    submitWeeklyPlan: fieldUserOnly
       .input(
         z.object({
           weekOf: z.date(),
@@ -479,7 +485,7 @@ export const appRouter = router({
             });
         }
         const first = visits[0]!;
-        const managerRecord = ctx.user.role === "manager";
+        const managerRecord = ctx.user.role !== "delegate";
         const result = await createWeeklyVisitPlan({
           authorId: ctx.user.id,
           delegateId: managerRecord ? null : ctx.user.id,
@@ -554,7 +560,7 @@ export const appRouter = router({
         });
         return result;
       }),
-    submitDailyReport: delegateOrManagerOnly
+    submitDailyReport: fieldUserOnly
       .input(
         z.object({
           reportDate: z.date(),
@@ -609,7 +615,7 @@ export const appRouter = router({
             });
         }
         const first = input.visits[0]!;
-        const managerRecord = ctx.user.role === "manager";
+        const managerRecord = ctx.user.role !== "delegate";
         const visitText = input.visits
           .map(
             visit =>
