@@ -368,3 +368,4 @@
 - [x] Remove the Delegate Work Log overlay that covers the mobile bottom navigation and Profile entry
 - [x] Require each Delegate plan day to include three to six planned hospitals and linked doctors
 - [x] Restrict each daily report to that date's planned hospitals while allowing multiple registered doctor visits per hospital, with at least three doctor visits
+- [x] Group multiple registered doctors under each hospital in Delegate weekly plans and daily reports

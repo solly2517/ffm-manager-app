@@ -19,7 +19,10 @@ describe("Delegate Work Log rules", () => {
     const plan = validPlan();
     expect(weeklyPlanValidationError(plan, weekOf)).toBeNull();
 
-    plan[0]!.visits.pop();
+    plan[0]!.visits.push({ date: plan[0]!.date, clientId: 1, doctorId: 12 });
+    expect(weeklyPlanValidationError(plan, weekOf)).toBeNull();
+
+    plan[0]!.visits = plan[0]!.visits.filter((visit) => visit.clientId !== 3);
     expect(weeklyPlanValidationError(plan, weekOf)).toContain("3 to 6 hospitals");
 
     const maximumPlan = validPlan();

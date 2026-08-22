@@ -27,14 +27,16 @@ describe("six-day Delegate visit schedule", () => {
   it("starts each of six plan days with three hospital rows and permits no more than six", () => {
     const plan = sixDayHospitalPlan("2026-08-17");
     expect(plan).toHaveLength(6);
-    expect(plan.every((day) => day.visits.length === MIN_HOSPITALS_PER_DAY)).toBe(true);
-    expect(plan[0].visits).toHaveLength(MIN_HOSPITALS_PER_DAY);
+    expect(plan.every((day) => day.hospitals.length === MIN_HOSPITALS_PER_DAY)).toBe(true);
+    expect(plan[0].hospitals).toHaveLength(MIN_HOSPITALS_PER_DAY);
     for (const day of plan) {
-      for (let index = 0; index < day.visits.length; index += 1) { const visit = day.visits[index]!; visit.clientId = String(index + 1); visit.doctorId = String(index + 20); }
+      for (let index = 0; index < day.hospitals.length; index += 1) { const hospital = day.hospitals[index]!; hospital.clientId = String(index + 1); hospital.doctorIds = [String(index + 20)]; }
     }
     expect(planIsComplete(plan)).toBe(true);
-    plan[0].visits.push({ date: plan[0].date, clientId: "4", doctorId: "24" }, { date: plan[0].date, clientId: "5", doctorId: "25" }, { date: plan[0].date, clientId: "6", doctorId: "26" }, { date: plan[0].date, clientId: "7", doctorId: "27" });
-    expect(plan[0].visits).toHaveLength(MAX_HOSPITALS_PER_DAY + 1);
+    plan[0].hospitals[0]!.doctorIds.push("99", "100");
+    expect(planIsComplete(plan)).toBe(true);
+    plan[0].hospitals.push({ clientId: "4", doctorIds: ["24"] }, { clientId: "5", doctorIds: ["25"] }, { clientId: "6", doctorIds: ["26"] }, { clientId: "7", doctorIds: ["27"] });
+    expect(plan[0].hospitals).toHaveLength(MAX_HOSPITALS_PER_DAY + 1);
     expect(planIsComplete(plan)).toBe(false);
   });
 });

@@ -27,13 +27,16 @@ export function weeklyPlanValidationError(days: WorkLogPlanDay[], weekOf: Date) 
   for (let index = 0; index < days.length; index += 1) {
     const day = days[index]!;
     if (day.date !== expectedDates[index]) return "Each weekly-plan day must match the selected Monday through Saturday dates.";
-    if (day.visits.length < MIN_HOSPITALS_PER_DAY || day.visits.length > MAX_HOSPITALS_PER_DAY) return `Each plan day must include ${MIN_HOSPITALS_PER_DAY} to ${MAX_HOSPITALS_PER_DAY} hospitals.`;
     const hospitalIds = new Set<number>();
+    const seenDoctorVisits = new Set<string>();
     for (const visit of day.visits) {
       if (visit.date !== day.date || !Number.isInteger(visit.clientId) || visit.clientId <= 0 || !Number.isInteger(visit.doctorId) || visit.doctorId <= 0) return "Every planned hospital requires its date, hospital, and registered doctor.";
       hospitalIds.add(visit.clientId);
+      const key = `${visit.clientId}:${visit.doctorId}`;
+      if (seenDoctorVisits.has(key)) return "Select each doctor only once under the same planned hospital.";
+      seenDoctorVisits.add(key);
     }
-    if (hospitalIds.size !== day.visits.length) return "Select each hospital only once per plan day.";
+    if (hospitalIds.size < MIN_HOSPITALS_PER_DAY || hospitalIds.size > MAX_HOSPITALS_PER_DAY) return `Each plan day must include ${MIN_HOSPITALS_PER_DAY} to ${MAX_HOSPITALS_PER_DAY} hospitals.`;
   }
   return null;
 }

@@ -31,7 +31,7 @@ const tokenHash = (token: string) => createHash("sha256").update(token).digest("
 const deliveryProofDateRangeSchema = z.object({ from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }).refine((input) => !input.from || !input.to || input.from <= input.to, { message: "The proof end date must not be earlier than the start date" });
 const isExpectedInvitationProbe = (input: { message: string; route?: string }) => input.route?.startsWith("/invite/") === true && /invitation is invalid or expired/i.test(input.message);
 const workLogVisitInput = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), clientId: z.number().int().positive(), doctorId: z.number().int().positive() });
-const workLogPlanDayInput = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), visits: z.array(workLogVisitInput).min(3).max(6) });
+const workLogPlanDayInput = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), visits: z.array(workLogVisitInput).min(3).max(100) });
 
 export const appRouter = router({
   system: systemRouter,

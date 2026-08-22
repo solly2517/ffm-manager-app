@@ -2,7 +2,8 @@ import { MAX_HOSPITALS_PER_DAY, MIN_HOSPITALS_PER_DAY, type WorkLogPlanDay } fro
 
 export { MAX_HOSPITALS_PER_DAY, MIN_HOSPITALS_PER_DAY };
 export type ScheduledClinicalVisit = { date: string; clientId: string; doctorId: string };
-export type ScheduledPlanDay = { date: string; visits: ScheduledClinicalVisit[] };
+export type ScheduledHospital = { clientId: string; doctorIds: string[] };
+export type ScheduledPlanDay = { date: string; hospitals: ScheduledHospital[] };
 
 export function sixDaySchedule(weekOf: string): ScheduledClinicalVisit[] {
   const start = new Date(`${weekOf}T12:00:00`);
@@ -14,7 +15,7 @@ export function sixDaySchedule(weekOf: string): ScheduledClinicalVisit[] {
 }
 
 export function sixDayHospitalPlan(weekOf: string): ScheduledPlanDay[] {
-  return sixDaySchedule(weekOf).map((day) => ({ date: day.date, visits: Array.from({ length: MIN_HOSPITALS_PER_DAY }, () => ({ date: day.date, clientId: "", doctorId: "" })) }));
+  return sixDaySchedule(weekOf).map((day) => ({ date: day.date, hospitals: Array.from({ length: MIN_HOSPITALS_PER_DAY }, () => ({ clientId: "", doctorIds: [""] })) }));
 }
 
 export function scheduleIsComplete(schedule: ScheduledClinicalVisit[]) {
@@ -22,15 +23,15 @@ export function scheduleIsComplete(schedule: ScheduledClinicalVisit[]) {
 }
 
 export function planIsComplete(plan: ScheduledPlanDay[]) {
-  return plan.length === 6 && plan.every((day) => day.visits.length >= MIN_HOSPITALS_PER_DAY && day.visits.length <= MAX_HOSPITALS_PER_DAY && day.visits.every((visit) => visit.date === day.date && Boolean(visit.clientId && visit.doctorId)) && new Set(day.visits.map((visit) => visit.clientId)).size === day.visits.length);
+  return plan.length === 6 && plan.every((day) => day.hospitals.length >= MIN_HOSPITALS_PER_DAY && day.hospitals.length <= MAX_HOSPITALS_PER_DAY && day.hospitals.every((hospital) => Boolean(hospital.clientId) && hospital.doctorIds.length > 0 && hospital.doctorIds.every(Boolean) && new Set(hospital.doctorIds).size === hospital.doctorIds.length) && new Set(day.hospitals.map((hospital) => hospital.clientId)).size === day.hospitals.length);
 }
 
 export function planPayload(plan: ScheduledPlanDay[]): WorkLogPlanDay[] {
-  return plan.map((day) => ({ date: day.date, visits: day.visits.map((visit) => ({ date: visit.date, clientId: Number(visit.clientId), doctorId: Number(visit.doctorId) })) }));
+  return plan.map((day) => ({ date: day.date, visits: day.hospitals.flatMap((hospital) => hospital.doctorIds.map((doctorId) => ({ date: day.date, clientId: Number(hospital.clientId), doctorId: Number(doctorId) }))) }));
 }
 
 export function formatPlan(plan: ScheduledPlanDay[], clientName: (id: string) => string, doctorName: (id: string) => string) {
-  return plan.map((day, index) => `Day ${index + 1} — ${day.date}\n${day.visits.map((visit) => `• ${clientName(visit.clientId)} — ${doctorName(visit.doctorId)}`).join("\n")}`).join("\n\n");
+  return plan.map((day, index) => `Day ${index + 1} — ${day.date}\n${day.hospitals.map((hospital) => `• ${clientName(hospital.clientId)}\n  Doctors: ${hospital.doctorIds.map((doctorId) => doctorName(doctorId)).join(", ")}`).join("\n")}`).join("\n\n");
 }
 
 export function hasAtLeastHospitals(schedule: ScheduledClinicalVisit[], minimum = 3) {
