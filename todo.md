@@ -398,3 +398,8 @@
 - [x] Add a view-only Stock Management hyperlink that opens the stock app login screen in a new tab
 - [x] Add searchable, role- and department-filterable Super Manager roster controls with each Delegate's Manager assignment
 - [x] Add read-only recent weekly-plan and daily-report submission activity to the Super Manager dashboard
+- [x] Extend the reusable FFM workflow skill with Administrator department structures, filtered roster export, activity filters, and mobile date-format guidance
+- [x] Add an Administrator-only interface to manage reusable department names and assign departments to members
+- [x] Add CSV export of the currently filtered Super Manager roster with spreadsheet-safe fields
+- [x] Add date-range and report-status filters to the read-only Super Manager team activity summary
+- [x] Correct mobile Delegate date displays to use the unambiguous dd/MM/yyyy format

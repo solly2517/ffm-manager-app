@@ -16,6 +16,16 @@ export const users = mysqlTable("users", {
   locationSharing: boolean("locationSharing").default(false).notNull(),
 }, (table) => ({ emailIdx: index("users_email_idx").on(table.email) }));
 
+export const departments = mysqlTable("departments", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 160 }).notNull(),
+  parentDepartmentId: int("parentDepartmentId"),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdBy: int("createdBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({ nameUnique: uniqueIndex("departments_name_unique").on(table.name), parentIdx: index("departments_parent_idx").on(table.parentDepartmentId) }));
+
 export const clientErrorReports = mysqlTable("client_error_reports", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId"),

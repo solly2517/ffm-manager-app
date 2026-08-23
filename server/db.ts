@@ -1,6 +1,6 @@
 import { and, count, desc, eq, isNull, like, ne, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, invitations, clients, doctors, managerDelegateAssignments, managerWarehouseHeroAssignments, warehouseHeroLocations, warehouseDeliveryProofs, tasks, visits, evidence, auditEvents, messages, userNotifications, surgeries, implantCatalogue, surgeryImplants, surgeryDeliveryProofs, visitPlans, weeklyVisitPlans, dailyActivityReports, geography, clientErrorReports, weeklyBackupReminderSchedules, googleDriveBackupConnections, backupArchives, travelExpenseClaims, travelExpenseLines } from "../drizzle/schema";
+import { InsertUser, users, departments, invitations, clients, doctors, managerDelegateAssignments, managerWarehouseHeroAssignments, warehouseHeroLocations, warehouseDeliveryProofs, tasks, visits, evidence, auditEvents, messages, userNotifications, surgeries, implantCatalogue, surgeryImplants, surgeryDeliveryProofs, visitPlans, weeklyVisitPlans, dailyActivityReports, geography, clientErrorReports, weeklyBackupReminderSchedules, googleDriveBackupConnections, backupArchives, travelExpenseClaims, travelExpenseLines } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -87,6 +87,13 @@ export async function listUsers() {
   const db = await getDb(); if (!db) return [];
   return db.select().from(users).orderBy(users.createdAt);
 }
+
+export async function listDepartments() { const db = await getDb(); if (!db) return []; return db.select().from(departments).orderBy(departments.name); }
+export async function getDepartmentById(id: number) { const db = await getDb(); if (!db) return undefined; return (await db.select().from(departments).where(eq(departments.id, id)).limit(1))[0]; }
+export async function createDepartment(input: typeof departments.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database is not available"); const result = await db.insert(departments).values(input); return getDepartmentById(Number(result[0].insertId)); }
+export async function updateDepartment(id: number, input: Pick<typeof departments.$inferInsert, "name" | "parentDepartmentId" | "isActive">) { const db = await getDb(); if (!db) throw new Error("Database is not available"); const current = await getDepartmentById(id); if (!current) return undefined; await db.update(departments).set(input).where(eq(departments.id, id)); if (current.name !== input.name) await db.update(users).set({ department: input.name }).where(eq(users.department, current.name)); return getDepartmentById(id); }
+export async function removeDepartment(id: number) { const db = await getDb(); if (!db) throw new Error("Database is not available"); await db.delete(departments).where(eq(departments.id, id)); return { success: true as const }; }
+export async function updateUserDepartment(id: number, department: string | null) { const db = await getDb(); if (!db) throw new Error("Database is not available"); await db.update(users).set({ department }).where(eq(users.id, id)); return getUserById(id); }
 
 export async function upsertInvitedUser(input: { email: string; name?: string | null }) {
   const db = await getDb(); if (!db) throw new Error("Database is not available");

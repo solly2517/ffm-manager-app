@@ -103,6 +103,23 @@ describe("admin access control", () => {
     await expect(caller.admin.removeUser({ id: 2 })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
+  it("reserves department structures and member department assignments for Administrators", async () => {
+    const nonAdmin = appRouter.createCaller(contextFor(baseUser));
+    await expect(nonAdmin.admin.createDepartment({ name: "Clinical Operations" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(nonAdmin.admin.assignUserDepartment({ userId: 2, departmentId: 7 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    vi.spyOn(db, "listDepartments").mockResolvedValue([] as never);
+    vi.spyOn(db, "createDepartment").mockResolvedValue({ id: 7, name: "Clinical Operations", parentDepartmentId: null, isActive: true } as never);
+    vi.spyOn(db, "getUserById").mockResolvedValue({ id: 2, openId: "member-2", email: "member@example.com", department: null } as never);
+    vi.spyOn(db, "getDepartmentById").mockResolvedValue({ id: 7, name: "Clinical Operations", isActive: true } as never);
+    vi.spyOn(db, "updateUserDepartment").mockResolvedValue({ id: 2, department: "Clinical Operations" } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const admin = appRouter.createCaller(contextFor({ ...baseUser, role: "admin", email: "dr.seleam@gmail.com" }));
+    await expect(admin.admin.createDepartment({ name: "Clinical Operations" })).resolves.toMatchObject({ id: 7, name: "Clinical Operations" });
+    await expect(admin.admin.assignUserDepartment({ userId: 2, departmentId: 7 })).resolves.toMatchObject({ id: 2, department: "Clinical Operations" });
+    expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "department.member_assigned", entityId: 2 }));
+  });
+
   it("protects the designated administrator and the acting administrator account", () => {
     expect(isProtectedAdminTarget({ email: "DR.SELEAM@GMAIL.COM", openId: "other" }, "actor")).toBe(true);
     expect(isProtectedAdminTarget({ email: "other@example.com", openId: "actor" }, "actor")).toBe(true);

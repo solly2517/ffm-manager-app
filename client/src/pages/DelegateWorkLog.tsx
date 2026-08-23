@@ -26,6 +26,7 @@ import {
   type ScheduledPlanDay,
 } from "@/lib/workLogSchedule";
 import { parseWeeklySchedule } from "@shared/workLogRules";
+import { formatFfmDate } from "@/lib/ffmDate";
 
 const localDate = () => new Date().toISOString().slice(0, 10);
 const statusTone = (status: string) =>
@@ -754,9 +755,9 @@ export default function DelegateWorkLog() {
                       <strong>
                         {canReview
                           ? plan.authorId === user?.id
-                            ? `My plan · Week of ${new Date(plan.weekOf).toLocaleDateString()}`
-                            : `${plan.delegateName || plan.authorName || "Delegate"} · Week of ${new Date(plan.weekOf).toLocaleDateString()}`
-                          : `Week of ${new Date(plan.weekOf).toLocaleDateString()}`}
+                            ? `My plan · Week of ${formatFfmDate(plan.weekOf)}`
+                            : `${plan.delegateName || plan.authorName || "Delegate"} · Week of ${formatFfmDate(plan.weekOf)}`
+                          : `Week of ${formatFfmDate(plan.weekOf)}`}
                       </strong>
                       <Badge className={statusTone(plan.status)}>
                         {plan.status}
@@ -816,9 +817,9 @@ export default function DelegateWorkLog() {
                       <strong>
                         {canReview
                           ? report.authorId === user?.id
-                            ? `My report · ${new Date(report.reportDate).toLocaleDateString()}`
-                            : `${report.delegateName || report.authorName || "Delegate"} · ${new Date(report.reportDate).toLocaleDateString()}`
-                          : new Date(report.reportDate).toLocaleDateString()}
+                            ? `My report · ${formatFfmDate(report.reportDate)}`
+                            : `${report.delegateName || report.authorName || "Delegate"} · ${formatFfmDate(report.reportDate)}`
+                          : formatFfmDate(report.reportDate)}
                       </strong>
                       <Badge className={statusTone(report.status)}>
                         {report.status}

@@ -65,6 +65,12 @@ import {
   listWarehouseHeroIdsForManager,
   listUsers,
   listManagers,
+  listDepartments,
+  getDepartmentById,
+  createDepartment,
+  updateDepartment,
+  removeDepartment,
+  updateUserDepartment,
   listManagerAssignments,
   listManagerWarehouseHeroAssignments,
   listVisitPlansForDelegate,
@@ -257,6 +263,51 @@ const deliveryProofDateRangeSchema = z
   .refine(input => !input.from || !input.to || input.from <= input.to, {
     message: "The proof end date must not be earlier than the start date",
   });
+const reportActivityStatusSchema = z.enum(["pending", "approved", "rejected", "submitted", "reviewed", "manager_recorded"]);
+const superManagerActivityFilterFields = z.object({
+  activityFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  activityTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  activityStatus: reportActivityStatusSchema.optional(),
+});
+const superManagerActivityFilters = superManagerActivityFilterFields.refine(input => !input.activityFrom || !input.activityTo || input.activityFrom <= input.activityTo, { message: "The activity end date must not be earlier than the start date." });
+const superManagerRosterExportFilters = z.object({
+  activityFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  activityTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  activityStatus: reportActivityStatusSchema.optional(),
+  query: z.string().trim().max(160).optional(),
+  role: z.enum(["manager", "delegate", "warehouse_hero"]).optional(),
+  department: z.string().trim().max(160).optional(),
+}).refine(input => !input.activityFrom || !input.activityTo || input.activityFrom <= input.activityTo, { message: "The activity end date must not be earlier than the start date." });
+const departmentName = (value: string) => value.trim().replace(/\s+/g, " ");
+const departmentHierarchyHasCycle = (rows: Array<{ id: number; parentDepartmentId: number | null }>, id: number, parentDepartmentId: number | null) => {
+  const byId = new globalThis.Map(rows.map(row => [row.id, row]));
+  let current = parentDepartmentId;
+  while (current != null) {
+    if (current === id) return true;
+    current = byId.get(current)?.parentDepartmentId ?? null;
+  }
+  return false;
+};
+const safeCsvCell = (value: unknown) => {
+  const raw = String(value ?? "");
+  const safe = /^[=+\-@]/.test(raw) ? `'${raw}` : raw;
+  return `"${safe.replace(/"/g, '""')}"`;
+};
+async function buildSuperManagerRoster(input: z.infer<typeof superManagerActivityFilters> = {}) {
+  const [managers, delegates, warehouseHeroes, assignments, weeklyPlans, dailyReports] = await Promise.all([
+    listManagers(), listDelegates(), listWarehouseHeroes(), listManagerAssignments(), listAllWeeklyVisitPlans(), listAllDailyActivityReports(),
+  ]);
+  const from = input.activityFrom ? new Date(`${input.activityFrom}T00:00:00.000Z`).getTime() : Number.NEGATIVE_INFINITY;
+  const to = input.activityTo ? new Date(`${input.activityTo}T23:59:59.999Z`).getTime() : Number.POSITIVE_INFINITY;
+  const recentActivity = [
+    ...weeklyPlans.map(record => ({ id: `weekly-${record.id}`, type: "weekly_plan" as const, authorName: record.authorName, authorEmail: record.authorEmail, status: record.status, submittedAt: record.createdAt })),
+    ...dailyReports.map(record => ({ id: `daily-${record.id}`, type: "daily_report" as const, authorName: record.authorName, authorEmail: record.authorEmail, status: record.status, submittedAt: record.createdAt })),
+  ].filter(record => {
+    const submittedAt = new Date(record.submittedAt).getTime();
+    return submittedAt >= from && submittedAt <= to && (!input.activityStatus || record.status === input.activityStatus);
+  }).sort((left, right) => new Date(right.submittedAt).getTime() - new Date(left.submittedAt).getTime()).slice(0, 20);
+  return { managers, delegates, warehouseHeroes, assignments, recentActivity };
+}
 const isExpectedInvitationProbe = (input: {
   message: string;
   route?: string;
@@ -1071,6 +1122,55 @@ export const appRouter = router({
     managers: adminOnly.query(async () => listManagers()),
     delegates: adminOnly.query(async () => listDelegates()),
     warehouseHeroes: adminOnly.query(async () => listWarehouseHeroes()),
+    departments: adminOnly.query(async () => listDepartments()),
+    createDepartment: adminOnly
+      .input(z.object({ name: z.string().trim().min(2).max(160), parentDepartmentId: z.number().int().positive().nullable().optional() }))
+      .mutation(async ({ input, ctx }) => {
+        const name = departmentName(input.name);
+        const rows = await listDepartments();
+        if (rows.some(row => row.name.toLowerCase() === name.toLowerCase())) throw new TRPCError({ code: "CONFLICT", message: "A department with this name already exists." });
+        if (input.parentDepartmentId != null && !rows.some(row => row.id === input.parentDepartmentId)) throw new TRPCError({ code: "BAD_REQUEST", message: "Choose an existing parent department." });
+        const result = await createDepartment({ name, parentDepartmentId: input.parentDepartmentId ?? null, createdBy: ctx.user.id, isActive: true });
+        await addAuditEvent({ actorId: ctx.user.id, action: "department.created", entityType: "department", entityId: result?.id, metadata: JSON.stringify({ name, parentDepartmentId: input.parentDepartmentId ?? null }) });
+        return result;
+      }),
+    updateDepartment: adminOnly
+      .input(z.object({ id: z.number().int().positive(), name: z.string().trim().min(2).max(160), parentDepartmentId: z.number().int().positive().nullable(), isActive: z.boolean() }))
+      .mutation(async ({ input, ctx }) => {
+        const current = await getDepartmentById(input.id);
+        if (!current) throw new TRPCError({ code: "NOT_FOUND", message: "Department not found." });
+        const name = departmentName(input.name);
+        const rows = await listDepartments();
+        if (rows.some(row => row.id !== input.id && row.name.toLowerCase() === name.toLowerCase())) throw new TRPCError({ code: "CONFLICT", message: "A department with this name already exists." });
+        if (input.parentDepartmentId != null && !rows.some(row => row.id === input.parentDepartmentId)) throw new TRPCError({ code: "BAD_REQUEST", message: "Choose an existing parent department." });
+        if (departmentHierarchyHasCycle(rows, input.id, input.parentDepartmentId)) throw new TRPCError({ code: "BAD_REQUEST", message: "A department cannot be its own parent or descendant." });
+        const result = await updateDepartment(input.id, { name, parentDepartmentId: input.parentDepartmentId, isActive: input.isActive });
+        await addAuditEvent({ actorId: ctx.user.id, action: "department.updated", entityType: "department", entityId: input.id, metadata: JSON.stringify({ previousName: current.name, name, parentDepartmentId: input.parentDepartmentId, isActive: input.isActive }) });
+        return result;
+      }),
+    removeDepartment: adminOnly
+      .input(z.object({ id: z.number().int().positive() }))
+      .mutation(async ({ input, ctx }) => {
+        const department = await getDepartmentById(input.id);
+        if (!department) throw new TRPCError({ code: "NOT_FOUND", message: "Department not found." });
+        const [rows, members] = await Promise.all([listDepartments(), listUsers()]);
+        if (rows.some(row => row.parentDepartmentId === input.id)) throw new TRPCError({ code: "CONFLICT", message: "Reassign or remove child departments before removing this department." });
+        if (members.some(member => member.department?.trim().toLowerCase() === department.name.trim().toLowerCase())) throw new TRPCError({ code: "CONFLICT", message: "Reassign or clear members before removing this department." });
+        const result = await removeDepartment(input.id);
+        await addAuditEvent({ actorId: ctx.user.id, action: "department.removed", entityType: "department", entityId: input.id, metadata: JSON.stringify({ name: department.name }) });
+        return result;
+      }),
+    assignUserDepartment: adminOnly
+      .input(z.object({ userId: z.number().int().positive(), departmentId: z.number().int().positive().nullable() }))
+      .mutation(async ({ input, ctx }) => {
+        const member = await getUserById(input.userId);
+        if (!member) throw new TRPCError({ code: "NOT_FOUND", message: "Member not found." });
+        const department = input.departmentId == null ? undefined : await getDepartmentById(input.departmentId);
+        if (input.departmentId != null && (!department || !department.isActive)) throw new TRPCError({ code: "BAD_REQUEST", message: "Choose an active department." });
+        const result = await updateUserDepartment(input.userId, department?.name ?? null);
+        await addAuditEvent({ actorId: ctx.user.id, action: "department.member_assigned", entityType: "user", entityId: input.userId, metadata: JSON.stringify({ previousDepartment: member.department ?? null, department: department?.name ?? null }) });
+        return result;
+      }),
     removeWarehouseDeliveryProof: adminOnly
       .input(z.object({ id: z.number().int().positive() }))
       .mutation(async ({ input, ctx }) => {
@@ -1572,22 +1672,34 @@ export const appRouter = router({
         ? listDelegatesForManager(ctx.user.id)
         : listDelegates()
     ),
-    superManagerRoster: protectedProcedure.query(async ({ ctx }) => {
+    superManagerRoster: protectedProcedure.input(superManagerActivityFilters.optional()).query(async ({ ctx, input }) => {
       if (!isAdmin(ctx.user) && !isSuperManager(ctx.user))
         throw new TRPCError({ code: "FORBIDDEN", message: "Super Manager roster oversight is restricted." });
-      const [managers, delegates, warehouseHeroes, assignments, weeklyPlans, dailyReports] = await Promise.all([
-        listManagers(),
-        listDelegates(),
-        listWarehouseHeroes(),
-        listManagerAssignments(),
-        listAllWeeklyVisitPlans(),
-        listAllDailyActivityReports(),
-      ]);
-      const recentActivity = [
-        ...weeklyPlans.map(record => ({ id: `weekly-${record.id}`, type: "weekly_plan" as const, authorName: record.authorName, authorEmail: record.authorEmail, status: record.status, submittedAt: record.createdAt })),
-        ...dailyReports.map(record => ({ id: `daily-${record.id}`, type: "daily_report" as const, authorName: record.authorName, authorEmail: record.authorEmail, status: record.status, submittedAt: record.createdAt })),
-      ].sort((left, right) => new Date(right.submittedAt).getTime() - new Date(left.submittedAt).getTime()).slice(0, 20);
-      return { managers, delegates, warehouseHeroes, assignments, recentActivity };
+      return buildSuperManagerRoster(input ?? {});
+    }),
+    superManagerRosterExport: protectedProcedure.input(superManagerRosterExportFilters).mutation(async ({ ctx, input }) => {
+      if (!isAdmin(ctx.user) && !isSuperManager(ctx.user)) throw new TRPCError({ code: "FORBIDDEN", message: "Super Manager roster oversight is restricted." });
+      const roster = await buildSuperManagerRoster();
+      const assignmentNames = new globalThis.Map<number, string[]>();
+      for (const assignment of roster.assignments) {
+        const values = assignmentNames.get(assignment.delegateId) ?? [];
+        values.push(assignment.managerName || assignment.managerEmail || "Assigned Manager");
+        assignmentNames.set(assignment.delegateId, values);
+      }
+      const query = input.query?.toLowerCase() ?? "";
+      const department = input.department?.toLowerCase() ?? "";
+      const rows = [
+        ...roster.managers.map(member => ({ ...member, rosterRole: "manager", managerAssignments: [] as string[] })),
+        ...roster.delegates.map(member => ({ ...member, rosterRole: "delegate", managerAssignments: assignmentNames.get(member.id) ?? [] })),
+        ...roster.warehouseHeroes.map(member => ({ ...member, rosterRole: "warehouse_hero", managerAssignments: [] as string[] })),
+      ].filter(member => {
+        const matchesQuery = !query || `${member.name || ""} ${member.email || ""} ${member.department || ""} ${member.managerAssignments.join(" ")}`.toLowerCase().includes(query);
+        return matchesQuery && (!input.role || member.rosterRole === input.role) && (!department || member.department?.trim().toLowerCase() === department);
+      });
+      const header = ["Name", "Email", "Role", "Department", "Assigned Manager"];
+      const csv = [header.map(safeCsvCell).join(","), ...rows.map(member => [member.name || "", member.email || "", member.rosterRole, member.department || "", member.managerAssignments.join("; ") || (member.rosterRole === "delegate" ? "Unassigned" : "")].map(safeCsvCell).join(","))].join("\n");
+      await addAuditEvent({ actorId: ctx.user.id, action: "super_manager.roster_exported", entityType: "user", metadata: JSON.stringify({ query: input.query || null, role: input.role || null, department: input.department || null, rowCount: rows.length }) });
+      return { csv: `${csv}\n`, filename: `ffm-super-manager-roster-${new Date().toISOString().slice(0, 10)}.csv`, rowCount: rows.length };
     }),
     doctors: fieldUserOnly.query(() => listDoctors()),
     geography: fieldUserOnly.query(() => listGeography()),

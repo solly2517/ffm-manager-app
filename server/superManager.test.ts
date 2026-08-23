@@ -28,6 +28,20 @@ describe("Super Manager roster oversight", () => {
     expect(assignedDelegates).not.toHaveBeenCalled();
   });
 
+  it("filters read-only report activity and exports only the requested authorized roster scope as safe CSV", async () => {
+    vi.spyOn(db, "listManagers").mockResolvedValue([{ id: 1, email: "manager@example.com", name: "Assigned Manager", department: "Operations" }] as never);
+    vi.spyOn(db, "listDelegates").mockResolvedValue([{ id: 2, email: "delegate@example.com", name: "=Delegate", department: "Clinical" }] as never);
+    vi.spyOn(db, "listWarehouseHeroes").mockResolvedValue([{ id: 3, email: "hero@example.com", name: "Warehouse Hero", department: "Warehouse" }] as never);
+    vi.spyOn(db, "listManagerAssignments").mockResolvedValue([{ delegateId: 2, managerId: 1, managerName: "Assigned Manager", managerEmail: "manager@example.com" }] as never);
+    vi.spyOn(db, "listAllWeeklyVisitPlans").mockResolvedValue([{ id: 4, authorName: "Delegate", authorEmail: "delegate@example.com", status: "pending", createdAt: new Date("2026-08-22T12:00:00.000Z") }] as never);
+    vi.spyOn(db, "listAllDailyActivityReports").mockResolvedValue([{ id: 5, authorName: "Delegate", authorEmail: "delegate@example.com", status: "reviewed", createdAt: new Date("2026-08-23T12:00:00.000Z") }] as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const caller = appRouter.createCaller(contextFor(superManager));
+
+    await expect(caller.operations.superManagerRoster({ activityFrom: "2026-08-23", activityTo: "2026-08-23", activityStatus: "reviewed" })).resolves.toMatchObject({ recentActivity: [{ id: "daily-5", status: "reviewed" }] });
+    await expect(caller.operations.superManagerRosterExport({ query: "delegate", role: "delegate", department: "Clinical" })).resolves.toMatchObject({ rowCount: 1, csv: expect.stringContaining("'=Delegate") });
+  });
+
   it("does not grant roster oversight to an ordinary Manager", async () => {
     vi.spyOn(db, "listDelegatesForManager").mockResolvedValue([] as never);
     const allDelegates = vi.spyOn(db, "listDelegates").mockResolvedValue([] as never);
