@@ -447,3 +447,4 @@
 - [x] Add an authorized weekly hospital handover analytics export to the Manager dashboard
 - [x] Verify and resolve reported preview-mode publication access issue for the live FFM deployment
 - [x] Reorder the welcome dashboard so Operational Overview appears before Administrator report controls
+- [x] Move the Monthly Travel Expense summary and trend below the main daily operational dashboard content
