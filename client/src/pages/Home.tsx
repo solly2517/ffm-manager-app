@@ -325,7 +325,7 @@ export default function Home() {
 
   const current = nav.find((item) => item.id === active) ?? nav[0];
   if (active === "warehouse-heroes") return <WarehouseHeroesWorkspace isAdmin={isAdmin} onBack={() => setActive("dashboard")} />;
-  if (active === "warehouse-hero-lead") return <WarehouseHeroLeadDashboard />;
+  if (active === "warehouse-hero-lead") return <WarehouseHeroLeadDashboard onBack={() => setActive("dashboard")} />;
   if (active === "surgery-calendar") return <SurgeryCalendar />;
   if (active === "surgery-readiness") return <SurgeryReadiness />;
   if (active === "diagnostics") return <AdminDiagnostics />;

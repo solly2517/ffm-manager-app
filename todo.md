@@ -437,3 +437,4 @@
 - [x] Add required recipient-name and digital-signature capture to hospital handover proof submissions
 - [x] Add Manager review and acknowledgement of completed hospital handovers
 - [x] Extend the reusable FFM workflow skill with recipient-signature evidence and Manager acknowledgement guidance
+- [x] Add a persistent Back to Dashboard control to Warehouse Hero Lead Activity
