@@ -92,6 +92,7 @@ export const warehouseDeliveryProofs = mysqlTable("warehouse_delivery_proofs", {
   id: int("id").autoincrement().primaryKey(),
   warehouseHeroId: int("warehouseHeroId").notNull(),
   note: text("note"),
+  captureSource: mysqlEnum("captureSource", ["legacy_upload", "live_camera"]).default("legacy_upload").notNull(),
   storageKey: varchar("storageKey", { length: 512 }).notNull(),
   mimeType: varchar("mimeType", { length: 120 }).notNull(),
   sizeBytes: int("sizeBytes").notNull(),

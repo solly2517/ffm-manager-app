@@ -425,3 +425,8 @@
 - [x] Extend the reusable FFM workflow skill with report-link revocation and Warehouse Hero lead dashboard guidance
 - [x] Add Administrator-only shared report-link listing and immediate revocation controls
 - [x] Add a dedicated Warehouse Hero lead dashboard for osamaahmed@altamammed.com with assigned Hero performance, daily delivery activity, proofs, and tasks
+- [x] Extend the reusable FFM workflow skill with lead CSV export, overdue proof alerts, expiry management, and camera-only multi-photo proof guidance
+- [x] Add a spreadsheet-safe CSV export of the server-authorized Hero Lead Activity data
+- [x] Add overdue delivery-proof alerts for the designated Warehouse Hero lead without automatic external email delivery
+- [x] Add Administrator controls to set and extend the expiration of active shared report links
+- [x] Require Warehouse Hero delivery proofs to use camera-only multi-photo capture instead of choosing existing device files

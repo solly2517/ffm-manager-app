@@ -80,7 +80,9 @@ import {
   getActiveMonthlyDepartmentReportShare,
   listMonthlyDepartmentReportShares,
   revokeMonthlyDepartmentReportShare,
+  updateMonthlyDepartmentReportShareExpiry,
   getWarehouseHeroLeadActivity,
+  warehouseHeroLeadActivityCsv,
   listManagerAssignments,
   listManagerWarehouseHeroAssignments,
   listVisitPlansForDelegate,
@@ -1197,6 +1199,15 @@ export const appRouter = router({
       await addAuditEvent({ actorId: ctx.user.id, action: "department.monthly_report_share_revoked", entityType: "department", entityId: input.id, metadata: JSON.stringify({ shareId: input.id }) });
       return { success: true } as const;
     }),
+    updateMonthlyDepartmentReportShareExpiry: adminOnly.input(z.object({ id: z.number().int().positive(), expiresOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) })).mutation(async ({ ctx, input }) => {
+      const expiresAt = new Date(`${input.expiresOn}T23:59:59.999Z`);
+      const maximum = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+      if (Number.isNaN(expiresAt.getTime()) || expiresAt.getTime() <= Date.now() || expiresAt > maximum) throw new TRPCError({ code: "BAD_REQUEST", message: "Choose a future expiry date within the next 90 days." });
+      const share = await updateMonthlyDepartmentReportShareExpiry(input.id, expiresAt);
+      if (!share) throw new TRPCError({ code: "NOT_FOUND", message: "Only active report links can have their expiry updated." });
+      await addAuditEvent({ actorId: ctx.user.id, action: "department.monthly_report_share_expiry_updated", entityType: "department", entityId: input.id, metadata: JSON.stringify({ shareId: input.id, expiresAt: expiresAt.toISOString() }) });
+      return { id: share.id, expiresAt: share.expiresAt };
+    }),
     departmentAuditEvents: adminOnly.input(departmentDateRangeFilters.optional()).query(async ({ input }) => listDepartmentAuditEvents(input ?? {})),
     departmentAuditExport: adminOnly.input(departmentDateRangeFilters.optional()).mutation(async ({ ctx, input }) => {
       const filters = input ?? {};
@@ -1755,6 +1766,13 @@ export const appRouter = router({
       if (!lead) throw new TRPCError({ code: "FORBIDDEN", message: "Warehouse Hero lead activity is restricted to the designated lead and Administrators." });
       return getWarehouseHeroLeadActivity(lead.id);
     }),
+    exportWarehouseHeroLeadActivityCsv: protectedProcedure.query(async ({ ctx }) => {
+      const lead = isAdmin(ctx.user) ? (await listUsers()).find(user => user.email?.trim().toLowerCase() === WAREHOUSE_HERO_LEAD_EMAIL && user.role === "manager") : isWarehouseHeroLead(ctx.user) ? ctx.user : undefined;
+      if (!lead) throw new TRPCError({ code: "FORBIDDEN", message: "Warehouse Hero lead export is restricted to the designated lead and Administrators." });
+      const rows = await getWarehouseHeroLeadActivity(lead.id);
+      await addAuditEvent({ actorId: ctx.user.id, action: "warehouse_hero.lead_activity_exported", entityType: "user", entityId: lead.id, metadata: JSON.stringify({ leadEmail: WAREHOUSE_HERO_LEAD_EMAIL, rowCount: rows.length }) });
+      return warehouseHeroLeadActivityCsv(rows);
+    }),
     clients: fieldUserOnly.query(() => listClients()),
     delegates: fieldUserOnly.query(({ ctx }) =>
       ctx.user.role === "manager" && !isSuperManager(ctx.user)
@@ -1922,8 +1940,9 @@ export const appRouter = router({
       .input(
         z.object({
           fileName: z.string().min(1).max(180),
-          mimeType: z.enum(["image/jpeg", "image/png", "image/webp"]),
+          mimeType: z.literal("image/jpeg"),
           base64: z.string().min(20).max(15_000_000),
+          captureSource: z.literal("live_camera"),
           note: z.string().max(1_000).optional(),
         })
       )
@@ -1951,6 +1970,7 @@ export const appRouter = router({
         const result = await createWarehouseDeliveryProof({
           warehouseHeroId: ctx.user.id,
           note: input.note?.trim() || null,
+          captureSource: input.captureSource,
           storageKey: uploaded.key,
           mimeType: input.mimeType,
           sizeBytes: buffer.byteLength,

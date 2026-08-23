@@ -222,7 +222,7 @@ describe("admin access control", () => {
     vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
     const caller = appRouter.createCaller(contextFor(warehouseHero));
     await expect(caller.operations.updateWarehouseHeroLocation({ latitude: "24.7136000", longitude: "46.6753000" })).resolves.toMatchObject({ id: 94, warehouseHeroId: 54 });
-    await expect(caller.operations.uploadWarehouseDeliveryProof({ fileName: "proof.jpg", mimeType: "image/jpeg", base64: "data:image/jpeg;base64,QUJDREVGR0hJSktMTU5PUA==" })).resolves.toMatchObject({ proofId: 95 });
+    await expect(caller.operations.uploadWarehouseDeliveryProof({ fileName: "proof.jpg", mimeType: "image/jpeg", captureSource: "live_camera", base64: "data:image/jpeg;base64,QUJDREVGR0hJSktMTU5PUA==" })).resolves.toMatchObject({ proofId: 95 });
   });
 
   it("rejects out-of-range Warehouse Hero GPS coordinates before persistence", async () => {
@@ -440,17 +440,24 @@ describe("admin access control", () => {
     vi.spyOn(db, "createWarehouseDeliveryProof").mockResolvedValue({ id: 94, warehouseHeroId: 72, note: "Delivered", storageKey: "warehouse-delivery-proofs/72/proof_hash.jpg", mimeType: "image/jpeg", sizeBytes: 10, capturedAt: new Date(), createdAt: new Date() } as never);
     vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
     const caller = appRouter.createCaller(contextFor(warehouseHero));
-    await expect(caller.operations.uploadWarehouseDeliveryProof({ fileName: "proof.jpg", mimeType: "image/jpeg", base64: "data:image/jpeg;base64,QUJDREVGR0hJSktMTU5PUA==", note: "Delivered" })).resolves.toMatchObject({ proofId: 94, url: "/manus-storage/warehouse-delivery-proofs/72/proof_hash.jpg" });
+    await expect(caller.operations.uploadWarehouseDeliveryProof({ fileName: "proof.jpg", mimeType: "image/jpeg", captureSource: "live_camera", base64: "data:image/jpeg;base64,QUJDREVGR0hJSktMTU5PUA==", note: "Delivered" })).resolves.toMatchObject({ proofId: 94, url: "/manus-storage/warehouse-delivery-proofs/72/proof_hash.jpg" });
     expect(storagePut).toHaveBeenCalled();
-    expect(db.createWarehouseDeliveryProof).toHaveBeenCalledWith(expect.objectContaining({ warehouseHeroId: 72, mimeType: "image/jpeg", note: "Delivered" }));
+    expect(db.createWarehouseDeliveryProof).toHaveBeenCalledWith(expect.objectContaining({ warehouseHeroId: 72, mimeType: "image/jpeg", captureSource: "live_camera", note: "Delivered" }));
   });
 
   it("rejects delivery-proof payloads larger than the server-side 8 MB limit", async () => {
     const warehouseHero = { ...baseUser, id: 73, openId: "warehouse-hero-73", role: "warehouse_hero" as const, email: "hero@example.com" };
     vi.spyOn(db, "hasManagerForWarehouseHero").mockResolvedValue(true);
     const caller = appRouter.createCaller(contextFor(warehouseHero));
-    await expect(caller.operations.uploadWarehouseDeliveryProof({ fileName: "large.jpg", mimeType: "image/jpeg", base64: "A".repeat(11_200_000) })).rejects.toMatchObject({ code: "PAYLOAD_TOO_LARGE" });
+    await expect(caller.operations.uploadWarehouseDeliveryProof({ fileName: "large.jpg", mimeType: "image/jpeg", captureSource: "live_camera", base64: "A".repeat(11_200_000) })).rejects.toMatchObject({ code: "PAYLOAD_TOO_LARGE" });
     expect(storagePut).not.toHaveBeenCalled();
+  });
+
+  it("rejects device-library proof contracts that are not live-camera JPEG captures", async () => {
+    const warehouseHero = { ...baseUser, id: 74, openId: "warehouse-hero-74", role: "warehouse_hero" as const, email: "hero@example.com" };
+    const caller = appRouter.createCaller(contextFor(warehouseHero));
+    await expect(caller.operations.uploadWarehouseDeliveryProof({ fileName: "proof.png", mimeType: "image/png" as never, captureSource: "live_camera", base64: "data:image/png;base64,QUJDREVGR0hJSktMTU5PUA==" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    await expect(caller.operations.uploadWarehouseDeliveryProof({ fileName: "proof.jpg", mimeType: "image/jpeg", captureSource: "legacy_upload" as never, base64: "data:image/jpeg;base64,QUJDREVGR0hJSktMTU5PUA==" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
   it("blocks duplicate manager–delegate assignments", async () => {
@@ -494,6 +501,17 @@ describe("admin access control", () => {
     expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "department.monthly_report_share_revoked", entityId: 51 }));
   });
 
+  it("lets only Administrators extend active report-share expiry dates and audits the change", async () => {
+    const future = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000);
+    vi.spyOn(db, "updateMonthlyDepartmentReportShareExpiry").mockResolvedValue({ id: 51, expiresAt: future } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const regular = appRouter.createCaller(contextFor(baseUser));
+    await expect(regular.admin.updateMonthlyDepartmentReportShareExpiry({ id: 51, expiresOn: future.toISOString().slice(0, 10) })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    const admin = appRouter.createCaller(contextFor({ ...baseUser, role: "admin", email: "dr.seleam@gmail.com" }));
+    await expect(admin.admin.updateMonthlyDepartmentReportShareExpiry({ id: 51, expiresOn: future.toISOString().slice(0, 10) })).resolves.toMatchObject({ id: 51 });
+    expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "department.monthly_report_share_expiry_updated", entityId: 51 }));
+  });
+
   it("returns Warehouse Hero lead activity only to Osama Ahmed or an Administrator", async () => {
     const activity = [{ id: 61, name: "Hero", email: "hero@example.com", todayTaskCount: 1, openTaskCount: 2, completedTaskCount: 3, recentProofCount: 1, recentProofs: [], latestLocationAt: null }];
     vi.spyOn(db, "getWarehouseHeroLeadActivity").mockResolvedValue(activity as never);
@@ -503,6 +521,18 @@ describe("admin access control", () => {
     const designatedLead = appRouter.createCaller(contextFor({ ...baseUser, id: 7770030, role: "manager", email: "osamaahmed@altamammed.com" }));
     await expect(designatedLead.operations.warehouseHeroLeadActivity()).resolves.toMatchObject([{ id: 61, openTaskCount: 2 }]);
     expect(db.getWarehouseHeroLeadActivity).toHaveBeenCalledWith(7770030);
+  });
+
+  it("exports spreadsheet-safe Hero Lead activity only to Osama Ahmed or an Administrator", async () => {
+    const activity = [{ id: 61, name: "=Hero", email: "hero@example.com", todayTaskCount: 1, openTaskCount: 2, completedTaskCount: 3, overdueProofTaskCount: 1, overdueProofTasks: [{ id: 7, scheduledAt: new Date("2026-08-01"), status: "completed" }], recentProofCount: 1, recentProofs: [], latestLocationAt: null }];
+    vi.spyOn(db, "getWarehouseHeroLeadActivity").mockResolvedValue(activity as never);
+    vi.spyOn(db, "listUsers").mockResolvedValue([{ ...baseUser, id: 7770030, email: "osamaahmed@altamammed.com", role: "manager" }] as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const ordinaryManager = appRouter.createCaller(contextFor({ ...baseUser, role: "manager", email: "manager@example.com" }));
+    await expect(ordinaryManager.operations.exportWarehouseHeroLeadActivityCsv()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    const designatedLead = appRouter.createCaller(contextFor({ ...baseUser, id: 7770030, role: "manager", email: "osamaahmed@altamammed.com" }));
+    await expect(designatedLead.operations.exportWarehouseHeroLeadActivityCsv()).resolves.toContain("'=Hero");
+    expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "warehouse_hero.lead_activity_exported", entityId: 7770030 }));
   });
 
 });
