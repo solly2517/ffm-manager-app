@@ -1,5 +1,5 @@
-import { createHash, randomBytes } from "node:crypto";
 import { TRPCError } from "@trpc/server";
+import { createHash, randomBytes } from "node:crypto";
 import { z } from "zod";
 import { COOKIE_NAME, FFM_MAGIC_SESSION_COOKIE } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
@@ -76,6 +76,8 @@ import {
   listSuperManagerReportFilterPresets,
   createSuperManagerReportFilterPreset,
   removeSuperManagerReportFilterPreset,
+  createMonthlyDepartmentReportShare,
+  getActiveMonthlyDepartmentReportShare,
   listManagerAssignments,
   listManagerWarehouseHeroAssignments,
   listVisitPlansForDelegate,
@@ -178,6 +180,7 @@ const SUPER_MANAGER_EMAILS = new Set([
   "amreslam@altamammed.com",
   "waleedelshamy@altamammed.com",
 ]);
+const WAREHOUSE_HERO_LEAD_EMAIL = "osamaahmed@altamammed.com";
 const isAdmin = (user: { email?: string | null; role?: string }) =>
   user.email?.toLowerCase() === ADMIN_EMAIL || user.role === "admin";
 const isSuperManager = (user: { email?: string | null }) =>
@@ -298,6 +301,7 @@ const departmentDateRangeFilters = z.object({
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 }).refine(input => !input.from || !input.to || input.from <= input.to, { message: "The end date must not be earlier than the start date." }).refine(input => !input.from || !input.to || new Date(`${input.to}T00:00:00.000Z`).getTime() - new Date(`${input.from}T00:00:00.000Z`).getTime() <= 366 * 24 * 60 * 60 * 1000, { message: "Select a date range of one year or less." });
 const departmentSummaryMonthSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Choose a valid report month.");
+const departmentReportCommentarySchema = z.string().trim().max(2000, "Keep commentary to 2,000 characters or fewer.").optional().transform(value => value || null);
 const departmentSummaryMonthRange = (month: string) => {
   const [year, monthNumber] = month.split("-").map(Number);
   const lastDay = new Date(Date.UTC(year, monthNumber, 0)).getUTCDate();
@@ -496,6 +500,13 @@ export const appRouter = router({
             message: "Unable to activate invitation",
           });
         await acceptInvitation(invitation.id);
+        if (invitation.role === "warehouse_hero") {
+          const warehouseHeroLead = (await listUsers()).find(user => user.email?.trim().toLowerCase() === WAREHOUSE_HERO_LEAD_EMAIL && user.role === "manager");
+          if (warehouseHeroLead && !await isWarehouseHeroAssignedToManager(warehouseHeroLead.id, invitedUser.id)) {
+            await createManagerWarehouseHeroAssignment({ managerId: warehouseHeroLead.id, warehouseHeroId: invitedUser.id, assignedBy: warehouseHeroLead.id });
+            await addAuditEvent({ actorId: invitedUser.id, action: "warehouse_hero.default_lead_assigned", entityType: "user", entityId: invitedUser.id, metadata: JSON.stringify({ managerId: warehouseHeroLead.id, managerEmail: WAREHOUSE_HERO_LEAD_EMAIL, invitationId: invitation.id }) });
+          }
+        }
         await addAuditEvent({
           actorId: invitedUser.id,
           action: "invitation.accepted_magic_link",
@@ -1154,6 +1165,26 @@ export const appRouter = router({
       const totals = await getDepartmentDashboardTotals(range);
       await addAuditEvent({ actorId: ctx.user.id, action: "department.monthly_summary_generated", entityType: "department", metadata: JSON.stringify({ month: input.month, ...range, departmentCount: totals.length }) });
       return { month: input.month, ...range, generatedAt: new Date(), totals };
+    }),
+    createMonthlyDepartmentReportShare: adminOnly.input(z.object({ month: departmentSummaryMonthSchema, commentary: departmentReportCommentarySchema })).mutation(async ({ ctx, input }) => {
+      const range = departmentSummaryMonthRange(input.month);
+      const generatedAt = new Date();
+      const totals = await getDepartmentDashboardTotals(range);
+      const token = randomBytes(32).toString("base64url");
+      const tokenHash = createHash("sha256").update(token).digest("hex");
+      const expiresAt = new Date(generatedAt.getTime() + 30 * 24 * 60 * 60 * 1000);
+      const reportPayload = JSON.stringify({ month: input.month, ...range, generatedAt, totals });
+      await createMonthlyDepartmentReportShare({ tokenHash, createdBy: ctx.user.id, month: input.month, commentary: input.commentary, reportPayload, expiresAt });
+      await addAuditEvent({ actorId: ctx.user.id, action: "department.monthly_report_shared", entityType: "department", metadata: JSON.stringify({ month: input.month, ...range, departmentCount: totals.length, expiresAt: expiresAt.toISOString() }) });
+      return { token, expiresAt };
+    }),
+    resolveMonthlyDepartmentReportShare: adminOnly.input(z.object({ token: z.string().min(32).max(128) })).query(async ({ ctx, input }) => {
+      const tokenHash = createHash("sha256").update(input.token).digest("hex");
+      const share = await getActiveMonthlyDepartmentReportShare(tokenHash);
+      if (!share) throw new TRPCError({ code: "NOT_FOUND", message: "This report link is invalid or has expired." });
+      const report = JSON.parse(share.reportPayload) as { month: string; from: string; to: string; generatedAt: Date | string; totals: Awaited<ReturnType<typeof getDepartmentDashboardTotals>> };
+      await addAuditEvent({ actorId: ctx.user.id, action: "department.monthly_report_share_accessed", entityType: "department", metadata: JSON.stringify({ shareId: share.id, month: share.month }) });
+      return { ...report, commentary: share.commentary, expiresAt: share.expiresAt };
     }),
     departmentAuditEvents: adminOnly.input(departmentDateRangeFilters.optional()).query(async ({ input }) => listDepartmentAuditEvents(input ?? {})),
     departmentAuditExport: adminOnly.input(departmentDateRangeFilters.optional()).mutation(async ({ ctx, input }) => {

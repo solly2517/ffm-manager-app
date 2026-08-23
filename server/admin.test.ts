@@ -466,4 +466,19 @@ describe("admin access control", () => {
     await expect(caller.admin.removeUser({ id: 0 })).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
 
+  it("creates and resolves expiring monthly report shares only for Administrators", async () => {
+    const totals = [{ id: 7, name: "Clinical", isActive: true, memberCount: 4, managerCount: 1, delegateCount: 2, warehouseHeroCount: 1, taskCount: 9, openTaskCount: 3, weeklyPlanCount: 2, dailyReportCount: 6 }];
+    vi.spyOn(db, "getDepartmentDashboardTotals").mockResolvedValue(totals as never);
+    vi.spyOn(db, "createMonthlyDepartmentReportShare").mockResolvedValue({ id: 41, tokenHash: "hashed", createdBy: 1, month: "2026-08", commentary: "Focus on coverage", reportPayload: JSON.stringify({ month: "2026-08", from: "2026-08-01", to: "2026-08-31", generatedAt: new Date(), totals }), expiresAt: new Date("2026-09-01"), createdAt: new Date() } as never);
+    vi.spyOn(db, "getActiveMonthlyDepartmentReportShare").mockResolvedValue({ id: 41, tokenHash: "hashed", createdBy: 1, month: "2026-08", commentary: "Focus on coverage", reportPayload: JSON.stringify({ month: "2026-08", from: "2026-08-01", to: "2026-08-31", generatedAt: new Date(), totals }), expiresAt: new Date("2026-09-01"), createdAt: new Date() } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const regular = appRouter.createCaller(contextFor(baseUser));
+    await expect(regular.admin.createMonthlyDepartmentReportShare({ month: "2026-08", commentary: "No access" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    const admin = appRouter.createCaller(contextFor({ ...baseUser, role: "admin", email: "dr.seleam@gmail.com" }));
+    await expect(admin.admin.createMonthlyDepartmentReportShare({ month: "2026-08", commentary: "Focus on coverage" })).resolves.toMatchObject({ token: expect.any(String) });
+    await expect(admin.admin.resolveMonthlyDepartmentReportShare({ token: "x".repeat(32) })).resolves.toMatchObject({ month: "2026-08", commentary: "Focus on coverage", totals: [{ id: 7 }] });
+    expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "department.monthly_report_shared" }));
+    expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "department.monthly_report_share_accessed" }));
+  });
+
 });

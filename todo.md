@@ -417,3 +417,8 @@
 - [x] Add an Administrator preview modal for monthly department PDF data before download
 - [x] Add visual department staffing and task comparison charts to the monthly department PDF
 - [x] Add native Al Tamam company logo and custom brand colors to the monthly PDF header without pasted-background styling
+- [x] Extend the reusable FFM workflow skill with report commentary, executive summaries, secure share links, and Warehouse Hero leadership guidance
+- [x] Add Administrator-only optional commentary to the monthly report preview and generated PDF
+- [x] Add an executive summary cover page with top-performing departments and live key metrics to the monthly PDF
+- [x] Add a secure, copyable Administrator report-share link that exposes only the authorized generated report
+- [x] Assign existing and future Warehouse Heroes to the controlled osamaahmed@altamammed.com leadership relationship without restoring broad Hero assignments

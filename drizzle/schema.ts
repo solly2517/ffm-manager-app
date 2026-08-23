@@ -41,6 +41,17 @@ export const superManagerReportFilterPresets = mysqlTable("super_manager_report_
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({ userIdx: index("super_manager_preset_user_idx").on(table.userId), userNameUnique: uniqueIndex("super_manager_preset_user_name_unique").on(table.userId, table.name) }));
 
+export const monthlyDepartmentReportShares = mysqlTable("monthly_department_report_shares", {
+  id: int("id").autoincrement().primaryKey(),
+  tokenHash: varchar("tokenHash", { length: 128 }).notNull().unique(),
+  createdBy: int("createdBy").notNull(),
+  month: varchar("month", { length: 7 }).notNull(),
+  commentary: text("commentary"),
+  reportPayload: text("reportPayload").notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({ creatorIdx: index("monthly_department_report_share_creator_idx").on(table.createdBy), expiryIdx: index("monthly_department_report_share_expiry_idx").on(table.expiresAt) }));
+
 export const clientErrorReports = mysqlTable("client_error_reports", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId"),
