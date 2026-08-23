@@ -55,6 +55,8 @@ import {
   createWarehouseHandover,
   listWarehouseHandovers,
   acknowledgeWarehouseHandover,
+  getWeeklyWarehouseHandoverAnalytics,
+  warehouseHandoverAnalyticsCsv,
   listDoctors,
   listGeography,
   listInvitations,
@@ -1893,6 +1895,8 @@ export const appRouter = router({
       listWarehouseDeliveryProofsForHero(ctx.user.id)
     ),
     warehouseHandovers: managerOnly.query(() => listWarehouseHandovers()),
+    weeklyWarehouseHandoverAnalytics: managerOnly.input(z.object({ weekStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }).optional()).query(async ({ input }) => getWeeklyWarehouseHandoverAnalytics(input?.weekStart)),
+    exportWarehouseHandoverWeeklyAnalyticsCsv: managerOnly.input(z.object({ weekStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }).optional()).query(async ({ ctx, input }) => { const analytics = await getWeeklyWarehouseHandoverAnalytics(input?.weekStart); await addAuditEvent({ actorId: ctx.user.id, action: "warehouse_handover.weekly_analytics_exported", entityType: "warehouseHandover", metadata: JSON.stringify({ weekStart: analytics.weekStart, weekEnd: analytics.weekEnd, rowCount: analytics.rows.length }) }); return { csv: warehouseHandoverAnalyticsCsv(analytics), filename: `ffm-weekly-handover-analytics-${analytics.weekStart}.csv`, summary: { weekStart: analytics.weekStart, weekEnd: analytics.weekEnd, totalHandovers: analytics.totalHandovers, acknowledgedHandovers: analytics.acknowledgedHandovers, awaitingAcknowledgement: analytics.awaitingAcknowledgement, totalProofPhotos: analytics.totalProofPhotos } }; }),
     acknowledgeWarehouseHandover: managerOnly.input(z.object({ handoverId: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
       const handover = await acknowledgeWarehouseHandover(input.handoverId, ctx.user.id);
       if (!handover) throw new TRPCError({ code: "NOT_FOUND", message: "This handover is unavailable or has already been acknowledged." });

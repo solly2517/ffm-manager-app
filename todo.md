@@ -442,3 +442,6 @@
 - [x] Add reusable breadcrumb navigation for deep FFM workspaces
 - [x] Add unsaved-form leave confirmation to protect handover and operational draft inputs
 - [x] Extend the reusable FFM workflow skill with mobile navigation, breadcrumbs, and unsaved-form safeguards
+- [x] Verify the published mobile Hero Lead Activity navigation and sticky action bar
+- [x] Add a printable PDF template export for completed hospital handovers
+- [x] Add an authorized weekly hospital handover analytics export to the Manager dashboard

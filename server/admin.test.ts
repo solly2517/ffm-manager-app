@@ -467,6 +467,21 @@ describe("admin access control", () => {
     expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "warehouse_handover.acknowledged", entityId: 301 }));
   });
 
+  it("restricts weekly handover analytics export to Managers and Administrators and audits the export", async () => {
+    vi.spyOn(db, "getWeeklyWarehouseHandoverAnalytics").mockResolvedValue({ weekStart: "2026-08-17", weekEnd: "2026-08-24", totalHandovers: 1, acknowledgedHandovers: 1, awaitingAcknowledgement: 0, totalProofPhotos: 2, rows: [{ id: 301, completedAt: new Date("2026-08-20T10:00:00.000Z"), warehouseHeroName: "Hero", warehouseHeroEmail: "hero@example.com", recipientName: "Recipient", proofCount: 2, acknowledgementStatus: "acknowledged", acknowledgedAt: new Date("2026-08-20T11:00:00.000Z"), acknowledgedByName: "Manager", note: null }] } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const regular = appRouter.createCaller(contextFor(baseUser));
+    await expect(regular.operations.exportWarehouseHandoverWeeklyAnalyticsCsv({ weekStart: "2026-08-17" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    const manager = appRouter.createCaller(contextFor({ ...baseUser, id: 11, role: "manager", email: "manager@example.com" }));
+    await expect(manager.operations.exportWarehouseHandoverWeeklyAnalyticsCsv({ weekStart: "2026-08-17" })).resolves.toMatchObject({ filename: "ffm-weekly-handover-analytics-2026-08-17.csv", summary: { totalHandovers: 1 } });
+    expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "warehouse_handover.weekly_analytics_exported" }));
+  });
+
+  it("neutralizes spreadsheet-formula text in weekly handover analytics CSV output", () => {
+    const csv = db.warehouseHandoverAnalyticsCsv({ weekStart: "2026-08-17", weekEnd: "2026-08-24", totalHandovers: 1, acknowledgedHandovers: 0, awaitingAcknowledgement: 1, totalProofPhotos: 1, rows: [{ id: 44, completedAt: new Date("2026-08-20T10:00:00.000Z"), warehouseHeroName: "=HYPERLINK(\"https://unsafe.example\")", warehouseHeroEmail: "hero@example.com", recipientName: "Recipient", proofCount: 1, acknowledgementStatus: "awaiting_acknowledgement", acknowledgedAt: null, acknowledgedByName: null, note: null }] });
+    expect(csv).toContain("'=HYPERLINK");
+  });
+
   it("rejects delivery-proof payloads larger than the server-side 8 MB limit", async () => {
     const warehouseHero = { ...baseUser, id: 73, openId: "warehouse-hero-73", role: "warehouse_hero" as const, email: "hero@example.com" };
     vi.spyOn(db, "hasManagerForWarehouseHero").mockResolvedValue(true);

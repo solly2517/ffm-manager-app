@@ -22,6 +22,8 @@ vi.mock("@/lib/trpc", () => {
         exportWarehouseDeliveryProofsCsv: { useQuery: () => ({ ...emptyQuery, refetch: mocks.exportRefetch }) },
         warehouseHandovers: { useQuery: () => emptyQuery },
         acknowledgeWarehouseHandover: { useMutation: () => idleMutation },
+        weeklyWarehouseHandoverAnalytics: { useQuery: () => ({ ...emptyQuery, data: { weekStart: "2026-08-17", weekEnd: "2026-08-24", totalHandovers: 0, acknowledgedHandovers: 0, awaitingAcknowledgement: 0, totalProofPhotos: 0, rows: [] } }) },
+        exportWarehouseHandoverWeeklyAnalyticsCsv: { useQuery: () => emptyQuery },
       },
       admin: {
         managers: { useQuery: () => emptyQuery },
