@@ -162,8 +162,15 @@ import { claimsWithinTravelExpenseRange, travelExpenseDateRangeError, travelExpe
 
 const ADMIN_EMAIL = "dr.seleam@gmail.com";
 const OPERATIONAL_MANAGER_EMAIL = "amreslam@altamammed.com";
+const SUPER_MANAGER_EMAILS = new Set([
+  "m.selim@altamammed.com",
+  "amreslam@altamammed.com",
+  "waleedelshamy@altamammed.com",
+]);
 const isAdmin = (user: { email?: string | null; role?: string }) =>
   user.email?.toLowerCase() === ADMIN_EMAIL || user.role === "admin";
+const isSuperManager = (user: { email?: string | null }) =>
+  Boolean(user.email && SUPER_MANAGER_EMAILS.has(user.email.trim().toLowerCase()));
 const canManage = (user: { email?: string | null; role?: string }) =>
   isAdmin(user) || user.role === "manager";
 const adminOnly = protectedProcedure.use(({ ctx, next }) => {
@@ -1561,10 +1568,20 @@ export const appRouter = router({
   operations: router({
     clients: fieldUserOnly.query(() => listClients()),
     delegates: fieldUserOnly.query(({ ctx }) =>
-      ctx.user.role === "manager"
+      ctx.user.role === "manager" && !isSuperManager(ctx.user)
         ? listDelegatesForManager(ctx.user.id)
         : listDelegates()
     ),
+    superManagerRoster: protectedProcedure.query(async ({ ctx }) => {
+      if (!isAdmin(ctx.user) && !isSuperManager(ctx.user))
+        throw new TRPCError({ code: "FORBIDDEN", message: "Super Manager roster oversight is restricted." });
+      const [managers, delegates, warehouseHeroes] = await Promise.all([
+        listManagers(),
+        listDelegates(),
+        listWarehouseHeroes(),
+      ]);
+      return { managers, delegates, warehouseHeroes };
+    }),
     doctors: fieldUserOnly.query(() => listDoctors()),
     geography: fieldUserOnly.query(() => listGeography()),
     messages: protectedProcedure.query(({ ctx }) => listMessages(ctx.user.id)),

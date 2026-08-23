@@ -393,3 +393,4 @@
 - [x] Add a dashboard month-over-month Travel Expense trend chart with currency-safe series
 - [x] Add a Manager action to email an overdue alert for the selected assigned Delegate
 - [x] Add a department filter to Finance Travel Expense date-range Excel and CSV exports
+- [x] Grant m.selim@altamammed.com, amreslam@altamammed.com, and waleedelshamy@altamammed.com controlled Super Manager visibility of all Managers, Delegates, and Warehouse Heroes without Administrator account-management access
