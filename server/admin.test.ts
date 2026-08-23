@@ -147,6 +147,19 @@ describe("admin access control", () => {
     expect(db.listDepartmentAuditEvents).toHaveBeenCalledWith(filters);
   });
 
+  it("generates Administrator-only monthly department summary data from the exact calendar month and audits the request", async () => {
+    const nonAdmin = appRouter.createCaller(contextFor(baseUser));
+    await expect(nonAdmin.admin.departmentMonthlySummary({ month: "2026-08" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    vi.spyOn(db, "getDepartmentDashboardTotals").mockResolvedValue([{ id: 7, name: "Clinical", taskCount: 4, weeklyPlanCount: 2, dailyReportCount: 5 }] as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const admin = appRouter.createCaller(contextFor({ ...baseUser, role: "admin", email: "dr.seleam@gmail.com" }));
+    await expect(admin.admin.departmentMonthlySummary({ month: "2026-08" })).resolves.toMatchObject({ month: "2026-08", from: "2026-08-01", to: "2026-08-31", totals: [{ id: 7 }] });
+    await expect(admin.admin.departmentMonthlySummary({ month: "2026-13" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(db.getDepartmentDashboardTotals).toHaveBeenCalledWith({ from: "2026-08-01", to: "2026-08-31" });
+    expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "department.monthly_summary_generated", metadata: expect.stringContaining("2026-08") }));
+  });
+
   it("protects the designated administrator and the acting administrator account", () => {
     expect(isProtectedAdminTarget({ email: "DR.SELEAM@GMAIL.COM", openId: "other" }, "actor")).toBe(true);
     expect(isProtectedAdminTarget({ email: "other@example.com", openId: "actor" }, "actor")).toBe(true);

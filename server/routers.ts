@@ -297,6 +297,12 @@ const departmentDateRangeFilters = z.object({
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
 }).refine(input => !input.from || !input.to || input.from <= input.to, { message: "The end date must not be earlier than the start date." }).refine(input => !input.from || !input.to || new Date(`${input.to}T00:00:00.000Z`).getTime() - new Date(`${input.from}T00:00:00.000Z`).getTime() <= 366 * 24 * 60 * 60 * 1000, { message: "Select a date range of one year or less." });
+const departmentSummaryMonthSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Choose a valid report month.");
+const departmentSummaryMonthRange = (month: string) => {
+  const [year, monthNumber] = month.split("-").map(Number);
+  const lastDay = new Date(Date.UTC(year, monthNumber, 0)).getUTCDate();
+  return { from: `${month}-01`, to: `${month}-${String(lastDay).padStart(2, "0")}` };
+};
 const departmentName = (value: string) => value.trim().replace(/\s+/g, " ");
 const departmentHierarchyHasCycle = (rows: Array<{ id: number; parentDepartmentId: number | null }>, id: number, parentDepartmentId: number | null) => {
   const byId = new globalThis.Map(rows.map(row => [row.id, row]));
@@ -1143,6 +1149,12 @@ export const appRouter = router({
     warehouseHeroes: adminOnly.query(async () => listWarehouseHeroes()),
     departments: adminOnly.query(async () => listDepartments()),
     departmentDashboardTotals: adminOnly.input(departmentDateRangeFilters.optional()).query(async ({ input }) => getDepartmentDashboardTotals(input ?? {})),
+    departmentMonthlySummary: adminOnly.input(z.object({ month: departmentSummaryMonthSchema })).mutation(async ({ ctx, input }) => {
+      const range = departmentSummaryMonthRange(input.month);
+      const totals = await getDepartmentDashboardTotals(range);
+      await addAuditEvent({ actorId: ctx.user.id, action: "department.monthly_summary_generated", entityType: "department", metadata: JSON.stringify({ month: input.month, ...range, departmentCount: totals.length }) });
+      return { month: input.month, ...range, generatedAt: new Date(), totals };
+    }),
     departmentAuditEvents: adminOnly.input(departmentDateRangeFilters.optional()).query(async ({ input }) => listDepartmentAuditEvents(input ?? {})),
     departmentAuditExport: adminOnly.input(departmentDateRangeFilters.optional()).mutation(async ({ ctx, input }) => {
       const filters = input ?? {};

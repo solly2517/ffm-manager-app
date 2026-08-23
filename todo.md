@@ -411,3 +411,5 @@
 - [x] Add Administrator date-range filtering to department-change audit history and CSV export
 - [x] Add an Administrator-managed shared Super Manager report-filter preset library
 - [x] Add Administrator date-range filters to department task and Work Log totals
+- [x] Extend the reusable FFM workflow skill with Administrator monthly department PDF summary guidance
+- [x] Add an Administrator-only monthly department summary PDF generation and download action using live department metrics
