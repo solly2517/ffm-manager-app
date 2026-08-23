@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { MapView } from "@/components/Map";
 import { DigitalSignaturePad } from "@/components/DigitalSignaturePad";
+import { useUnsavedFormGuard } from "@/hooks/useUnsavedFormGuard";
 import { trpc } from "@/lib/trpc";
 import { HANDOVER_CHECKLIST, initialHandoverChecklist, isHandoverChecklistComplete, MAX_LIVE_CAMERA_PROOFS, type HandoverChecklistId } from "@/lib/warehouseHandoverCapture";
 import { Camera, CheckCircle2, CircleDollarSign, Eye, LocateFixed, LogOut, MapPin, MessageSquare, RotateCcw, Send, Truck, X } from "lucide-react";
@@ -13,7 +14,7 @@ import { Camera, CheckCircle2, CircleDollarSign, Eye, LocateFixed, LogOut, MapPi
 type CapturedProof = { id: string; dataUrl: string };
 
 export default function WarehouseHero() {
-  const { user, loading, isAuthenticated, logout } = useAuth();
+  const { user, loading, isAuthenticated, logout: performLogout } = useAuth();
   const utils = trpc.useUtils();
   const [activeTab, setActiveTab] = useState<"delivery" | "messages">("delivery");
   const [tracking, setTracking] = useState(false);
@@ -53,6 +54,9 @@ export default function WarehouseHero() {
   const unreadMessageCount = messagesQuery.data?.filter(message => message.recipientId === user?.id && !message.readAt).length ?? 0;
   const handoverChecklistComplete = isHandoverChecklistComplete(handoverChecklist);
   const previewProof = capturedProofs.find(proof => proof.id === previewProofId) ?? null;
+  const handoverDraftDirty = Boolean(proofNote.trim() || recipientName.trim() || signatureDataUrl || capturedProofs.length || HANDOVER_CHECKLIST.some(item => handoverChecklist[item.id]));
+  const { requestLeave } = useUnsavedFormGuard(handoverDraftDirty, "You have an unfinished hospital handover. Leave and discard the recipient details, signature, checklist, and captured photos?");
+  const logout = () => requestLeave(performLogout);
 
   useEffect(() => { setLocationEnabled(preferences.data?.locationSharing ?? false); }, [preferences.data?.locationSharing]);
   useEffect(() => {

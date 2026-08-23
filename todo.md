@@ -438,3 +438,7 @@
 - [x] Add Manager review and acknowledgement of completed hospital handovers
 - [x] Extend the reusable FFM workflow skill with recipient-signature evidence and Manager acknowledgement guidance
 - [x] Add a persistent Back to Dashboard control to Warehouse Hero Lead Activity
+- [x] Add a mobile sticky action bar for accessible dashboard navigation and workspace return actions
+- [x] Add reusable breadcrumb navigation for deep FFM workspaces
+- [x] Add unsaved-form leave confirmation to protect handover and operational draft inputs
+- [x] Extend the reusable FFM workflow skill with mobile navigation, breadcrumbs, and unsaved-form safeguards
