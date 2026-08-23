@@ -422,3 +422,6 @@
 - [x] Add an executive summary cover page with top-performing departments and live key metrics to the monthly PDF
 - [x] Add a secure, copyable Administrator report-share link that exposes only the authorized generated report
 - [x] Assign existing and future Warehouse Heroes to the controlled osamaahmed@altamammed.com leadership relationship without restoring broad Hero assignments
+- [x] Extend the reusable FFM workflow skill with report-link revocation and Warehouse Hero lead dashboard guidance
+- [x] Add Administrator-only shared report-link listing and immediate revocation controls
+- [x] Add a dedicated Warehouse Hero lead dashboard for osamaahmed@altamammed.com with assigned Hero performance, daily delivery activity, proofs, and tasks

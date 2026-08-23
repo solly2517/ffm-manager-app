@@ -481,4 +481,28 @@ describe("admin access control", () => {
     expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "department.monthly_report_share_accessed" }));
   });
 
+  it("lets only Administrators list and revoke shared monthly report links", async () => {
+    vi.spyOn(db, "listMonthlyDepartmentReportShares").mockResolvedValue([{ id: 51, month: "2026-08", createdAt: new Date(), expiresAt: new Date(Date.now() + 86_400_000), createdByName: "Administrator", createdByEmail: "dr.seleam@gmail.com", active: true }] as never);
+    vi.spyOn(db, "revokeMonthlyDepartmentReportShare").mockResolvedValue({ deleted: 1 });
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const regular = appRouter.createCaller(contextFor(baseUser));
+    await expect(regular.admin.monthlyDepartmentReportShares()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(regular.admin.revokeMonthlyDepartmentReportShare({ id: 51 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    const admin = appRouter.createCaller(contextFor({ ...baseUser, role: "admin", email: "dr.seleam@gmail.com" }));
+    await expect(admin.admin.monthlyDepartmentReportShares()).resolves.toMatchObject([{ id: 51, active: true }]);
+    await expect(admin.admin.revokeMonthlyDepartmentReportShare({ id: 51 })).resolves.toEqual({ success: true });
+    expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "department.monthly_report_share_revoked", entityId: 51 }));
+  });
+
+  it("returns Warehouse Hero lead activity only to Osama Ahmed or an Administrator", async () => {
+    const activity = [{ id: 61, name: "Hero", email: "hero@example.com", todayTaskCount: 1, openTaskCount: 2, completedTaskCount: 3, recentProofCount: 1, recentProofs: [], latestLocationAt: null }];
+    vi.spyOn(db, "getWarehouseHeroLeadActivity").mockResolvedValue(activity as never);
+    vi.spyOn(db, "listUsers").mockResolvedValue([{ ...baseUser, id: 7770030, email: "osamaahmed@altamammed.com", role: "manager" }] as never);
+    const ordinaryManager = appRouter.createCaller(contextFor({ ...baseUser, role: "manager", email: "manager@example.com" }));
+    await expect(ordinaryManager.operations.warehouseHeroLeadActivity()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    const designatedLead = appRouter.createCaller(contextFor({ ...baseUser, id: 7770030, role: "manager", email: "osamaahmed@altamammed.com" }));
+    await expect(designatedLead.operations.warehouseHeroLeadActivity()).resolves.toMatchObject([{ id: 61, openTaskCount: 2 }]);
+    expect(db.getWarehouseHeroLeadActivity).toHaveBeenCalledWith(7770030);
+  });
+
 });

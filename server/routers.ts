@@ -78,6 +78,9 @@ import {
   removeSuperManagerReportFilterPreset,
   createMonthlyDepartmentReportShare,
   getActiveMonthlyDepartmentReportShare,
+  listMonthlyDepartmentReportShares,
+  revokeMonthlyDepartmentReportShare,
+  getWarehouseHeroLeadActivity,
   listManagerAssignments,
   listManagerWarehouseHeroAssignments,
   listVisitPlansForDelegate,
@@ -181,6 +184,7 @@ const SUPER_MANAGER_EMAILS = new Set([
   "waleedelshamy@altamammed.com",
 ]);
 const WAREHOUSE_HERO_LEAD_EMAIL = "osamaahmed@altamammed.com";
+const isWarehouseHeroLead = (user: { email?: string | null; role?: string }) => user.role === "manager" && user.email?.trim().toLowerCase() === WAREHOUSE_HERO_LEAD_EMAIL;
 const isAdmin = (user: { email?: string | null; role?: string }) =>
   user.email?.toLowerCase() === ADMIN_EMAIL || user.role === "admin";
 const isSuperManager = (user: { email?: string | null }) =>
@@ -1186,6 +1190,13 @@ export const appRouter = router({
       await addAuditEvent({ actorId: ctx.user.id, action: "department.monthly_report_share_accessed", entityType: "department", metadata: JSON.stringify({ shareId: share.id, month: share.month }) });
       return { ...report, commentary: share.commentary, expiresAt: share.expiresAt };
     }),
+    monthlyDepartmentReportShares: adminOnly.query(async () => listMonthlyDepartmentReportShares()),
+    revokeMonthlyDepartmentReportShare: adminOnly.input(z.object({ id: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
+      const result = await revokeMonthlyDepartmentReportShare(input.id);
+      if (!result.deleted) throw new TRPCError({ code: "NOT_FOUND", message: "This report link has already been revoked or does not exist." });
+      await addAuditEvent({ actorId: ctx.user.id, action: "department.monthly_report_share_revoked", entityType: "department", entityId: input.id, metadata: JSON.stringify({ shareId: input.id }) });
+      return { success: true } as const;
+    }),
     departmentAuditEvents: adminOnly.input(departmentDateRangeFilters.optional()).query(async ({ input }) => listDepartmentAuditEvents(input ?? {})),
     departmentAuditExport: adminOnly.input(departmentDateRangeFilters.optional()).mutation(async ({ ctx, input }) => {
       const filters = input ?? {};
@@ -1739,6 +1750,11 @@ export const appRouter = router({
       }),
   }),
   operations: router({
+    warehouseHeroLeadActivity: protectedProcedure.query(async ({ ctx }) => {
+      const lead = isAdmin(ctx.user) ? (await listUsers()).find(user => user.email?.trim().toLowerCase() === WAREHOUSE_HERO_LEAD_EMAIL && user.role === "manager") : isWarehouseHeroLead(ctx.user) ? ctx.user : undefined;
+      if (!lead) throw new TRPCError({ code: "FORBIDDEN", message: "Warehouse Hero lead activity is restricted to the designated lead and Administrators." });
+      return getWarehouseHeroLeadActivity(lead.id);
+    }),
     clients: fieldUserOnly.query(() => listClients()),
     delegates: fieldUserOnly.query(({ ctx }) =>
       ctx.user.role === "manager" && !isSuperManager(ctx.user)
