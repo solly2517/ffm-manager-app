@@ -448,3 +448,6 @@
 - [x] Verify and resolve reported preview-mode publication access issue for the live FFM deployment
 - [x] Reorder the welcome dashboard so Operational Overview appears before Administrator report controls
 - [x] Move the Monthly Travel Expense summary and trend below the main daily operational dashboard content
+- [x] Add a user-controlled toggle to hide empty dashboard cards
+- [x] Add a compact weekly operations summary near the dashboard top
+- [x] Extend the reusable FFM workflow skill with dashboard personalization and weekly summary guidance
