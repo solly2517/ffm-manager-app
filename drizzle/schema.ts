@@ -91,6 +91,7 @@ export const warehouseHeroLocations = mysqlTable("warehouse_hero_locations", {
 export const warehouseDeliveryProofs = mysqlTable("warehouse_delivery_proofs", {
   id: int("id").autoincrement().primaryKey(),
   warehouseHeroId: int("warehouseHeroId").notNull(),
+  handoverId: int("handoverId"),
   note: text("note"),
   captureSource: mysqlEnum("captureSource", ["legacy_upload", "live_camera"]).default("legacy_upload").notNull(),
   storageKey: varchar("storageKey", { length: 512 }).notNull(),
@@ -98,7 +99,19 @@ export const warehouseDeliveryProofs = mysqlTable("warehouse_delivery_proofs", {
   sizeBytes: int("sizeBytes").notNull(),
   capturedAt: timestamp("capturedAt").defaultNow().notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-}, (table) => ({ heroIdx: index("warehouse_delivery_proof_hero_idx").on(table.warehouseHeroId), capturedIdx: index("warehouse_delivery_proof_captured_idx").on(table.capturedAt) }));
+}, (table) => ({ heroIdx: index("warehouse_delivery_proof_hero_idx").on(table.warehouseHeroId), handoverIdx: index("warehouse_delivery_proof_handover_idx").on(table.handoverId), capturedIdx: index("warehouse_delivery_proof_captured_idx").on(table.capturedAt) }));
+
+export const warehouseHandovers = mysqlTable("warehouse_handovers", {
+  id: int("id").autoincrement().primaryKey(),
+  warehouseHeroId: int("warehouseHeroId").notNull(),
+  recipientName: varchar("recipientName", { length: 160 }).notNull(),
+  note: text("note"),
+  signatureStorageKey: varchar("signatureStorageKey", { length: 512 }).notNull(),
+  signatureMimeType: varchar("signatureMimeType", { length: 120 }).notNull(),
+  acknowledgedBy: int("acknowledgedBy"),
+  acknowledgedAt: timestamp("acknowledgedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({ heroIdx: index("warehouse_handover_hero_idx").on(table.warehouseHeroId), acknowledgedIdx: index("warehouse_handover_acknowledged_idx").on(table.acknowledgedAt), createdIdx: index("warehouse_handover_created_idx").on(table.createdAt) }));
 export const invitations = mysqlTable("invitations", {
   id: int("id").autoincrement().primaryKey(),
   email: varchar("email", { length: 320 }).notNull(),

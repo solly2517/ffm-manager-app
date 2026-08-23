@@ -434,3 +434,6 @@
 - [x] Add a required mobile hospital-handover checklist before delivery-proof submission
 - [x] Add full captured-photo preview and retake controls to the live-camera proof workflow
 - [x] Extend the reusable FFM workflow skill with the 20-photo checklist and preview/retake capture pattern
+- [x] Add required recipient-name and digital-signature capture to hospital handover proof submissions
+- [x] Add Manager review and acknowledgement of completed hospital handovers
+- [x] Extend the reusable FFM workflow skill with recipient-signature evidence and Manager acknowledgement guidance

@@ -445,6 +445,28 @@ describe("admin access control", () => {
     expect(db.createWarehouseDeliveryProof).toHaveBeenCalledWith(expect.objectContaining({ warehouseHeroId: 72, mimeType: "image/jpeg", captureSource: "live_camera", note: "Delivered" }));
   });
 
+  it("stores recipient identity, a digital signature, and grouped live-camera photos for a signed hospital handover", async () => {
+    const warehouseHero = { ...baseUser, id: 75, openId: "warehouse-hero-75", role: "warehouse_hero" as const, email: "hero@example.com" };
+    vi.mocked(storagePut).mockResolvedValueOnce({ key: "warehouse-handovers/75/signature.png", url: "/manus-storage/warehouse-handovers/75/signature.png" }).mockResolvedValueOnce({ key: "warehouse-delivery-proofs/75/proof.jpg", url: "/manus-storage/warehouse-delivery-proofs/75/proof.jpg" });
+    vi.spyOn(db, "createWarehouseHandover").mockResolvedValue({ id: 301, warehouseHeroId: 75, recipientName: "Hospital Recipient", signatureStorageKey: "warehouse-handovers/75/signature.png", signatureMimeType: "image/png", createdAt: new Date() } as never);
+    vi.spyOn(db, "createWarehouseDeliveryProof").mockResolvedValue({ id: 302, warehouseHeroId: 75, handoverId: 301, storageKey: "warehouse-delivery-proofs/75/proof.jpg", mimeType: "image/jpeg", sizeBytes: 10, capturedAt: new Date(), createdAt: new Date() } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const caller = appRouter.createCaller(contextFor(warehouseHero));
+    await expect(caller.operations.submitWarehouseHandover({ recipientName: "Hospital Recipient", signatureBase64: `data:image/png;base64,${"QUJD".repeat(50)}`, proofs: [{ fileName: "proof.jpg", base64: "data:image/jpeg;base64,QUJDREVGR0hJSktMTU5PUA==" }] })).resolves.toMatchObject({ handoverId: 301, proofIds: [302] });
+    expect(db.createWarehouseHandover).toHaveBeenCalledWith(expect.objectContaining({ warehouseHeroId: 75, recipientName: "Hospital Recipient", signatureMimeType: "image/png" }));
+    expect(db.createWarehouseDeliveryProof).toHaveBeenCalledWith(expect.objectContaining({ handoverId: 301, captureSource: "live_camera" }));
+  });
+
+  it("restricts handover acknowledgement to Managers and Administrators and records the acknowledgement", async () => {
+    vi.spyOn(db, "acknowledgeWarehouseHandover").mockResolvedValue({ id: 301, warehouseHeroId: 75, recipientName: "Hospital Recipient", acknowledgedBy: 11, acknowledgedAt: new Date() } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const regular = appRouter.createCaller(contextFor(baseUser));
+    await expect(regular.operations.acknowledgeWarehouseHandover({ handoverId: 301 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    const manager = appRouter.createCaller(contextFor({ ...baseUser, id: 11, role: "manager", email: "manager@example.com" }));
+    await expect(manager.operations.acknowledgeWarehouseHandover({ handoverId: 301 })).resolves.toMatchObject({ id: 301 });
+    expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "warehouse_handover.acknowledged", entityId: 301 }));
+  });
+
   it("rejects delivery-proof payloads larger than the server-side 8 MB limit", async () => {
     const warehouseHero = { ...baseUser, id: 73, openId: "warehouse-hero-73", role: "warehouse_hero" as const, email: "hero@example.com" };
     vi.spyOn(db, "hasManagerForWarehouseHero").mockResolvedValue(true);

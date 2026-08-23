@@ -52,6 +52,9 @@ import {
   listSharedWarehouseDeliveryProofs,
   listSharedWarehouseHeroLocations,
   createWarehouseDeliveryProof,
+  createWarehouseHandover,
+  listWarehouseHandovers,
+  acknowledgeWarehouseHandover,
   listDoctors,
   listGeography,
   listInvitations,
@@ -1889,6 +1892,13 @@ export const appRouter = router({
     myWarehouseDeliveryProofs: warehouseHeroOnly.query(({ ctx }) =>
       listWarehouseDeliveryProofsForHero(ctx.user.id)
     ),
+    warehouseHandovers: managerOnly.query(() => listWarehouseHandovers()),
+    acknowledgeWarehouseHandover: managerOnly.input(z.object({ handoverId: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
+      const handover = await acknowledgeWarehouseHandover(input.handoverId, ctx.user.id);
+      if (!handover) throw new TRPCError({ code: "NOT_FOUND", message: "This handover is unavailable or has already been acknowledged." });
+      await addAuditEvent({ actorId: ctx.user.id, action: "warehouse_handover.acknowledged", entityType: "warehouseHandover", entityId: handover.id, metadata: JSON.stringify({ warehouseHeroId: handover.warehouseHeroId, recipientName: handover.recipientName }) });
+      return handover;
+    }),
     warehouseHeroAssignmentStatus: warehouseHeroOnly.query(
       () => ({ assigned: true, available: true }) as const
     ),
@@ -1984,6 +1994,30 @@ export const appRouter = router({
         });
         return { proofId: result?.id, url: uploaded.url } as const;
       }),
+    submitWarehouseHandover: warehouseHeroOnly.input(z.object({
+      recipientName: z.string().trim().min(2).max(160),
+      signatureBase64: z.string().min(100).max(2_000_000),
+      note: z.string().max(1_000).optional(),
+      proofs: z.array(z.object({ fileName: z.string().min(1).max(180), base64: z.string().min(20).max(15_000_000) })).min(1).max(20),
+    })).mutation(async ({ ctx, input }) => {
+      const signatureBuffer = Buffer.from(input.signatureBase64.replace(/^data:[^;]+;base64,/, ""), "base64");
+      if (signatureBuffer.byteLength < 100 || signatureBuffer.byteLength > 1024 * 1024) throw new TRPCError({ code: "BAD_REQUEST", message: "A valid handover signature is required and must be 1 MB or smaller." });
+      const timestamp = Date.now();
+      const signature = await storagePut(`warehouse-handovers/${ctx.user.id}/${timestamp}-recipient-signature.png`, signatureBuffer, "image/png");
+      const handover = await createWarehouseHandover({ warehouseHeroId: ctx.user.id, recipientName: input.recipientName, note: input.note?.trim() || null, signatureStorageKey: signature.key, signatureMimeType: "image/png" });
+      const proofIds: number[] = [];
+      for (let index = 0; index < input.proofs.length; index += 1) {
+        const proof = input.proofs[index];
+        const buffer = Buffer.from(proof.base64.replace(/^data:[^;]+;base64,/, ""), "base64");
+        if (!buffer.byteLength || buffer.byteLength > 8 * 1024 * 1024) throw new TRPCError({ code: "PAYLOAD_TOO_LARGE", message: "Each delivery-proof photo must be 8 MB or smaller." });
+        const safeName = proof.fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
+        const uploaded = await storagePut(`warehouse-delivery-proofs/${ctx.user.id}/${timestamp}-${index + 1}-${safeName}`, buffer, "image/jpeg");
+        const record = await createWarehouseDeliveryProof({ warehouseHeroId: ctx.user.id, handoverId: handover!.id, note: input.note?.trim() || null, captureSource: "live_camera", storageKey: uploaded.key, mimeType: "image/jpeg", sizeBytes: buffer.byteLength, capturedAt: new Date() });
+        if (record?.id) proofIds.push(record.id);
+      }
+      await addAuditEvent({ actorId: ctx.user.id, action: "warehouse_handover.submitted", entityType: "warehouseHandover", entityId: handover?.id, metadata: JSON.stringify({ recipientName: input.recipientName, proofCount: proofIds.length }) });
+      return { handoverId: handover?.id, proofIds, signatureUrl: signature.url };
+    }),
     submitVisitPlan: delegateOnly
       .input(
         z.object({

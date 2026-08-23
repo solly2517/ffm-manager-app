@@ -20,6 +20,8 @@ vi.mock("@/lib/trpc", () => {
         warehouseHeroLocations: { useQuery: () => emptyQuery },
         warehouseDeliveryProofs: { useQuery: () => emptyQuery },
         exportWarehouseDeliveryProofsCsv: { useQuery: () => ({ ...emptyQuery, refetch: mocks.exportRefetch }) },
+        warehouseHandovers: { useQuery: () => emptyQuery },
+        acknowledgeWarehouseHandover: { useMutation: () => idleMutation },
       },
       admin: {
         managers: { useQuery: () => emptyQuery },
