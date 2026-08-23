@@ -134,6 +134,19 @@ describe("admin access control", () => {
     expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "department.audit_exported" }));
   });
 
+  it("passes validated inclusive date ranges to department totals and audit export procedures", async () => {
+    const filters = { from: "2026-08-01", to: "2026-08-23" };
+    vi.spyOn(db, "getDepartmentDashboardTotals").mockResolvedValue([] as never);
+    vi.spyOn(db, "listDepartmentAuditEvents").mockResolvedValue([] as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const admin = appRouter.createCaller(contextFor({ ...baseUser, role: "admin", email: "dr.seleam@gmail.com" }));
+    await expect(admin.admin.departmentDashboardTotals(filters)).resolves.toEqual([]);
+    await expect(admin.admin.departmentAuditExport(filters)).resolves.toMatchObject({ filename: "ffm-department-audit-2026-08-01-to-2026-08-23.csv" });
+    await expect(admin.admin.departmentAuditEvents({ from: "2026-08-23", to: "2026-08-01" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(db.getDepartmentDashboardTotals).toHaveBeenCalledWith(filters);
+    expect(db.listDepartmentAuditEvents).toHaveBeenCalledWith(filters);
+  });
+
   it("protects the designated administrator and the acting administrator account", () => {
     expect(isProtectedAdminTarget({ email: "DR.SELEAM@GMAIL.COM", openId: "other" }, "actor")).toBe(true);
     expect(isProtectedAdminTarget({ email: "other@example.com", openId: "actor" }, "actor")).toBe(true);

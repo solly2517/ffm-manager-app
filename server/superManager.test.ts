@@ -53,7 +53,21 @@ describe("Super Manager roster oversight", () => {
     presets.mockResolvedValue([{ id: 41, userId: superManager.id, name: "Clinical reviewed" }] as never);
     await expect(caller.operations.superManagerFilterPresets()).resolves.toMatchObject([{ id: 41, name: "Clinical reviewed" }]);
     await expect(caller.operations.removeSuperManagerFilterPreset({ id: 41 })).resolves.toEqual({ success: true });
-    expect(db.removeSuperManagerReportFilterPreset).toHaveBeenCalledWith(41, superManager.id);
+    expect(db.removeSuperManagerReportFilterPreset).toHaveBeenCalledWith(41, superManager.id, false);
+  });
+
+  it("allows an Administrator to publish and remove a shared report view without granting that control to ordinary Super Managers", async () => {
+    const administrator = { ...superManager, id: 1, role: "admin" as const, email: "dr.seleam@gmail.com", openId: "administrator" };
+    vi.spyOn(db, "listSuperManagerReportFilterPresets").mockResolvedValue([] as never);
+    vi.spyOn(db, "createSuperManagerReportFilterPreset").mockResolvedValue({ id: 42, userId: administrator.id, name: "All clinical", isShared: true } as never);
+    vi.spyOn(db, "removeSuperManagerReportFilterPreset").mockResolvedValue({ deleted: 1 } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const caller = appRouter.createCaller(contextFor(administrator));
+
+    await expect(caller.operations.saveSuperManagerFilterPreset({ name: "All clinical", isShared: true, department: "Clinical" })).resolves.toMatchObject({ id: 42, isShared: true });
+    await expect(caller.operations.removeSuperManagerFilterPreset({ id: 42 })).resolves.toEqual({ success: true });
+    expect(db.createSuperManagerReportFilterPreset).toHaveBeenCalledWith(expect.objectContaining({ isShared: true }));
+    expect(db.removeSuperManagerReportFilterPreset).toHaveBeenCalledWith(42, administrator.id, true);
   });
 
   it("does not grant roster oversight to an ordinary Manager", async () => {

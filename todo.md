@@ -407,3 +407,7 @@
 - [x] Add Administrator-only department-specific dashboard totals for member, work-log, and task metrics
 - [x] Add saved Super Manager report filter presets with protected per-user persistence
 - [x] Add Administrator-only CSV export of the department-change audit history with spreadsheet-safe fields
+- [x] Extend the reusable FFM workflow skill with date-ranged department audit export, shared Administrator presets, and date-filtered department totals guidance
+- [x] Add Administrator date-range filtering to department-change audit history and CSV export
+- [x] Add an Administrator-managed shared Super Manager report-filter preset library
+- [x] Add Administrator date-range filters to department task and Work Log totals

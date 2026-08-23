@@ -183,6 +183,13 @@
       "when": 1787470407781,
       "tag": "0025_magical_blade",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1787471656460,
+      "tag": "0026_empty_tarot",
+      "breakpoints": true
     }
   ]
 }

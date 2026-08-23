@@ -291,7 +291,12 @@ const superManagerFilterPresetInput = z.object({
   activityFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   activityTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   activityStatus: reportActivityStatusSchema.optional(),
+  isShared: z.boolean().optional(),
 }).refine(input => !input.activityFrom || !input.activityTo || input.activityFrom <= input.activityTo, { message: "The activity end date must not be earlier than the start date." });
+const departmentDateRangeFilters = z.object({
+  from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+}).refine(input => !input.from || !input.to || input.from <= input.to, { message: "The end date must not be earlier than the start date." }).refine(input => !input.from || !input.to || new Date(`${input.to}T00:00:00.000Z`).getTime() - new Date(`${input.from}T00:00:00.000Z`).getTime() <= 366 * 24 * 60 * 60 * 1000, { message: "Select a date range of one year or less." });
 const departmentName = (value: string) => value.trim().replace(/\s+/g, " ");
 const departmentHierarchyHasCycle = (rows: Array<{ id: number; parentDepartmentId: number | null }>, id: number, parentDepartmentId: number | null) => {
   const byId = new globalThis.Map(rows.map(row => [row.id, row]));
@@ -1137,14 +1142,16 @@ export const appRouter = router({
     delegates: adminOnly.query(async () => listDelegates()),
     warehouseHeroes: adminOnly.query(async () => listWarehouseHeroes()),
     departments: adminOnly.query(async () => listDepartments()),
-    departmentDashboardTotals: adminOnly.query(async () => getDepartmentDashboardTotals()),
-    departmentAuditEvents: adminOnly.query(async () => listDepartmentAuditEvents()),
-    departmentAuditExport: adminOnly.mutation(async ({ ctx }) => {
-      const events = await listDepartmentAuditEvents();
+    departmentDashboardTotals: adminOnly.input(departmentDateRangeFilters.optional()).query(async ({ input }) => getDepartmentDashboardTotals(input ?? {})),
+    departmentAuditEvents: adminOnly.input(departmentDateRangeFilters.optional()).query(async ({ input }) => listDepartmentAuditEvents(input ?? {})),
+    departmentAuditExport: adminOnly.input(departmentDateRangeFilters.optional()).mutation(async ({ ctx, input }) => {
+      const filters = input ?? {};
+      const events = await listDepartmentAuditEvents(filters);
       const header = ["Timestamp", "Actor", "Actor email", "Action", "Entity type", "Entity ID", "Metadata"];
       const csv = [header.map(safeCsvCell).join(","), ...events.map(event => [event.createdAt.toISOString(), event.actorName, event.actorEmail || "", event.action, event.entityType || "", event.entityId || "", event.metadata || ""].map(safeCsvCell).join(","))].join("\n");
-      await addAuditEvent({ actorId: ctx.user.id, action: "department.audit_exported", entityType: "department", metadata: JSON.stringify({ rowCount: events.length }) });
-      return { csv: `${csv}\n`, filename: `ffm-department-audit-${new Date().toISOString().slice(0, 10)}.csv`, rowCount: events.length };
+      await addAuditEvent({ actorId: ctx.user.id, action: "department.audit_exported", entityType: "department", metadata: JSON.stringify({ rowCount: events.length, from: filters.from ?? null, to: filters.to ?? null }) });
+      const rangeLabel = filters.from || filters.to ? `${filters.from ?? "start"}-to-${filters.to ?? "today"}` : "all-dates";
+      return { csv: `${csv}\n`, filename: `ffm-department-audit-${rangeLabel}.csv`, rowCount: events.length };
     }),
     createDepartment: adminOnly
       .input(z.object({ name: z.string().trim().min(2).max(160), parentDepartmentId: z.number().int().positive().nullable().optional() }))
@@ -1731,15 +1738,16 @@ export const appRouter = router({
     saveSuperManagerFilterPreset: protectedProcedure.input(superManagerFilterPresetInput).mutation(async ({ ctx, input }) => {
       if (!isAdmin(ctx.user) && !isSuperManager(ctx.user)) throw new TRPCError({ code: "FORBIDDEN", message: "Super Manager roster oversight is restricted." });
       const name = input.name.trim().replace(/\s+/g, " ");
-      const existing = await listSuperManagerReportFilterPresets(ctx.user.id);
+      const existing = await listSuperManagerReportFilterPresets(ctx.user.id, false);
       if (existing.some(preset => preset.name.toLowerCase() === name.toLowerCase())) throw new TRPCError({ code: "CONFLICT", message: "Choose a different name for this saved filter." });
-      const result = await createSuperManagerReportFilterPreset({ userId: ctx.user.id, name, query: input.query || null, role: input.role || null, department: input.department || null, activityFrom: input.activityFrom || null, activityTo: input.activityTo || null, activityStatus: input.activityStatus || null });
-      await addAuditEvent({ actorId: ctx.user.id, action: "super_manager.filter_preset_saved", entityType: "superManagerFilterPreset", entityId: result?.id, metadata: JSON.stringify({ name }) });
+      const isShared = isAdmin(ctx.user) && input.isShared === true;
+      const result = await createSuperManagerReportFilterPreset({ userId: ctx.user.id, name, query: input.query || null, role: input.role || null, department: input.department || null, activityFrom: input.activityFrom || null, activityTo: input.activityTo || null, activityStatus: input.activityStatus || null, isShared });
+      await addAuditEvent({ actorId: ctx.user.id, action: "super_manager.filter_preset_saved", entityType: "superManagerFilterPreset", entityId: result?.id, metadata: JSON.stringify({ name, isShared }) });
       return result;
     }),
     removeSuperManagerFilterPreset: protectedProcedure.input(z.object({ id: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
       if (!isAdmin(ctx.user) && !isSuperManager(ctx.user)) throw new TRPCError({ code: "FORBIDDEN", message: "Super Manager roster oversight is restricted." });
-      const result = await removeSuperManagerReportFilterPreset(input.id, ctx.user.id);
+      const result = await removeSuperManagerReportFilterPreset(input.id, ctx.user.id, isAdmin(ctx.user));
       if (!result.deleted) throw new TRPCError({ code: "NOT_FOUND", message: "Saved filter not found." });
       await addAuditEvent({ actorId: ctx.user.id, action: "super_manager.filter_preset_removed", entityType: "superManagerFilterPreset", entityId: input.id });
       return { success: true as const };

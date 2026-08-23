@@ -36,6 +36,7 @@ export const superManagerReportFilterPresets = mysqlTable("super_manager_report_
   activityFrom: varchar("activityFrom", { length: 10 }),
   activityTo: varchar("activityTo", { length: 10 }),
   activityStatus: mysqlEnum("activityStatus", ["pending", "approved", "rejected", "submitted", "reviewed", "manager_recorded"]),
+  isShared: boolean("isShared").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({ userIdx: index("super_manager_preset_user_idx").on(table.userId), userNameUnique: uniqueIndex("super_manager_preset_user_name_unique").on(table.userId, table.name) }));
