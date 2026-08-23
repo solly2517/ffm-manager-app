@@ -445,3 +445,5 @@
 - [x] Verify the published mobile Hero Lead Activity navigation and sticky action bar
 - [x] Add a printable PDF template export for completed hospital handovers
 - [x] Add an authorized weekly hospital handover analytics export to the Manager dashboard
+- [x] Verify and resolve reported preview-mode publication access issue for the live FFM deployment
+- [x] Reorder the welcome dashboard so Operational Overview appears before Administrator report controls
