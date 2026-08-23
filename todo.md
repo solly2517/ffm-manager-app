@@ -413,3 +413,7 @@
 - [x] Add Administrator date-range filters to department task and Work Log totals
 - [x] Extend the reusable FFM workflow skill with Administrator monthly department PDF summary guidance
 - [x] Add an Administrator-only monthly department summary PDF generation and download action using live department metrics
+- [x] Extend the reusable FFM workflow skill with native-branded monthly PDF, preview-modal, and department-comparison chart guidance
+- [x] Add an Administrator preview modal for monthly department PDF data before download
+- [x] Add visual department staffing and task comparison charts to the monthly department PDF
+- [x] Add native Al Tamam company logo and custom brand colors to the monthly PDF header without pasted-background styling
