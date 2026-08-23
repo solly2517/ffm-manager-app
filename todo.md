@@ -403,3 +403,7 @@
 - [x] Add CSV export of the currently filtered Super Manager roster with spreadsheet-safe fields
 - [x] Add date-range and report-status filters to the read-only Super Manager team activity summary
 - [x] Correct mobile Delegate date displays to use the unambiguous dd/MM/yyyy format
+- [x] Extend the reusable FFM workflow skill with department analytics, saved Super Manager filter presets, and department audit export guidance
+- [x] Add Administrator-only department-specific dashboard totals for member, work-log, and task metrics
+- [x] Add saved Super Manager report filter presets with protected per-user persistence
+- [x] Add Administrator-only CSV export of the department-change audit history with spreadsheet-safe fields

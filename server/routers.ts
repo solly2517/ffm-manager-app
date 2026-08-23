@@ -71,6 +71,11 @@ import {
   updateDepartment,
   removeDepartment,
   updateUserDepartment,
+  getDepartmentDashboardTotals,
+  listDepartmentAuditEvents,
+  listSuperManagerReportFilterPresets,
+  createSuperManagerReportFilterPreset,
+  removeSuperManagerReportFilterPreset,
   listManagerAssignments,
   listManagerWarehouseHeroAssignments,
   listVisitPlansForDelegate,
@@ -277,6 +282,15 @@ const superManagerRosterExportFilters = z.object({
   query: z.string().trim().max(160).optional(),
   role: z.enum(["manager", "delegate", "warehouse_hero"]).optional(),
   department: z.string().trim().max(160).optional(),
+}).refine(input => !input.activityFrom || !input.activityTo || input.activityFrom <= input.activityTo, { message: "The activity end date must not be earlier than the start date." });
+const superManagerFilterPresetInput = z.object({
+  name: z.string().trim().min(2).max(80),
+  query: z.string().trim().max(160).optional(),
+  role: z.enum(["manager", "delegate", "warehouse_hero"]).optional(),
+  department: z.string().trim().max(160).optional(),
+  activityFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  activityTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  activityStatus: reportActivityStatusSchema.optional(),
 }).refine(input => !input.activityFrom || !input.activityTo || input.activityFrom <= input.activityTo, { message: "The activity end date must not be earlier than the start date." });
 const departmentName = (value: string) => value.trim().replace(/\s+/g, " ");
 const departmentHierarchyHasCycle = (rows: Array<{ id: number; parentDepartmentId: number | null }>, id: number, parentDepartmentId: number | null) => {
@@ -1123,6 +1137,15 @@ export const appRouter = router({
     delegates: adminOnly.query(async () => listDelegates()),
     warehouseHeroes: adminOnly.query(async () => listWarehouseHeroes()),
     departments: adminOnly.query(async () => listDepartments()),
+    departmentDashboardTotals: adminOnly.query(async () => getDepartmentDashboardTotals()),
+    departmentAuditEvents: adminOnly.query(async () => listDepartmentAuditEvents()),
+    departmentAuditExport: adminOnly.mutation(async ({ ctx }) => {
+      const events = await listDepartmentAuditEvents();
+      const header = ["Timestamp", "Actor", "Actor email", "Action", "Entity type", "Entity ID", "Metadata"];
+      const csv = [header.map(safeCsvCell).join(","), ...events.map(event => [event.createdAt.toISOString(), event.actorName, event.actorEmail || "", event.action, event.entityType || "", event.entityId || "", event.metadata || ""].map(safeCsvCell).join(","))].join("\n");
+      await addAuditEvent({ actorId: ctx.user.id, action: "department.audit_exported", entityType: "department", metadata: JSON.stringify({ rowCount: events.length }) });
+      return { csv: `${csv}\n`, filename: `ffm-department-audit-${new Date().toISOString().slice(0, 10)}.csv`, rowCount: events.length };
+    }),
     createDepartment: adminOnly
       .input(z.object({ name: z.string().trim().min(2).max(160), parentDepartmentId: z.number().int().positive().nullable().optional() }))
       .mutation(async ({ input, ctx }) => {
@@ -1700,6 +1723,26 @@ export const appRouter = router({
       const csv = [header.map(safeCsvCell).join(","), ...rows.map(member => [member.name || "", member.email || "", member.rosterRole, member.department || "", member.managerAssignments.join("; ") || (member.rosterRole === "delegate" ? "Unassigned" : "")].map(safeCsvCell).join(","))].join("\n");
       await addAuditEvent({ actorId: ctx.user.id, action: "super_manager.roster_exported", entityType: "user", metadata: JSON.stringify({ query: input.query || null, role: input.role || null, department: input.department || null, rowCount: rows.length }) });
       return { csv: `${csv}\n`, filename: `ffm-super-manager-roster-${new Date().toISOString().slice(0, 10)}.csv`, rowCount: rows.length };
+    }),
+    superManagerFilterPresets: protectedProcedure.query(async ({ ctx }) => {
+      if (!isAdmin(ctx.user) && !isSuperManager(ctx.user)) throw new TRPCError({ code: "FORBIDDEN", message: "Super Manager roster oversight is restricted." });
+      return listSuperManagerReportFilterPresets(ctx.user.id);
+    }),
+    saveSuperManagerFilterPreset: protectedProcedure.input(superManagerFilterPresetInput).mutation(async ({ ctx, input }) => {
+      if (!isAdmin(ctx.user) && !isSuperManager(ctx.user)) throw new TRPCError({ code: "FORBIDDEN", message: "Super Manager roster oversight is restricted." });
+      const name = input.name.trim().replace(/\s+/g, " ");
+      const existing = await listSuperManagerReportFilterPresets(ctx.user.id);
+      if (existing.some(preset => preset.name.toLowerCase() === name.toLowerCase())) throw new TRPCError({ code: "CONFLICT", message: "Choose a different name for this saved filter." });
+      const result = await createSuperManagerReportFilterPreset({ userId: ctx.user.id, name, query: input.query || null, role: input.role || null, department: input.department || null, activityFrom: input.activityFrom || null, activityTo: input.activityTo || null, activityStatus: input.activityStatus || null });
+      await addAuditEvent({ actorId: ctx.user.id, action: "super_manager.filter_preset_saved", entityType: "superManagerFilterPreset", entityId: result?.id, metadata: JSON.stringify({ name }) });
+      return result;
+    }),
+    removeSuperManagerFilterPreset: protectedProcedure.input(z.object({ id: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
+      if (!isAdmin(ctx.user) && !isSuperManager(ctx.user)) throw new TRPCError({ code: "FORBIDDEN", message: "Super Manager roster oversight is restricted." });
+      const result = await removeSuperManagerReportFilterPreset(input.id, ctx.user.id);
+      if (!result.deleted) throw new TRPCError({ code: "NOT_FOUND", message: "Saved filter not found." });
+      await addAuditEvent({ actorId: ctx.user.id, action: "super_manager.filter_preset_removed", entityType: "superManagerFilterPreset", entityId: input.id });
+      return { success: true as const };
     }),
     doctors: fieldUserOnly.query(() => listDoctors()),
     geography: fieldUserOnly.query(() => listGeography()),

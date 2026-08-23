@@ -42,11 +42,26 @@ describe("Super Manager roster oversight", () => {
     await expect(caller.operations.superManagerRosterExport({ query: "delegate", role: "delegate", department: "Clinical" })).resolves.toMatchObject({ rowCount: 1, csv: expect.stringContaining("'=Delegate") });
   });
 
+  it("persists saved report views only for the authorized Super Manager who created them", async () => {
+    const presets = vi.spyOn(db, "listSuperManagerReportFilterPresets").mockResolvedValue([] as never);
+    vi.spyOn(db, "createSuperManagerReportFilterPreset").mockResolvedValue({ id: 41, userId: superManager.id, name: "Clinical reviewed", department: "Clinical", activityStatus: "reviewed" } as never);
+    vi.spyOn(db, "removeSuperManagerReportFilterPreset").mockResolvedValue({ deleted: 1 } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const caller = appRouter.createCaller(contextFor(superManager));
+
+    await expect(caller.operations.saveSuperManagerFilterPreset({ name: "Clinical reviewed", department: "Clinical", activityStatus: "reviewed" })).resolves.toMatchObject({ id: 41, userId: superManager.id });
+    presets.mockResolvedValue([{ id: 41, userId: superManager.id, name: "Clinical reviewed" }] as never);
+    await expect(caller.operations.superManagerFilterPresets()).resolves.toMatchObject([{ id: 41, name: "Clinical reviewed" }]);
+    await expect(caller.operations.removeSuperManagerFilterPreset({ id: 41 })).resolves.toEqual({ success: true });
+    expect(db.removeSuperManagerReportFilterPreset).toHaveBeenCalledWith(41, superManager.id);
+  });
+
   it("does not grant roster oversight to an ordinary Manager", async () => {
     vi.spyOn(db, "listDelegatesForManager").mockResolvedValue([] as never);
     const allDelegates = vi.spyOn(db, "listDelegates").mockResolvedValue([] as never);
     const caller = appRouter.createCaller(contextFor(ordinaryManager));
     await expect(caller.operations.superManagerRoster()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller.operations.superManagerFilterPresets()).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller.operations.delegates()).resolves.toEqual([]);
     expect(allDelegates).not.toHaveBeenCalled();
   });

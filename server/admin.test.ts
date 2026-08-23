@@ -120,6 +120,20 @@ describe("admin access control", () => {
     expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "department.member_assigned", entityId: 2 }));
   });
 
+  it("keeps department dashboard totals and department audit CSV export Administrator-only and spreadsheet-safe", async () => {
+    const nonAdmin = appRouter.createCaller(contextFor(baseUser));
+    await expect(nonAdmin.admin.departmentDashboardTotals()).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(nonAdmin.admin.departmentAuditExport()).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    vi.spyOn(db, "getDepartmentDashboardTotals").mockResolvedValue([{ id: 7, name: "Clinical", memberCount: 2, taskCount: 5, weeklyPlanCount: 1, dailyReportCount: 3 }] as never);
+    vi.spyOn(db, "listDepartmentAuditEvents").mockResolvedValue([{ id: 9, createdAt: new Date("2026-08-23T12:00:00.000Z"), actorName: "=Administrator", actorEmail: "admin@example.com", action: "department.created", entityType: "department", entityId: 7, metadata: "=Clinical" }] as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const admin = appRouter.createCaller(contextFor({ ...baseUser, role: "admin", email: "dr.seleam@gmail.com" }));
+    await expect(admin.admin.departmentDashboardTotals()).resolves.toMatchObject([{ id: 7, taskCount: 5 }]);
+    await expect(admin.admin.departmentAuditExport()).resolves.toMatchObject({ rowCount: 1, csv: expect.stringContaining("'=Administrator") });
+    expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "department.audit_exported" }));
+  });
+
   it("protects the designated administrator and the acting administrator account", () => {
     expect(isProtectedAdminTarget({ email: "DR.SELEAM@GMAIL.COM", openId: "other" }, "actor")).toBe(true);
     expect(isProtectedAdminTarget({ email: "other@example.com", openId: "actor" }, "actor")).toBe(true);

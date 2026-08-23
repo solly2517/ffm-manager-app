@@ -1,6 +1,6 @@
 import { and, count, desc, eq, isNull, like, ne, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, departments, invitations, clients, doctors, managerDelegateAssignments, managerWarehouseHeroAssignments, warehouseHeroLocations, warehouseDeliveryProofs, tasks, visits, evidence, auditEvents, messages, userNotifications, surgeries, implantCatalogue, surgeryImplants, surgeryDeliveryProofs, visitPlans, weeklyVisitPlans, dailyActivityReports, geography, clientErrorReports, weeklyBackupReminderSchedules, googleDriveBackupConnections, backupArchives, travelExpenseClaims, travelExpenseLines } from "../drizzle/schema";
+import { InsertUser, users, departments, superManagerReportFilterPresets, invitations, clients, doctors, managerDelegateAssignments, managerWarehouseHeroAssignments, warehouseHeroLocations, warehouseDeliveryProofs, tasks, visits, evidence, auditEvents, messages, userNotifications, surgeries, implantCatalogue, surgeryImplants, surgeryDeliveryProofs, visitPlans, weeklyVisitPlans, dailyActivityReports, geography, clientErrorReports, weeklyBackupReminderSchedules, googleDriveBackupConnections, backupArchives, travelExpenseClaims, travelExpenseLines } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -94,6 +94,22 @@ export async function createDepartment(input: typeof departments.$inferInsert) {
 export async function updateDepartment(id: number, input: Pick<typeof departments.$inferInsert, "name" | "parentDepartmentId" | "isActive">) { const db = await getDb(); if (!db) throw new Error("Database is not available"); const current = await getDepartmentById(id); if (!current) return undefined; await db.update(departments).set(input).where(eq(departments.id, id)); if (current.name !== input.name) await db.update(users).set({ department: input.name }).where(eq(users.department, current.name)); return getDepartmentById(id); }
 export async function removeDepartment(id: number) { const db = await getDb(); if (!db) throw new Error("Database is not available"); await db.delete(departments).where(eq(departments.id, id)); return { success: true as const }; }
 export async function updateUserDepartment(id: number, department: string | null) { const db = await getDb(); if (!db) throw new Error("Database is not available"); await db.update(users).set({ department }).where(eq(users.id, id)); return getUserById(id); }
+export async function getDepartmentDashboardTotals() {
+  const [departmentRows, memberRows, taskRows, weeklyRows, dailyRows] = await Promise.all([listDepartments(), listUsers(), listAllTasks(), listAllWeeklyVisitPlans(), listAllDailyActivityReports()]);
+  const memberDepartment = new Map(memberRows.map(member => [member.id, member.department?.trim().toLowerCase() || ""]));
+  return departmentRows.map(department => {
+    const normalized = department.name.trim().toLowerCase();
+    const members = memberRows.filter(member => member.department?.trim().toLowerCase() === normalized);
+    const taskRowsForDepartment = taskRows.filter(task => memberDepartment.get(task.delegateId) === normalized);
+    const weeklyPlanCount = weeklyRows.filter(plan => memberDepartment.get(plan.authorId) === normalized).length;
+    const dailyReportCount = dailyRows.filter(report => memberDepartment.get(report.authorId) === normalized).length;
+    return { id: department.id, name: department.name, isActive: department.isActive, memberCount: members.length, managerCount: members.filter(member => member.role === "manager").length, delegateCount: members.filter(member => member.role === "delegate").length, warehouseHeroCount: members.filter(member => member.role === "warehouse_hero").length, taskCount: taskRowsForDepartment.length, openTaskCount: taskRowsForDepartment.filter(task => task.status !== "completed" && task.status !== "cancelled").length, weeklyPlanCount, dailyReportCount };
+  });
+}
+export async function listDepartmentAuditEvents(limit = 500) { const db = await getDb(); if (!db) return []; const [events, people] = await Promise.all([db.select().from(auditEvents).orderBy(desc(auditEvents.createdAt)).limit(limit), db.select().from(users)]); const byId = new Map(people.map(person => [person.id, person])); return events.filter(event => event.action.startsWith("department.")).map(event => ({ ...event, actorName: byId.get(event.actorId)?.name || byId.get(event.actorId)?.email || "FFM Administrator", actorEmail: byId.get(event.actorId)?.email || null })); }
+export async function listSuperManagerReportFilterPresets(userId: number) { const db = await getDb(); if (!db) return []; return db.select().from(superManagerReportFilterPresets).where(eq(superManagerReportFilterPresets.userId, userId)).orderBy(superManagerReportFilterPresets.name); }
+export async function createSuperManagerReportFilterPreset(input: typeof superManagerReportFilterPresets.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database is not available"); const result = await db.insert(superManagerReportFilterPresets).values(input); return (await db.select().from(superManagerReportFilterPresets).where(eq(superManagerReportFilterPresets.id, Number(result[0].insertId))).limit(1))[0]; }
+export async function removeSuperManagerReportFilterPreset(id: number, userId: number) { const db = await getDb(); if (!db) throw new Error("Database is not available"); const result = await db.delete(superManagerReportFilterPresets).where(and(eq(superManagerReportFilterPresets.id, id), eq(superManagerReportFilterPresets.userId, userId))); return { deleted: Number(result[0]?.affectedRows ?? 0) }; }
 
 export async function upsertInvitedUser(input: { email: string; name?: string | null }) {
   const db = await getDb(); if (!db) throw new Error("Database is not available");

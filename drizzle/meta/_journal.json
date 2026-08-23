@@ -176,6 +176,13 @@
       "when": 1787469306509,
       "tag": "0024_far_solo",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1787470407781,
+      "tag": "0025_magical_blade",
+      "breakpoints": true
     }
   ]
 }

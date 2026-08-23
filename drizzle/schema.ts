@@ -26,6 +26,20 @@ export const departments = mysqlTable("departments", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, (table) => ({ nameUnique: uniqueIndex("departments_name_unique").on(table.name), parentIdx: index("departments_parent_idx").on(table.parentDepartmentId) }));
 
+export const superManagerReportFilterPresets = mysqlTable("super_manager_report_filter_presets", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 80 }).notNull(),
+  query: varchar("query", { length: 160 }),
+  role: mysqlEnum("role", ["manager", "delegate", "warehouse_hero"]),
+  department: varchar("department", { length: 160 }),
+  activityFrom: varchar("activityFrom", { length: 10 }),
+  activityTo: varchar("activityTo", { length: 10 }),
+  activityStatus: mysqlEnum("activityStatus", ["pending", "approved", "rejected", "submitted", "reviewed", "manager_recorded"]),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({ userIdx: index("super_manager_preset_user_idx").on(table.userId), userNameUnique: uniqueIndex("super_manager_preset_user_name_unique").on(table.userId, table.name) }));
+
 export const clientErrorReports = mysqlTable("client_error_reports", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId"),
