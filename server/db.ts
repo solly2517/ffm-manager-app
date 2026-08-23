@@ -114,9 +114,9 @@ export async function updateUserRole(id: number, role: "user" | "manager" | "del
   return getUserById(id);
 }
 
-export async function updateUserDisplayName(id: number, name: string) {
+export async function updateUserDisplayName(id: number, name: string, department?: string | null) {
   const db = await getDb(); if (!db) throw new Error("Database is not available");
-  await db.update(users).set({ name }).where(eq(users.id, id));
+  await db.update(users).set({ name, ...(department === undefined ? {} : { department }) }).where(eq(users.id, id));
   return getUserById(id);
 }
 

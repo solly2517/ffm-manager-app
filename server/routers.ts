@@ -308,15 +308,15 @@ export const appRouter = router({
       return ctx.user;
     }),
     updateDisplayName: protectedProcedure
-      .input(z.object({ name: z.string().trim().min(2).max(120) }))
+      .input(z.object({ name: z.string().trim().min(2).max(120), department: z.string().trim().max(160).optional() }))
       .mutation(async ({ input, ctx }) => {
-        const result = await updateUserDisplayName(ctx.user.id, input.name);
+        const result = await updateUserDisplayName(ctx.user.id, input.name, input.department || null);
         await addAuditEvent({
           actorId: ctx.user.id,
-          action: "profile.display_name_updated",
+          action: "profile.identity_updated",
           entityType: "user",
           entityId: ctx.user.id,
-          metadata: JSON.stringify({ name: input.name }),
+          metadata: JSON.stringify({ name: input.name, department: input.department || null }),
         });
         return result;
       }),
@@ -1575,12 +1575,19 @@ export const appRouter = router({
     superManagerRoster: protectedProcedure.query(async ({ ctx }) => {
       if (!isAdmin(ctx.user) && !isSuperManager(ctx.user))
         throw new TRPCError({ code: "FORBIDDEN", message: "Super Manager roster oversight is restricted." });
-      const [managers, delegates, warehouseHeroes] = await Promise.all([
+      const [managers, delegates, warehouseHeroes, assignments, weeklyPlans, dailyReports] = await Promise.all([
         listManagers(),
         listDelegates(),
         listWarehouseHeroes(),
+        listManagerAssignments(),
+        listAllWeeklyVisitPlans(),
+        listAllDailyActivityReports(),
       ]);
-      return { managers, delegates, warehouseHeroes };
+      const recentActivity = [
+        ...weeklyPlans.map(record => ({ id: `weekly-${record.id}`, type: "weekly_plan" as const, authorName: record.authorName, authorEmail: record.authorEmail, status: record.status, submittedAt: record.createdAt })),
+        ...dailyReports.map(record => ({ id: `daily-${record.id}`, type: "daily_report" as const, authorName: record.authorName, authorEmail: record.authorEmail, status: record.status, submittedAt: record.createdAt })),
+      ].sort((left, right) => new Date(right.submittedAt).getTime() - new Date(left.submittedAt).getTime()).slice(0, 20);
+      return { managers, delegates, warehouseHeroes, assignments, recentActivity };
     }),
     doctors: fieldUserOnly.query(() => listDoctors()),
     geography: fieldUserOnly.query(() => listGeography()),

@@ -394,3 +394,7 @@
 - [x] Add a Manager action to email an overdue alert for the selected assigned Delegate
 - [x] Add a department filter to Finance Travel Expense date-range Excel and CSV exports
 - [x] Grant m.selim@altamammed.com, amreslam@altamammed.com, and waleedelshamy@altamammed.com controlled Super Manager visibility of all Managers, Delegates, and Warehouse Heroes without Administrator account-management access
+- [x] Extend the reusable FFM workflow skill with view-only stock link and Super Manager supervision guidance
+- [x] Add a view-only Stock Management hyperlink that opens the stock app login screen in a new tab
+- [x] Add searchable, role- and department-filterable Super Manager roster controls with each Delegate's Manager assignment
+- [x] Add read-only recent weekly-plan and daily-report submission activity to the Super Manager dashboard

@@ -15,13 +15,16 @@ describe("Super Manager roster oversight", () => {
   afterEach(() => vi.restoreAllMocks());
 
   it("returns all Manager, Delegate, and Warehouse Hero records for an allowlisted Super Manager", async () => {
-    vi.spyOn(db, "listManagers").mockResolvedValue([{ id: 1, email: "manager@example.com" }] as never);
-    vi.spyOn(db, "listDelegates").mockResolvedValue([{ id: 2, email: "delegate@example.com" }] as never);
+    vi.spyOn(db, "listManagers").mockResolvedValue([{ id: 1, email: "manager@example.com", name: "Assigned Manager", department: "Operations" }] as never);
+    vi.spyOn(db, "listDelegates").mockResolvedValue([{ id: 2, email: "delegate@example.com", name: "Delegate", department: "Clinical" }] as never);
     vi.spyOn(db, "listWarehouseHeroes").mockResolvedValue([{ id: 3, email: "hero@example.com" }] as never);
+    vi.spyOn(db, "listManagerAssignments").mockResolvedValue([{ delegateId: 2, managerId: 1, managerName: "Assigned Manager", managerEmail: "manager@example.com" }] as never);
+    vi.spyOn(db, "listAllWeeklyVisitPlans").mockResolvedValue([{ id: 4, authorName: "Delegate", authorEmail: "delegate@example.com", status: "pending", createdAt: new Date("2026-08-22T12:00:00.000Z") }] as never);
+    vi.spyOn(db, "listAllDailyActivityReports").mockResolvedValue([{ id: 5, authorName: "Delegate", authorEmail: "delegate@example.com", status: "reviewed", createdAt: new Date("2026-08-23T12:00:00.000Z") }] as never);
     const assignedDelegates = vi.spyOn(db, "listDelegatesForManager").mockResolvedValue([] as never);
     const caller = appRouter.createCaller(contextFor(superManager));
-    await expect(caller.operations.superManagerRoster()).resolves.toMatchObject({ managers: [{ id: 1 }], delegates: [{ id: 2 }], warehouseHeroes: [{ id: 3 }] });
-    await expect(caller.operations.delegates()).resolves.toEqual([{ id: 2, email: "delegate@example.com" }]);
+    await expect(caller.operations.superManagerRoster()).resolves.toMatchObject({ managers: [{ id: 1 }], delegates: [{ id: 2, department: "Clinical" }], warehouseHeroes: [{ id: 3 }], assignments: [{ delegateId: 2, managerName: "Assigned Manager" }], recentActivity: [{ id: "daily-5", type: "daily_report" }, { id: "weekly-4", type: "weekly_plan" }] });
+    await expect(caller.operations.delegates()).resolves.toMatchObject([{ id: 2, email: "delegate@example.com", department: "Clinical" }]);
     expect(assignedDelegates).not.toHaveBeenCalled();
   });
 

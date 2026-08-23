@@ -37,11 +37,11 @@ describe("expanded FFM permissions", () => {
     await expect(caller.admin.createInvitation({ email: "new@example.com", role: "delegate" })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
-  it("lets every authenticated member save a display name without changing role or email", async () => {
-    const updateName = vi.spyOn(db, "updateUserDisplayName").mockResolvedValue({ id: 999999, name: "Solly Ibrahim", email: "delegate@example.com", role: "delegate" } as never);
+  it("lets every authenticated member save a display name and optional department without changing role or email", async () => {
+    const updateName = vi.spyOn(db, "updateUserDisplayName").mockResolvedValue({ id: 999999, name: "Solly Ibrahim", email: "delegate@example.com", department: "Clinical", role: "delegate" } as never);
     const caller = appRouter.createCaller(createContext("delegate"));
-    await expect(caller.auth.updateDisplayName({ name: "Solly Ibrahim" })).resolves.toMatchObject({ id: 999999, name: "Solly Ibrahim", role: "delegate" });
-    expect(updateName).toHaveBeenCalledWith(999999, "Solly Ibrahim");
+    await expect(caller.auth.updateDisplayName({ name: "Solly Ibrahim", department: "Clinical" })).resolves.toMatchObject({ id: 999999, name: "Solly Ibrahim", department: "Clinical", role: "delegate" });
+    expect(updateName).toHaveBeenCalledWith(999999, "Solly Ibrahim", "Clinical");
   });
 
   it("returns only a member's notifications and allows that member to mark them read", async () => {

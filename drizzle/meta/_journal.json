@@ -162,6 +162,13 @@
       "when": 1787405332256,
       "tag": "0022_pale_nighthawk",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "5",
+      "when": 1787467379690,
+      "tag": "0023_strong_cardiac",
+      "breakpoints": true
     }
   ]
 }
