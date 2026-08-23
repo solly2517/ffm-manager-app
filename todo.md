@@ -430,3 +430,7 @@
 - [x] Add overdue delivery-proof alerts for the designated Warehouse Hero lead without automatic external email delivery
 - [x] Add Administrator controls to set and extend the expiration of active shared report links
 - [x] Require Warehouse Hero delivery proofs to use camera-only multi-photo capture instead of choosing existing device files
+- [x] Increase Warehouse Hero live-camera delivery-proof queue from 10 to 20 photos
+- [x] Add a required mobile hospital-handover checklist before delivery-proof submission
+- [x] Add full captured-photo preview and retake controls to the live-camera proof workflow
+- [x] Extend the reusable FFM workflow skill with the 20-photo checklist and preview/retake capture pattern
