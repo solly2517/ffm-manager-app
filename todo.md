@@ -389,3 +389,7 @@
 - [x] Add a dashboard monthly Travel Expense summary by department and currency
 - [x] Add an assigned-Delegate dropdown filter to the Manager overdue Work Log widget
 - [x] Add a validated date-range selector to Finance Travel Expense Excel and CSV exports
+- [x] Extend the reusable FFM workflow skill with expense trends, selected-Delegate email alert, and department-filter export guidance
+- [x] Add a dashboard month-over-month Travel Expense trend chart with currency-safe series
+- [x] Add a Manager action to email an overdue alert for the selected assigned Delegate
+- [x] Add a department filter to Finance Travel Expense date-range Excel and CSV exports

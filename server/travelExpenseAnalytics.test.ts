@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { claimsWithinTravelExpenseRange, travelExpenseDateRangeError, travelExpenseDepartmentCurrencySummary } from "../shared/travelExpenseAnalytics";
+import { claimsWithinTravelExpenseRange, travelExpenseDateRangeError, travelExpenseDepartmentCurrencySummary, travelExpenseRollingMonthlyTrend } from "../shared/travelExpenseAnalytics";
 
 describe("Travel Expense analytics", () => {
   it("keeps department totals separated by currency and adds only matching pairs", () => {
@@ -20,5 +20,18 @@ describe("Travel Expense analytics", () => {
     const claims = [{ id: 1, claimDate: "2026-08-01T00:00:00.000Z", totalAmount: 1 }, { id: 2, claimDate: "2026-08-31T23:59:59.000Z", totalAmount: 2 }, { id: 3, claimDate: "2026-09-01T00:00:00.000Z", totalAmount: 3 }];
     expect(claimsWithinTravelExpenseRange(claims, "2026-08-01", "2026-08-31").map(claim => claim.id)).toEqual([1, 2]);
     expect(travelExpenseDateRangeError("2026-08-31", "2026-08-01")).toContain("end date");
+  });
+
+  it("creates separate, zero-filled rolling monthly trend series for each currency", () => {
+    const trend = travelExpenseRollingMonthlyTrend([
+      { claimDate: "2026-04-10", currency: "SAR", totalAmount: 50 },
+      { claimDate: "2026-06-02", currency: "SAR", totalAmount: 100 },
+      { claimDate: "2026-06-08", currency: "USD", totalAmount: 20 },
+    ], 3, new Date("2026-06-20T12:00:00.000Z"));
+    expect(trend.months).toEqual(["2026-04", "2026-05", "2026-06"]);
+    expect(trend.series).toEqual(expect.arrayContaining([
+      { currency: "SAR", points: [{ month: "2026-04", totalAmount: 50, claimCount: 1 }, { month: "2026-05", totalAmount: 0, claimCount: 0 }, { month: "2026-06", totalAmount: 100, claimCount: 1 }] },
+      { currency: "USD", points: [{ month: "2026-04", totalAmount: 0, claimCount: 0 }, { month: "2026-05", totalAmount: 0, claimCount: 0 }, { month: "2026-06", totalAmount: 20, claimCount: 1 }] },
+    ]));
   });
 });

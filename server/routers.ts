@@ -158,7 +158,7 @@ import {
   weeklyPlanValidationError,
 } from "../shared/workLogRules";
 import { overdueWorkLogSummary } from "../shared/workLogOverdue";
-import { claimsWithinTravelExpenseRange, travelExpenseDateRangeError, travelExpenseDepartmentCurrencySummary } from "../shared/travelExpenseAnalytics";
+import { claimsWithinTravelExpenseRange, travelExpenseDateRangeError, travelExpenseDepartmentCurrencySummary, travelExpenseRollingMonthlyTrend } from "../shared/travelExpenseAnalytics";
 
 const ADMIN_EMAIL = "dr.seleam@gmail.com";
 const OPERATIONAL_MANAGER_EMAIL = "amreslam@altamammed.com";
@@ -454,6 +454,27 @@ export const appRouter = router({
       ]);
       return overdueWorkLogSummary({ delegates, weeklyPlans, dailyReports });
     }),
+    overdueEmailDraft: managerOnly
+      .input(z.object({ delegateId: z.number().int().positive() }))
+      .mutation(async ({ ctx, input }) => {
+        const allAccess = isAdmin(ctx.user);
+        const [delegates, weeklyPlans, dailyReports, assignments] = await Promise.all([
+          allAccess ? listDelegates() : listDelegatesForManager(ctx.user.id),
+          allAccess ? listAllWeeklyVisitPlans() : listWeeklyVisitPlansForManager(ctx.user.id),
+          allAccess ? listAllDailyActivityReports() : listDailyActivityReportsForManager(ctx.user.id),
+          allAccess ? listManagerAssignments() : Promise.resolve([]),
+        ]);
+        const overdue = overdueWorkLogSummary({ delegates, weeklyPlans, dailyReports }).overdueDelegates.find(item => item.delegateId === input.delegateId);
+        if (!overdue) throw new TRPCError({ code: "NOT_FOUND", message: "This Delegate has no overdue Work Log item in your permitted scope." });
+        const assignedManager = allAccess ? assignments.find(assignment => assignment.delegateId === input.delegateId) : undefined;
+        const recipientEmail = allAccess ? assignedManager?.managerEmail : ctx.user.email;
+        if (!recipientEmail) throw new TRPCError({ code: "BAD_REQUEST", message: "No Manager email is available for this selected Delegate." });
+        const subject = `FFM overdue Work Log reminder — ${overdue.delegateName}`;
+        const overdueText = `${overdue.missingWeeklyPlan ? "Weekly plan is missing." : "Weekly plan is submitted."}${overdue.overdueDailyDates.length ? ` Overdue daily reports: ${overdue.overdueDailyDates.join(", ")}.` : ""}`;
+        const body = `Hello,\n\nFFM Work Log requires attention for ${overdue.delegateName}${overdue.delegateEmail ? ` (${overdue.delegateEmail})` : ""}.\n\n${overdueText}\n\nPlease review the Delegate's Work Log and follow up as needed.\n\nFFM Manager`;
+        await addAuditEvent({ actorId: ctx.user.id, action: "work_log.overdue_email_composed", entityType: "user", entityId: input.delegateId, metadata: JSON.stringify({ delegateId: input.delegateId, recipientEmail }) });
+        return { recipientEmail, subject, body };
+      }),
     submitWeeklyPlan: fieldUserOnly
       .input(
         z.object({
@@ -728,17 +749,19 @@ export const appRouter = router({
       const claims = await listTravelExpenseClaims();
       const isOperationalManager = ctx.user.email?.trim().toLowerCase() === OPERATIONAL_MANAGER_EMAIL;
       const scopedClaims = isAdmin(ctx.user) || isOperationalManager ? claims : claims.filter(claim => claim.claimantId === ctx.user.id || claim.managerApproverId === ctx.user.id);
-      return { month, rows: travelExpenseDepartmentCurrencySummary(claimsWithinTravelExpenseRange(scopedClaims, `${month}-01`, monthEnd)) };
+      return { month, rows: travelExpenseDepartmentCurrencySummary(claimsWithinTravelExpenseRange(scopedClaims, `${month}-01`, monthEnd)), trend: travelExpenseRollingMonthlyTrend(scopedClaims) };
     }),
     accountingExport: protectedProcedure
-      .input(z.object({ from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }))
+      .input(z.object({ from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), department: z.string().trim().max(160).optional() }))
       .query(async ({ ctx, input }) => {
         const isOperationalManager = ctx.user.email?.trim().toLowerCase() === OPERATIONAL_MANAGER_EMAIL;
         if (!isAdmin(ctx.user) && !isOperationalManager) throw new TRPCError({ code: "FORBIDDEN", message: "Travel Expense accounting export is restricted to Finance administration." });
         const dateError = travelExpenseDateRangeError(input.from, input.to);
         if (dateError) throw new TRPCError({ code: "BAD_REQUEST", message: dateError });
-        const claims = claimsWithinTravelExpenseRange(await listTravelExpenseClaims(), input.from, input.to);
-        await addAuditEvent({ actorId: ctx.user.id, action: "travel_expense.range_exported", entityType: "travelExpenseClaim", metadata: JSON.stringify({ from: input.from, to: input.to, claimCount: claims.length }) });
+        const normalizedDepartment = input.department?.trim().toLowerCase();
+        const rangedClaims = claimsWithinTravelExpenseRange(await listTravelExpenseClaims(), input.from, input.to);
+        const claims = normalizedDepartment ? rangedClaims.filter(claim => claim.department?.trim().toLowerCase() === normalizedDepartment) : rangedClaims;
+        await addAuditEvent({ actorId: ctx.user.id, action: "travel_expense.range_exported", entityType: "travelExpenseClaim", metadata: JSON.stringify({ from: input.from, to: input.to, department: input.department || null, claimCount: claims.length }) });
         return claims;
       }),
     monthlyAccountingExport: protectedProcedure

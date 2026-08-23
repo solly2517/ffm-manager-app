@@ -26,3 +26,32 @@ export function travelExpenseDepartmentCurrencySummary(claims: TravelExpenseSumm
   }
   return Array.from(totals.values()).map(row => ({ ...row, totalAmount: Math.round(row.totalAmount * 100) / 100 })).sort((left, right) => left.department.localeCompare(right.department) || left.currency.localeCompare(right.currency));
 }
+
+export function travelExpenseRollingMonthlyTrend(claims: TravelExpenseSummaryClaim[], monthCount = 6, asOf = new Date()) {
+  const months = Array.from({ length: monthCount }, (_, index) => {
+    const date = new Date(Date.UTC(asOf.getUTCFullYear(), asOf.getUTCMonth() - (monthCount - 1 - index), 1));
+    return date.toISOString().slice(0, 7);
+  });
+  const currencies = new Map<string, Map<string, { totalAmount: number; claimCount: number }>>();
+  for (const claim of claims) {
+    const month = new Date(claim.claimDate).toISOString().slice(0, 7);
+    if (!months.includes(month)) continue;
+    const currency = claim.currency?.trim().toUpperCase() || "SAR";
+    const byMonth = currencies.get(currency) ?? new Map();
+    const current = byMonth.get(month) ?? { totalAmount: 0, claimCount: 0 };
+    current.totalAmount += Number(claim.totalAmount) || 0;
+    current.claimCount += 1;
+    byMonth.set(month, current);
+    currencies.set(currency, byMonth);
+  }
+  return {
+    months,
+    series: Array.from(currencies.entries()).sort(([left], [right]) => left.localeCompare(right)).map(([currency, byMonth]) => ({
+      currency,
+      points: months.map(month => {
+        const value = byMonth.get(month) ?? { totalAmount: 0, claimCount: 0 };
+        return { month, totalAmount: Math.round(value.totalAmount * 100) / 100, claimCount: value.claimCount };
+      }),
+    })),
+  };
+}

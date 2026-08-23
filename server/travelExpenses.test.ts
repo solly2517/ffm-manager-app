@@ -154,4 +154,15 @@ describe("Travel Expenses workflow", () => {
     await expect(adminCaller.travelExpenses.accountingExport({ from: "2026-08-31", to: "2026-08-01" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
     expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "travel_expense.range_exported", metadata: expect.stringContaining("2026-08-31") }));
   });
+
+  it("filters Finance accounting exports by normalized department without exposing other departments", async () => {
+    vi.spyOn(db, "listTravelExpenseClaims").mockResolvedValue([
+      { ...pendingClaim, claimDate: new Date("2026-08-10T00:00:00.000Z"), department: "Clinical", lines: [] },
+      { ...pendingClaim, id: 72, claimDate: new Date("2026-08-11T00:00:00.000Z"), department: "Operations", lines: [] },
+    ] as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const caller = appRouter.createCaller(contextFor(administrator));
+    await expect(caller.travelExpenses.accountingExport({ from: "2026-08-01", to: "2026-08-31", department: "clinical" })).resolves.toMatchObject([{ department: "Clinical" }]);
+    expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "travel_expense.range_exported", metadata: expect.stringContaining("clinical") }));
+  });
 });

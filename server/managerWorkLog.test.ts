@@ -78,4 +78,14 @@ describe("Manager Work Log authoring", () => {
     expect(updatePlan).not.toHaveBeenCalled();
     expect(updateReport).not.toHaveBeenCalled();
   });
+
+  it("creates an audited Manager email draft only for a permitted overdue Delegate", async () => {
+    vi.spyOn(db, "listDelegatesForManager").mockResolvedValue([delegate] as never);
+    vi.spyOn(db, "listWeeklyVisitPlansForManager").mockResolvedValue([] as never);
+    vi.spyOn(db, "listDailyActivityReportsForManager").mockResolvedValue([] as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const caller = appRouter.createCaller(contextFor(manager));
+    await expect(caller.delegatePlanning.overdueEmailDraft({ delegateId: delegate.id })).resolves.toMatchObject({ recipientEmail: manager.email, subject: expect.stringContaining(delegate.name), body: expect.stringContaining("Weekly plan is missing") });
+    expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "work_log.overdue_email_composed", entityId: delegate.id }));
+  });
 });
