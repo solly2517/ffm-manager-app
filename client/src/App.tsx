@@ -47,10 +47,16 @@ function Router() {
 
 function ErrorReporter() {
   const captureClientError = trpc.monitoring.captureClientError.useMutation();
+  const recentReports = useRef(new Map<string, number>());
   useEffect(() => {
     const handleError = (event: Event) => {
       const detail = (event as CustomEvent<{ message: string; stack?: string; componentStack?: string; route?: string }>).detail;
-      if (detail?.message) captureClientError.mutate(detail);
+      if (!detail?.message || /monitoring\.captureClientError|Unexpected token .*not valid JSON|Failed to execute 'json' on 'Response'|non-JSON response/i.test(detail.message)) return;
+      const key = `${detail.route ?? ""}:${detail.message.slice(0, 180)}`;
+      const now = Date.now();
+      if ((recentReports.current.get(key) ?? 0) > now - 30_000) return;
+      recentReports.current.set(key, now);
+      captureClientError.mutate(detail, { onError: () => undefined });
     };
     window.addEventListener("ffm:client-error", handleError);
     return () => window.removeEventListener("ffm:client-error", handleError);

@@ -10,10 +10,19 @@ import { startLogin } from "./const";
 import "./index.css";
 
 const queryClient = new QueryClient();
+const diagnosticCooldowns = new Map<string, number>();
+
+const isMonitoringTransportFailure = (message: string) =>
+  /monitoring\.captureClientError|Unexpected token .*not valid JSON|Failed to execute 'json' on 'Response'|non-JSON response/i.test(message);
 
 const dispatchApiDiagnostic = (kind: "query" | "mutation", error: unknown) => {
   if (typeof window === "undefined") return;
   const message = error instanceof Error ? error.message : String(error);
+  if (isMonitoringTransportFailure(message)) return;
+  const key = `${kind}:${message.slice(0, 180)}`;
+  const now = Date.now();
+  if ((diagnosticCooldowns.get(key) ?? 0) > now - 30_000) return;
+  diagnosticCooldowns.set(key, now);
   window.dispatchEvent(new CustomEvent("ffm:client-error", { detail: { message: `[API ${kind} Error] ${message}`, stack: error instanceof Error ? error.stack : undefined, route: window.location.pathname } }));
 };
 
@@ -90,7 +99,7 @@ const trpcClient = trpc.createClient({
           },
         });
         const diagnostic = await responseDiagnostic(response);
-        if (diagnostic.message) {
+        if (diagnostic.message && !String(input).includes("monitoring.captureClientError")) {
           window.dispatchEvent(new CustomEvent("ffm:client-error", { detail: { message: diagnostic.message, route: String(input) } }));
         }
         return response;

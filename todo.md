@@ -473,3 +473,11 @@
 - [x] Verify the requested email accounts and existing Super Manager scope
 - [x] Assign or invite Drislamtawfik@gmail.com and waleedelshamy@altamammed.com as view-only Super Managers
 - [x] Verify Super Manager visibility and Administration access restrictions
+- [x] Verify the public FFM URL separately from Manus preview and management links
+- [x] Test the public FFM domain at an iPhone-sized mobile viewport
+- [x] Correct any public sharing or routing issue and provide iPhone access guidance
+- [x] Reproduce the iPhone Administration overflow and inspect the visible monitoring 502/JSON failure
+- [x] Fix Administration mobile layout containment, long-text wrapping, and touch-size behavior
+- [x] Prevent monitoring/reporting transport failures from rendering repeated disruptive error details
+- [x] Add regression coverage and validate the repaired iPhone-sized Administration workspace
+- [x] Complete final mobile stability verification and publish the finalized FFM release
