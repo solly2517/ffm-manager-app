@@ -271,6 +271,7 @@ describe("admin access control", () => {
     const caller = appRouter.createCaller(contextFor(manager));
     await expect(caller.operations.createManagerSurgery({ delegateId: 75, clientId: 5, surgeryDate: new Date("2026-09-01"), procedureName: "Knee replacement", hospital: "City Hospital" })).resolves.toMatchObject({ id: 102, delegateId: 75, clientId: 5 });
     expect(db.createSurgery).toHaveBeenCalledWith(expect.objectContaining({ delegateId: 75, clientId: 5, createdBy: 74 }));
+    expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ actorId: 74, action: "manager_surgery.created", entityType: "surgery", entityId: 102, metadata: expect.stringContaining('"delegateId":75') }));
   });
 
   it("rejects Manager surgery creation for an unassigned Delegate", async () => {
@@ -281,6 +282,11 @@ describe("admin access control", () => {
     const caller = appRouter.createCaller(contextFor(manager));
     await expect(caller.operations.createManagerSurgery({ delegateId: 77, clientId: 5, surgeryDate: new Date("2026-09-01"), procedureName: "Knee replacement" })).rejects.toMatchObject({ code: "FORBIDDEN" });
     expect(createSurgery).not.toHaveBeenCalled();
+  });
+
+  it("keeps Warehouse Heroes outside clinical surgery planning", async () => {
+    const warehouseHero = appRouter.createCaller(contextFor({ ...baseUser, id: 78, role: "warehouse_hero" as const, email: "hero@example.com" }));
+    await expect(warehouseHero.operations.createManagerSurgery({ delegateId: 75, clientId: 5, surgeryDate: new Date("2026-09-01"), procedureName: "Knee replacement" })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
   it("allows every authenticated role to read the shared surgery calendar while keeping clinical resources field-only", async () => {

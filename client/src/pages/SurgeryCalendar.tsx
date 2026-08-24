@@ -13,6 +13,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   ArrowLeft,
+  CalendarPlus,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
@@ -109,6 +110,12 @@ export default function SurgeryCalendar() {
   const [currency, setCurrency] = useState("SAR");
   const [implantNotes, setImplantNotes] = useState("");
   const [proofNote, setProofNote] = useState("");
+  const [planningDelegateId, setPlanningDelegateId] = useState("");
+  const [planningClientId, setPlanningClientId] = useState("");
+  const [planningProcedure, setPlanningProcedure] = useState("");
+  const [planningDate, setPlanningDate] = useState("");
+  const [planningHospital, setPlanningHospital] = useState("");
+  const [planningSurgeon, setPlanningSurgeon] = useState("");
 
   const isAdmin =
     user?.role === "admin" ||
@@ -117,8 +124,18 @@ export default function SurgeryCalendar() {
     user?.role === "admin" ||
     user?.role === "manager" ||
     user?.role === "delegate";
+  const canPlanSurgery = isAdmin || user?.role === "manager";
   const calendarQuery = trpc.operations.surgeryCalendar.useQuery(undefined, {
     enabled: isAuthenticated,
+  });
+  const clientsQuery = trpc.operations.clients.useQuery(undefined, {
+    enabled: isAuthenticated && canPlanSurgery,
+  });
+  const delegatesQuery = trpc.operations.delegates.useQuery(undefined, {
+    enabled: isAuthenticated && canPlanSurgery,
+  });
+  const doctorsQuery = trpc.operations.doctors.useQuery(undefined, {
+    enabled: isAuthenticated && canPlanSurgery,
   });
   const catalogueSearchInput = useMemo(
     () => getCatalogueSearchInput(catalogueSearch),
@@ -130,6 +147,22 @@ export default function SurgeryCalendar() {
   );
   const selected =
     (calendarQuery.data ?? []).find(item => item.id === selectedId) ?? null;
+  const planningClient = useMemo(
+    () =>
+      (clientsQuery.data ?? []).find(
+        client => String(client.id) === planningClientId
+      ),
+    [clientsQuery.data, planningClientId]
+  );
+  const planningDoctors = useMemo(
+    () =>
+      planningClient
+        ? (doctorsQuery.data ?? []).filter(
+            doctor => doctor.clientId === planningClient.id
+          )
+        : [],
+    [doctorsQuery.data, planningClient]
+  );
   const resourcesQuery = trpc.operations.surgeryResources.useQuery(
     { surgeryId: selectedId ?? 0 },
     { enabled: isAuthenticated && selectedId !== null && canWrite }
@@ -180,6 +213,19 @@ export default function SurgeryCalendar() {
       utils.operations.surgeries.invalidate(),
     ]);
   };
+  const createManagerSurgery = trpc.operations.createManagerSurgery.useMutation({
+    onSuccess: async surgery => {
+      setPlanningClientId("");
+      setPlanningProcedure("");
+      setPlanningDate("");
+      setPlanningHospital("");
+      setPlanningSurgeon("");
+      if (surgery?.id) setSelectedId(surgery.id);
+      if (surgery?.surgeryDate) setMonth(new Date(surgery.surgeryDate));
+      await refresh("Surgery planned and added to the shared calendar.");
+    },
+    onError: error => setNotice(error.message),
+  });
   const updateSchedule = trpc.operations.updateSurgerySchedule.useMutation({
     onSuccess: () => refresh("Surgery appointment updated."),
     onError: error => setNotice(error.message),
@@ -237,6 +283,13 @@ export default function SurgeryCalendar() {
   useEffect(() => {
     if (selected) setMonth(new Date(selected.surgeryDate));
   }, [selected?.id]);
+  useEffect(() => {
+    const hospital = planningClient?.name ?? "";
+    if (planningHospital !== hospital) setPlanningHospital(hospital);
+    if (!planningDoctors.some(doctor => doctor.name === planningSurgeon)) {
+      setPlanningSurgeon("");
+    }
+  }, [planningClient, planningDoctors, planningHospital, planningSurgeon]);
 
   const uploadPatientSheet = (file?: File) => {
     if (!file || !selected) return;
@@ -365,6 +418,7 @@ export default function SurgeryCalendar() {
             <div
               className={
                 notice.includes("updated") ||
+                notice.includes("planned") ||
                 notice.includes("registered") ||
                 notice.includes("uploaded") ||
                 notice.includes("deleted")
@@ -374,6 +428,162 @@ export default function SurgeryCalendar() {
             >
               {notice}
             </div>
+          )}
+          {canPlanSurgery && (
+            <Card className="blueprint-card border-sky-400/30">
+              <CardHeader>
+                <div className="flex items-start gap-3">
+                  <div className="rounded-lg bg-sky-500/15 p-2 text-sky-200">
+                    <CalendarPlus size={20} />
+                  </div>
+                  <div>
+                    <CardTitle>Plan a surgery</CardTitle>
+                    <p className="muted mt-1">
+                      Choose one of your assigned Delegates, then select the
+                      hospital and its registered surgeon. The appointment is
+                      immediately visible on the shared calendar.
+                    </p>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {delegatesQuery.isLoading ? (
+                  <div className="admin-feedback">Loading assigned Delegates…</div>
+                ) : !(delegatesQuery.data?.length) ? (
+                  <div className="admin-feedback error">
+                    No Delegate is assigned to this Manager yet. Ask an
+                    Administrator to assign a Delegate before planning a
+                    surgery.
+                  </div>
+                ) : (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="calendar-planning-delegate">
+                        Assigned Delegate
+                      </Label>
+                      <select
+                        id="calendar-planning-delegate"
+                        aria-label="Assigned Delegate for surgery"
+                        className="blueprint-input w-full"
+                        value={planningDelegateId}
+                        onChange={event => setPlanningDelegateId(event.target.value)}
+                      >
+                        <option value="">Choose assigned Delegate</option>
+                        {(delegatesQuery.data ?? []).map(delegate => (
+                          <option key={delegate.id} value={delegate.id}>
+                            {delegate.name || delegate.email || "Delegate"}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="calendar-planning-client">Hospital / client</Label>
+                      <select
+                        id="calendar-planning-client"
+                        aria-label="Hospital or client for surgery"
+                        className="blueprint-input w-full"
+                        value={planningClientId}
+                        onChange={event => setPlanningClientId(event.target.value)}
+                      >
+                        <option value="">Choose hospital / client</option>
+                        {(clientsQuery.data ?? []).map(client => (
+                          <option key={client.id} value={client.id}>
+                            {client.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="calendar-planning-procedure">Procedure</Label>
+                      <Input
+                        id="calendar-planning-procedure"
+                        aria-label="Surgery procedure"
+                        value={planningProcedure}
+                        onChange={event => setPlanningProcedure(event.target.value)}
+                        placeholder="Procedure name"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="calendar-planning-date">Surgery date</Label>
+                      <Input
+                        id="calendar-planning-date"
+                        aria-label="Surgery date"
+                        type="date"
+                        value={planningDate}
+                        onChange={event => setPlanningDate(event.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="calendar-planning-hospital">Hospital</Label>
+                      <Input
+                        id="calendar-planning-hospital"
+                        aria-label="Selected hospital"
+                        value={planningHospital}
+                        readOnly
+                        title="Hospital is selected automatically from the client."
+                        placeholder="Select hospital / client first"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="calendar-planning-surgeon">Surgeon</Label>
+                      <select
+                        id="calendar-planning-surgeon"
+                        aria-label="Surgeon for surgery"
+                        className="blueprint-input w-full"
+                        value={planningSurgeon}
+                        disabled={!planningClient || !planningDoctors.length}
+                        onChange={event => setPlanningSurgeon(event.target.value)}
+                      >
+                        <option value="">
+                          {!planningClient
+                            ? "Select hospital first"
+                            : planningDoctors.length
+                              ? "Choose registered surgeon"
+                              : "No registered surgeons for this hospital"}
+                        </option>
+                        {planningDoctors.map(doctor => (
+                          <option key={doctor.id} value={doctor.name}>
+                            {doctor.name}
+                            {doctor.specialty ? ` — ${doctor.specialty}` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="sm:col-span-2 flex flex-col gap-2 border-t border-slate-700/70 pt-3 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="muted text-sm">
+                        Managers can plan surgery only for their assigned
+                        Delegates. Warehouse Heroes cannot create clinical
+                        surgery records.
+                      </p>
+                      <Button
+                        className="blueprint-button w-full sm:w-auto"
+                        disabled={
+                          !planningDelegateId ||
+                          !planningClientId ||
+                          !planningDate ||
+                          planningProcedure.trim().length < 2 ||
+                          createManagerSurgery.isPending
+                        }
+                        onClick={() =>
+                          createManagerSurgery.mutate({
+                            delegateId: Number(planningDelegateId),
+                            clientId: Number(planningClientId),
+                            surgeryDate: new Date(`${planningDate}T09:00:00`),
+                            procedureName: planningProcedure.trim(),
+                            hospital: planningHospital || undefined,
+                            surgeon: planningSurgeon || undefined,
+                          })
+                        }
+                      >
+                        {createManagerSurgery.isPending
+                          ? "Planning surgery…"
+                          : "Plan surgery"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(360px,0.9fr)]">
             <Card className="blueprint-card">

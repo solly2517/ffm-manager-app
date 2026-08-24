@@ -481,3 +481,7 @@
 - [x] Prevent monitoring/reporting transport failures from rendering repeated disruptive error details
 - [x] Add regression coverage and validate the repaired iPhone-sized Administration workspace
 - [x] Complete final mobile stability verification and publish the finalized FFM release
+- [x] Audit the current Manager surgery workspace and authorization boundary
+- [x] Enable assignment-scoped Manager surgery planning with hospital and doctor selection
+- [x] Improve the Manager surgery planning controls for mobile use
+- [x] Add regression coverage and validate the published Manager surgery-planning workflow
