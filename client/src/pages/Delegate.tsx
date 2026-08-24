@@ -31,14 +31,16 @@ import {
 import { opensWorkLog, WORK_LOG_PATH } from "@/lib/workLogNavigation";
 import { canSendTeamMessage, formatMemberRole } from "@/lib/teamMessaging";
 import { surgeryCalendarPath } from "@/lib/surgeryWorkspace";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useLanguage, type TranslationKey } from "@/contexts/LanguageContext";
 
-const tabs = [
-  { id: "tasks", label: "My Tasks", icon: ClipboardList },
-  { id: "visit", label: "Visit", icon: MapPin },
-  { id: "messages", label: "Messages", icon: MessageSquare },
-  { id: "surgery", label: "Surgeries", icon: Stethoscope },
-  { id: "plan", label: "Work Log", icon: CalendarPlus },
-  { id: "profile", label: "Profile", icon: UserRound },
+const tabs: { id: "tasks" | "visit" | "messages" | "surgery" | "plan" | "profile"; labelKey: TranslationKey; icon: typeof ClipboardList }[] = [
+  { id: "tasks", labelKey: "myTasks", icon: ClipboardList },
+  { id: "visit", labelKey: "visit", icon: MapPin },
+  { id: "messages", labelKey: "messages", icon: MessageSquare },
+  { id: "surgery", labelKey: "surgeries", icon: Stethoscope },
+  { id: "plan", labelKey: "workLog", icon: CalendarPlus },
+  { id: "profile", labelKey: "profile", icon: UserRound },
 ] as const;
 type DelegateTabId = (typeof tabs)[number]["id"];
 const getInitialDelegateTab = (): DelegateTabId => {
@@ -52,6 +54,7 @@ const getInitialDelegateTab = (): DelegateTabId => {
 
 export default function Delegate() {
   const { user, loading, isAuthenticated, logout } = useAuth();
+  const { language, t } = useLanguage();
   const [active, setActive] = useState<DelegateTabId>(getInitialDelegateTab);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isOffline, setIsOffline] = useState(
@@ -342,7 +345,7 @@ export default function Delegate() {
   if (loading)
     return (
       <div className="blueprint-page">
-        <div className="blueprint-loader">Loading FFM Delegate…</div>
+        <div className="blueprint-loader">{t("loadingManager")}</div>
       </div>
     );
   const uploadFile = async (
@@ -437,21 +440,19 @@ export default function Delegate() {
       <div className="blueprint-page login-view">
         <div className="blueprint-grid" />
         <Card className="login-card blueprint-card">
+          <div className="login-language"><LanguageSwitcher /></div>
           <div className="logo-mark">FFM</div>
-          <p className="eyebrow">FIELD REPRESENTATIVE APP</p>
+          <p className="eyebrow">{t("fieldRepresentative")}</p>
           <h1>FFM Delegate</h1>
-          <p className="muted">
-            Securely manage tasks, visits, clinical contacts, and field
-            evidence.
-          </p>
+          <p className="muted">{t("delegateLoginDescription")}</p>
           <Button
             className="w-full mt-6 blueprint-button"
             onClick={() => startLogin()}
           >
-            Sign in securely
+            {t("signIn")}
           </Button>
           <p className="login-note">
-            Authentication is required for all app access.
+            {t("authenticationRequired")}
           </p>
         </Card>
       </div>
@@ -459,19 +460,20 @@ export default function Delegate() {
   return (
     <div className="delegate-shell">
       <header className="delegate-topbar">
-        <button className="delegate-menu" onClick={() => setMenuOpen(true)}>
+        <button className="delegate-menu" onClick={() => setMenuOpen(true)} aria-label={t("operations")}>
           <Menu size={20} />
         </button>
         <div className="delegate-brand">
           <div className="logo-mark small">FFM</div>
           <div>
             <strong>FFM Delegate</strong>
-            <span>Field Representative</span>
+            <span>{t("fieldRepresentative")}</span>
           </div>
         </div>
         <div className="delegate-user">
-          <span>{user?.name || user?.email || "Delegate"}</span>
-          <button onClick={() => logout()}>
+          <LanguageSwitcher compact/>
+          <span>{user?.name || user?.email || t("delegate")}</span>
+          <button onClick={() => logout()} aria-label={t("signOut")}>
             <LogOut size={16} />
           </button>
         </div>
@@ -484,7 +486,7 @@ export default function Delegate() {
               <X size={18} />
             </button>
           </div>
-          {tabs.map(({ id, label, icon: Icon }) => (
+          {tabs.map(({ id, labelKey, icon: Icon }) => (
             <button
               key={id}
               onClick={() => {
@@ -494,14 +496,14 @@ export default function Delegate() {
               className={active === id ? "selected" : ""}
             >
               <Icon size={17} />
-              {label}
+              {t(labelKey)}
             </button>
           ))}
           <button onClick={() => window.location.assign("/travel-expenses")}>
-            <CircleDollarSign size={17} /> Travel Expenses
+            <CircleDollarSign size={17} /> {t("travelExpenses")}
           </button>
           <button onClick={() => logout()}>
-            <LogOut size={17} /> Sign out
+            <LogOut size={17} /> {t("signOut")}
           </button>
         </div>
       )}
@@ -515,12 +517,9 @@ export default function Delegate() {
         {showWelcome && (
           <div className="welcome-banner">
             <div>
-              <p className="eyebrow">WELCOME TO FFM</p>
-              <strong>Complete each visit with confidence</strong>
-              <p className="muted">
-                Open a task, check in with GPS, capture the report and evidence,
-                then check out.
-              </p>
+              <p className="eyebrow">{t("welcomeToFfm")}</p>
+              <strong>{t("completeVisit")}</strong>
+              <p className="muted">{t("delegateOnboardingText")}</p>
             </div>
             <Button
               variant="outline"
@@ -529,18 +528,18 @@ export default function Delegate() {
                 setShowWelcome(false);
               }}
             >
-              Got it
+              {t("gotIt")}
             </Button>
           </div>
         )}
         <div className="delegate-heading">
           <div>
-            <p className="eyebrow">FFM / {current.label.toUpperCase()}</p>
-            <h1>{current.label}</h1>
+            <p className="eyebrow">FFM / {t(current.labelKey).toUpperCase()}</p>
+            <h1>{t(current.labelKey)}</h1>
           </div>
           <div className="delegate-live">
             <span />{" "}
-            {locationSharing ? "LIVE LOCATION ON" : "LIVE LOCATION OFF"}
+            {locationSharing ? t("liveLocationOn") : t("liveLocationOff")}
           </div>
         </div>
         {active === "tasks" && (
@@ -548,14 +547,14 @@ export default function Delegate() {
             <Card className="blueprint-card delegate-map">
               <CardHeader>
                 <div>
-                  <CardTitle>Today’s route</CardTitle>
+                  <CardTitle>{t("todayRoute")}</CardTitle>
                   <p className="muted">
                     {tasksQuery.isLoading
-                      ? "Syncing assigned visits…"
-                      : `${tasksQuery.data?.length ?? 0} assigned visits · live records`}
+                      ? t("syncingAssignedVisits")
+                      : t("assignedVisits", { count: tasksQuery.data?.length ?? 0 })}
                   </p>
                 </div>
-                <Badge className="status-live">LIVE</Badge>
+                <Badge className="status-live">{t("live")}</Badge>
               </CardHeader>
               <CardContent>
                 <MapView
@@ -583,16 +582,16 @@ export default function Delegate() {
             </Card>
             <div className="delegate-task-list">
               <div className="delegate-section-title">
-                <span>Assigned tasks</span>
+                <span>{t("assignedTasks")}</span>
                 <Badge variant="outline">
-                  {tasksQuery.data?.length ?? 0} live
+                  {tasksQuery.data?.length ?? 0} {t("live")}
                 </Badge>
               </div>
               {tasksQuery.isLoading ? (
-                <div className="admin-feedback">Loading assigned tasks…</div>
+                <div className="admin-feedback">{t("loadingAssignedTasks")}</div>
               ) : tasksQuery.error ? (
                 <div className="admin-feedback error">
-                  Unable to load assigned tasks: {tasksQuery.error.message}
+                  {t("unableLoadAssignedTasks", { message: tasksQuery.error.message })}
                 </div>
               ) : tasksQuery.data?.length ? (
                 tasksQuery.data.map((task, i) => (
@@ -617,10 +616,10 @@ export default function Delegate() {
                     <div>
                       <strong>{task.clientName}</strong>
                       <span>
-                        <MapPin size={12} /> Scheduled field visit
+                        <MapPin size={12} /> {t("scheduledFieldVisit")}
                       </span>
                       <small>
-                        {new Date(task.scheduledAt).toLocaleString()}
+                        {new Date(task.scheduledAt).toLocaleString(language === "ar" ? "ar-SA" : "en-GB")}
                       </small>
                     </div>
                     <Badge
@@ -636,8 +635,7 @@ export default function Delegate() {
                 ))
               ) : (
                 <div className="admin-feedback">
-                  No assigned tasks yet. Your manager will publish new visits
-                  here.
+                  {t("noAssignedTasks")}
                 </div>
               )}
             </div>
@@ -660,20 +658,20 @@ export default function Delegate() {
                 <Navigation size={17} />
               </div>
               <div>
-                <p className="eyebrow">Current assignment</p>
-                <h2>{currentTask?.clientName || "No assignment selected"}</h2>
+                <p className="eyebrow">{t("currentAssignment")}</p>
+                <h2>{currentTask?.clientName || t("noAssignmentSelected")}</h2>
                 <p className="muted">
                   {currentTask?.scheduledAt
-                    ? new Date(currentTask.scheduledAt).toLocaleString()
-                    : "Schedule pending"}{" "}
-                  · {currentTask?.clientCity || "Location pending"}
+                    ? new Date(currentTask.scheduledAt).toLocaleString(language === "ar" ? "ar-SA" : "en-GB")
+                    : t("schedulePending")} {" "}
+                  · {currentTask?.clientCity || t("locationPending")}
                 </p>
                 <small className="visit-state">
                   {visitQuery.data?.checkOutAt
-                    ? `Completed ${new Date(visitQuery.data.checkOutAt).toLocaleString()}`
+                    ? t("completedAt", { date: new Date(visitQuery.data.checkOutAt).toLocaleString(language === "ar" ? "ar-SA" : "en-GB") })
                     : visitQuery.data?.checkInAt
-                      ? `Checked in ${new Date(visitQuery.data.checkInAt).toLocaleString()}`
-                      : "Not checked in"}
+                      ? t("checkedInAt", { date: new Date(visitQuery.data.checkInAt).toLocaleString(language === "ar" ? "ar-SA" : "en-GB") })
+                      : t("notCheckedIn")}
                 </small>
               </div>
             </div>
@@ -687,13 +685,13 @@ export default function Delegate() {
               markers={currentVisitMarkers}
             />
             <div className="location-caption">
-              {currentTask?.clientCity || "Location pending"} ·{" "}
+              {currentTask?.clientCity || t("locationPending")} ·{" "}
               {currentTask?.clientLatitude
-                ? "Live client coordinates"
-                : "Client coordinates unavailable"}
+                ? t("liveClientCoordinates")
+                : t("clientCoordinatesUnavailable")}
             </div>
             <div className="visit-status-control">
-              <label htmlFor="delegate-task-status">Task status</label>
+              <label htmlFor="delegate-task-status">{t("taskStatus")}</label>
               <select
                 id="delegate-task-status"
                 value={currentTask?.status || "pending"}
@@ -710,10 +708,10 @@ export default function Delegate() {
                     });
                 }}
               >
-                <option value="pending">Pending</option>
-                <option value="in_progress">In progress</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
+                <option value="pending">{t("pending")}</option>
+                <option value="in_progress">{t("inProgress")}</option>
+                <option value="completed">{t("completed")}</option>
+                <option value="cancelled">{t("cancelled")}</option>
               </select>
               {taskStatusNotice && (
                 <span
@@ -734,7 +732,7 @@ export default function Delegate() {
                 onClick={() => captureGps("in")}
               >
                 <CheckCircle2 size={16} />{" "}
-                {checkIn.isPending ? "Checking in…" : "Check in"}
+                {checkIn.isPending ? t("checkingIn") : t("checkIn")}
               </Button>
               <Button
                 variant="outline"
@@ -742,16 +740,16 @@ export default function Delegate() {
                 onClick={() => captureGps("out")}
               >
                 <Navigation size={16} />{" "}
-                {checkOut.isPending ? "Checking out…" : "Check out"}
+                {checkOut.isPending ? t("checkingOut") : t("checkOut")}
               </Button>
             </div>
             <div className="form-stack">
               {gpsStatus && <div className="admin-feedback">{gpsStatus}</div>}
-              <label>Visit report</label>
+              <label>{t("visitReport")}</label>
               <Textarea
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
-                placeholder="Capture purpose, discussion points, and follow-up actions…"
+                placeholder={t("visitReportPlaceholder")}
               />
               <Button
                 className="blueprint-button"
@@ -769,11 +767,11 @@ export default function Delegate() {
                   }
                 }}
               >
-                {saveVisitReport.isPending ? "Saving report…" : "Save report"}
+                {saveVisitReport.isPending ? t("savingReport") : t("saveReport")}
               </Button>
               {saveVisitReport.isSuccess && (
                 <div className="admin-feedback success">
-                  Visit report saved to the live record.
+                  {t("visitReportSaved")}
                 </div>
               )}
               {saveVisitReport.error && (
@@ -781,10 +779,10 @@ export default function Delegate() {
                   {saveVisitReport.error.message}
                 </div>
               )}
-              <label>Visit evidence</label>
+              <label>{t("visitEvidence")}</label>
               <div className="evidence-upload-grid">
                 <label className="evidence-upload">
-                  Photo
+                  {t("photo")}
                   <input
                     type="file"
                     accept="image/*"
@@ -795,7 +793,7 @@ export default function Delegate() {
                   />
                 </label>
                 <label className="evidence-upload">
-                  Audio
+                  {t("audio")}
                   <input
                     type="file"
                     accept="audio/*"
@@ -806,7 +804,7 @@ export default function Delegate() {
                   />
                 </label>
                 <div className="evidence-upload signature-capture">
-                  <span>Signature</span>
+                  <span>{t("signature")}</span>
                   <canvas
                     ref={signatureCanvas}
                     width={260}
@@ -826,16 +824,16 @@ export default function Delegate() {
                     onPointerMove={drawSignature}
                   />
                   <Button size="sm" variant="outline" onClick={saveSignature}>
-                    Save signature
+                    {t("saveSignature")}
                   </Button>
                 </div>
               </div>
               {uploadEvidence.isPending && (
-                <div className="admin-feedback">Uploading evidence…</div>
+                <div className="admin-feedback">{t("uploadingEvidence")}</div>
               )}
               {uploadEvidence.isSuccess && (
                 <div className="admin-feedback success">
-                  Evidence uploaded securely.
+                  {t("evidenceUploaded")}
                 </div>
               )}
               {uploadEvidence.error && (
@@ -1250,14 +1248,14 @@ export default function Delegate() {
         )}
       </main>
       <nav className="delegate-bottom-nav">
-        {tabs.map(({ id, label, icon: Icon }) => (
+        {tabs.map(({ id, labelKey, icon: Icon }) => (
           <button
             key={id}
             className={active === id ? "active" : ""}
             onClick={() => setActive(id)}
           >
             <Icon size={18} />
-            <span>{label}</span>
+            <span>{t(labelKey)}</span>
           </button>
         ))}
       </nav>

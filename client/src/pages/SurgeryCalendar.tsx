@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -78,6 +80,7 @@ const timelineLabel = (action: string) =>
 
 export default function SurgeryCalendar() {
   const { user, loading, isAuthenticated, logout } = useAuth();
+  const { t } = useLanguage();
   const utils = trpc.useUtils();
   const [month, setMonth] = useState(
     () => new Date(new Date().getFullYear(), new Date().getMonth(), 1)
@@ -281,22 +284,22 @@ export default function SurgeryCalendar() {
   if (loading)
     return (
       <div className="blueprint-page">
-        <div className="blueprint-loader">Loading surgery calendar…</div>
+        <div className="blueprint-loader">{t("loadingManager")}</div>
       </div>
     );
   if (!isAuthenticated)
     return (
       <div className="blueprint-page login-view">
         <Card className="login-card blueprint-card">
-          <div className="logo-mark">FFM</div>
-          <p className="eyebrow">SHARED SURGERY CALENDAR</p>
-          <h1>FFM Surgery Calendar</h1>
-          <p className="muted">Sign in to view the current surgery schedule.</p>
+          <div className="login-language"><LanguageSwitcher /></div><div className="logo-mark">FFM</div>
+          <p className="eyebrow">{t("sharedSurgeryCalendar")}</p>
+          <h1>FFM {t("surgeryCalendar")}</h1>
+          <p className="muted">{t("surgeryCalendarLoginDescription")}</p>
           <Button
             className="w-full mt-6 blueprint-button"
             onClick={() => startLogin()}
           >
-            Sign in securely
+            {t("signIn")}
           </Button>
         </Card>
       </div>
@@ -308,8 +311,8 @@ export default function SurgeryCalendar() {
         <div className="brand-lockup">
           <div className="logo-mark small">FFM</div>
           <div>
-            <strong>FFM Calendar</strong>
-            <span>Surgery planning</span>
+            <strong>FFM {t("surgeryCalendar")}</strong>
+            <span>{t("surgeryPlanning")}</span>
           </div>
         </div>
         <div className="sidebar-rule" />
@@ -319,8 +322,7 @@ export default function SurgeryCalendar() {
         >
           <ArrowLeft size={17} />
           <span>
-            Back to{" "}
-            {user?.role === "delegate" ? "Delegate workspace" : "workspace"}
+            {t("backToWorkspace")} {user?.role === "delegate" ? t("delegateWorkspace") : ""}
           </span>
         </a>
         <div className="sidebar-user">
@@ -328,41 +330,35 @@ export default function SurgeryCalendar() {
             {(user?.name || user?.email || "F")[0].toUpperCase()}
           </div>
           <div className="user-copy">
-            <strong>{user?.name || user?.email || "Authenticated user"}</strong>
+            <strong>{user?.name || user?.email || "FFM"}</strong>
             <span>{user?.role?.replace("_", " ")}</span>
           </div>
           <button
             className="logout-icon"
             onClick={() => logout()}
-            title="Sign out"
+            title={t("signOut")}
           >
-            Sign out
+            {t("signOut")}
           </button>
         </div>
       </aside>
       <main className="manager-main">
         <header className="manager-topbar">
           <div>
-            <p className="topbar-kicker">FFM / SHARED PLANNING</p>
-            <h2>Surgery calendar</h2>
+            <p className="topbar-kicker">FFM / {t("sharedPlanning")}</p>
+            <h2>{t("surgeryCalendar")}</h2>
           </div>
-          <div className="live-indicator">
-            <span /> All roles can view
-          </div>
+          <div className="topbar-actions"><div className="live-indicator"><span /> {t("allRolesCanView")}</div><LanguageSwitcher compact/></div>
         </header>
         <section className="manager-content">
           <div className="page-intro">
             <div>
-              <p className="eyebrow">Day-of-surgery control</p>
-              <h1>Plan early. Resolve only on the surgery day.</h1>
-              <p className="muted">
-                Choose from the supplied product catalogue or enter a missing
-                implant directly. Pricing is recorded only on the surgery
-                record.
-              </p>
+              <p className="eyebrow">{t("dayOfSurgeryControl")}</p>
+              <h1>{t("surgeryCalendarIntro")}</h1>
+              <p className="muted">{t("surgeryCalendarDescription")}</p>
             </div>
             <Badge variant="outline">
-              {calendarQuery.data?.length ?? 0} live surgeries
+              {t("liveSurgeries", { count: calendarQuery.data?.length ?? 0 })}
             </Badge>
           </div>
           {notice && (

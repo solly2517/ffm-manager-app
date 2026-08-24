@@ -12,6 +12,8 @@ import { ArrowLeft, CheckCircle2, ClipboardList, CircleDollarSign, Download, Fil
 import { calculateTravelExpenseClaimTotal, calculateTravelExpenseLineTotal } from "@/lib/travelExpenseCalculations";
 import { buildTravelExpensePrintDocument, type PrintableTravelExpenseClaim } from "@/lib/travelExpensePrint";
 import { downloadTravelExpenseAccountingWorkbook, downloadTravelExpenseClaimsCsv } from "@/lib/travelExpenseExport";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type TransportMode = "car" | "plane" | "car_and_plane" | "other";
 type ExpenseCategory = "hotel" | "car_taxi" | "fuel_invoice" | "maintenance" | "food" | "air_ticket" | "others";
@@ -31,6 +33,7 @@ const displayDate = (value: Date | string | null | undefined) => value ? new Dat
 
 export default function TravelExpenses() {
   const { user, loading, isAuthenticated, logout } = useAuth();
+  const { language, t } = useLanguage();
   const utils = trpc.useUtils();
   const claimsQuery = trpc.travelExpenses.claims.useQuery(undefined, { enabled: isAuthenticated });
   const approversQuery = trpc.travelExpenses.managerApprovers.useQuery(undefined, { enabled: isAuthenticated });
@@ -97,8 +100,8 @@ export default function TravelExpenses() {
     submit.mutate({ managerApproverId, claimDate, department: department || undefined, jobNature: jobNature || undefined, transportMode, ticketReference: ticketReference || undefined, estimatedDays, tripSegments: segments, jobReport, currency: currency.toUpperCase(), lines });
   };
 
-  if (loading) return <div className="blueprint-page"><div className="blueprint-loader">Loading Travel Expenses…</div></div>;
-  if (!isAuthenticated) return <div className="blueprint-page login-view"><Card className="login-card blueprint-card"><div className="logo-mark">FFM</div><p className="eyebrow">FINANCE WORKFLOW</p><h1>Travel Expenses</h1><p className="muted">Sign in to submit and track your FFM travel claims.</p><Button className="w-full mt-6 blueprint-button" onClick={() => startLogin()}>Sign in securely</Button></Card></div>;
+  if (loading) return <div className="blueprint-page"><div className="blueprint-loader">{t("loadingManager")}</div></div>;
+  if (!isAuthenticated) return <div className="blueprint-page login-view"><Card className="login-card blueprint-card"><div className="login-language"><LanguageSwitcher /></div><div className="logo-mark">FFM</div><p className="eyebrow">{t("financeWorkflow")}</p><h1>{t("travelExpenses")}</h1><p className="muted">{t("travelLoginDescription")}</p><Button className="w-full mt-6 blueprint-button" onClick={() => startLogin()}>{t("signIn")}</Button></Card></div>;
 
   const isOperationalManager = user?.email?.trim().toLowerCase() === operationalEmail;
   const isAccountingExporter = isOperationalManager || user?.role === "admin";
@@ -107,15 +110,15 @@ export default function TravelExpenses() {
 
   return <div className="manager-shell">
     <aside className="manager-sidebar">
-      <div className="brand-lockup"><div className="logo-mark small">FFM</div><div><strong>Travel Expenses</strong><span>Claim & release workflow</span></div></div>
+      <div className="brand-lockup"><div className="logo-mark small">FFM</div><div><strong>{t("travelExpenses")}</strong><span>{t("claimReleaseWorkflow")}</span></div></div>
       <div className="sidebar-rule" />
-      <nav><a className="sidebar-link" href={user?.role === "delegate" ? "/delegate" : user?.role === "warehouse_hero" ? "/warehouse-hero" : "/"}><ArrowLeft size={17} /><span>Back to workspace</span></a><a className="sidebar-link" href="/work-log"><ClipboardList size={17} /><span>Weekly visits & daily reports</span></a></nav>
-      <div className="sidebar-user"><div className="avatar">{(user?.name || user?.email || "F")[0].toUpperCase()}</div><div className="user-copy"><strong>{user?.name || user?.email || "FFM member"}</strong><span>{user?.role?.replace("_", " ")}</span></div><button className="logout-icon" onClick={() => logout()} title="Sign out">Sign out</button></div>
+      <nav><a className="sidebar-link" href={user?.role === "delegate" ? "/delegate" : user?.role === "warehouse_hero" ? "/warehouse-hero" : "/"}><ArrowLeft size={17} /><span>{t("backToWorkspace")}</span></a><a className="sidebar-link" href="/work-log"><ClipboardList size={17} /><span>{t("workLog")}</span></a></nav>
+      <div className="sidebar-user"><div className="avatar">{(user?.name || user?.email || "F")[0].toUpperCase()}</div><div className="user-copy"><strong>{user?.name || user?.email || "FFM"}</strong><span>{user?.role?.replace("_", " ")}</span></div><button className="logout-icon" onClick={() => logout()} title={t("signOut")}>{t("signOut")}</button></div>
     </aside>
     <main className="manager-main">
-      <header className="manager-topbar"><div><p className="topbar-kicker">FFM / FINANCE WORKFLOW</p><h2>Travel Expenses</h2></div><div className="topbar-actions"><div className="live-indicator"><span /> Secure approval trail</div></div></header>
+      <header className="manager-topbar"><div><p className="topbar-kicker">FFM / {t("financeWorkflow")}</p><h2>{t("travelExpenses")}</h2></div><div className="topbar-actions"><div className="live-indicator"><span /> {t("secureApprovalTrail")}</div><LanguageSwitcher compact/></div></header>
       <section className="manager-content space-y-6">
-        <div className="page-intro"><div><p className="eyebrow">Travel expense sheet</p><h1>Submit a clear claim. Track the approval. Record the release.</h1><p className="muted">Every FFM member can submit their own travel expenses. A claim stays pending until the claimant’s Manager and the designated Operational Manager approve it. The release date is recorded automatically when the released amount is confirmed.</p></div></div>
+        <div className="page-intro"><div><p className="eyebrow">{t("travelExpenseSheet")}</p><h1>{t("travelExpenseIntro")}</h1><p className="muted">{t("travelExpenseDescription")}</p></div></div>
         {notice && <div className={/submitted|recorded|released|downloaded/i.test(notice) ? "admin-feedback success" : "admin-feedback error"}>{notice}</div>}
         {isAccountingExporter && <Card className="blueprint-card"><CardHeader><CardTitle className="flex items-center gap-2"><FileSpreadsheet size={20} /> Accounting export by date range</CardTitle><p className="muted">Choose any inclusive claim-date period and optionally narrow it to one department. Excel includes separate claims and expense-line sheets; CSV contains the claim summary.</p></CardHeader><CardContent className="flex flex-wrap items-end gap-3"><div className="space-y-2"><Label htmlFor="accounting-from">From</Label><Input id="accounting-from" type="date" value={accountingFrom} onChange={event => setAccountingFrom(event.target.value)} /></div><div className="space-y-2"><Label htmlFor="accounting-to">To</Label><Input id="accounting-to" type="date" min={accountingFrom || undefined} value={accountingTo} onChange={event => setAccountingTo(event.target.value)} /></div><div className="space-y-2"><Label htmlFor="accounting-department">Department</Label><select id="accounting-department" className="ffm-select" value={accountingDepartment} onChange={event => setAccountingDepartment(event.target.value)}><option value="">All departments</option>{accountingDepartments.map(item => <option key={item} value={item}>{item}</option>)}</select></div><Button className="blueprint-button" disabled={accountingRangeExport.isFetching} onClick={() => downloadRangeAccounting("xlsx")}><FileSpreadsheet size={16} /> {accountingRangeExport.isFetching ? "Preparing…" : "Download Excel"}</Button><Button variant="outline" disabled={accountingRangeExport.isFetching} onClick={() => downloadRangeAccounting("csv")}><Download size={16} /> Download CSV</Button></CardContent></Card>}
         <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.25fr)_minmax(380px,0.75fr)]">

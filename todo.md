@@ -451,3 +451,7 @@
 - [x] Add a user-controlled toggle to hide empty dashboard cards
 - [x] Add a compact weekly operations summary near the dashboard top
 - [x] Extend the reusable FFM workflow skill with dashboard personalization and weekly summary guidance
+- [x] Audit user-visible FFM screens and create a translation inventory for English and Arabic
+- [x] Add a persisted English/Arabic language switcher with document language metadata and RTL handling
+- [x] Translate the navigation, dashboard, and high-priority operational workflows into Arabic
+- [x] Add localization regression tests and validate responsive English/Arabic layouts

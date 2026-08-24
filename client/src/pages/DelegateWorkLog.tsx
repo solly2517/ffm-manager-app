@@ -27,6 +27,8 @@ import {
 } from "@/lib/workLogSchedule";
 import { parseWeeklySchedule } from "@shared/workLogRules";
 import { formatFfmDate } from "@/lib/ffmDate";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const localDate = () => new Date().toISOString().slice(0, 10);
 const statusTone = (status: string) =>
@@ -294,6 +296,7 @@ function DailyHospitalGroups({
 
 export default function DelegateWorkLog() {
   const { user, loading, isAuthenticated } = useAuth();
+  const { t } = useLanguage();
   const utils = trpc.useUtils();
   const clientsQuery = trpc.operations.clients.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -522,17 +525,15 @@ export default function DelegateWorkLog() {
   if (loading)
     return (
       <div className="blueprint-page">
-        <div className="blueprint-loader">Loading FFM Work Log…</div>
+        <div className="blueprint-loader">{t("loadingManager")}</div>
       </div>
     );
   if (!canAuthor)
     return (
       <div className="blueprint-page">
         <Card className="login-card blueprint-card">
-          <h1>Work Log is role restricted</h1>
-          <p className="muted">
-            This workspace is for Delegates, Managers, and Administrators.
-          </p>
+          <h1>{t("workLogRestricted")}</h1>
+          <p className="muted">{t("workLogRestrictedDescription")}</p>
         </Card>
       </div>
     );
@@ -544,19 +545,17 @@ export default function DelegateWorkLog() {
           href={isDelegate ? "/delegate" : "/"}
           className="inline-flex items-center gap-2 text-sm text-cyan-300 mb-6"
         >
-          <ArrowLeft size={16} /> Back to workspace
+          <ArrowLeft size={16} /> {t("backToWorkspace")}
         </a>
         <div className="mb-8">
-          <p className="eyebrow">FFM / FIELD PERFORMANCE</p>
+          <div className="flex items-center justify-between gap-3"><p className="eyebrow">FFM / {t("fieldPerformance")}</p><LanguageSwitcher compact/></div>
           <h1 className="text-4xl font-bold text-white">
             {isDelegate
-              ? "My hospital plans & doctor visits"
-              : "My plans, reports & Delegate review"}
+              ? t("delegateWorkLogTitle")
+              : t("managerWorkLogTitle")}
           </h1>
           <p className="muted mt-2">
-            The Delegate workweek runs Saturday through Thursday; Friday is the
-            only weekend day. Every plan day contains 3–6 hospitals, each with
-            multiple registered doctors if needed.
+            {t("workLogDescription")}
           </p>
           {canReview && (
             <p className="admin-feedback mt-4 mb-0">
@@ -578,7 +577,7 @@ export default function DelegateWorkLog() {
           <section className="grid lg:grid-cols-2 gap-6 mb-6" aria-label="Add hospital and doctor">
             <Card className="blueprint-card">
               <CardHeader>
-                <CardTitle>Add hospital</CardTitle>
+                <CardTitle>{t("addHospital")}</CardTitle>
                 <p className="muted">Create a hospital/client so it can be selected in plans and reports.</p>
               </CardHeader>
               <CardContent className="form-stack">
@@ -593,7 +592,7 @@ export default function DelegateWorkLog() {
             </Card>
             <Card className="blueprint-card">
               <CardHeader>
-                <CardTitle>Add linked doctor</CardTitle>
+                <CardTitle>{t("addLinkedDoctor")}</CardTitle>
                 <p className="muted">Choose the hospital first; the doctor will be linked to it automatically.</p>
               </CardHeader>
               <CardContent className="form-stack">
@@ -621,7 +620,7 @@ export default function DelegateWorkLog() {
             <Card className="blueprint-card">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <CalendarDays size={20} /> Six-day workweek plan
+                  <CalendarDays size={20} /> {t("sixDayWorkweekPlan")}
                 </CardTitle>
                 <p className="muted">
                   Saturday through Thursday: select 3–6 hospitals for each
@@ -630,7 +629,7 @@ export default function DelegateWorkLog() {
                 </p>
               </CardHeader>
               <CardContent className="form-stack">
-                <label>Week starting Saturday</label>
+                <label>{t("weekStartingSaturday")}</label>
                 <Input
                   type="date"
                   value={weekOf}
@@ -657,14 +656,14 @@ export default function DelegateWorkLog() {
                 >
                   {submitWeekly.isPending
                     ? "Submitting…"
-                    : "Submit Saturday–Thursday plan"}
+                    : t("submitWorkweekPlan")}
                 </Button>
               </CardContent>
             </Card>
             <Card className="blueprint-card">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <FileText size={20} /> Daily visits & report
+                  <FileText size={20} /> {t("dailyVisitsReport")}
                 </CardTitle>
                 <p className="muted">
                   Choose a planned hospital once, then add every registered
@@ -673,7 +672,7 @@ export default function DelegateWorkLog() {
                 </p>
               </CardHeader>
               <CardContent className="form-stack">
-                <label>Report date</label>
+                <label>{t("reportDate")}</label>
                 <Input
                   type="date"
                   value={reportDate}
@@ -734,7 +733,7 @@ export default function DelegateWorkLog() {
                 >
                   {submitDaily.isPending
                     ? "Submitting…"
-                    : "Submit daily report"}
+                    : t("submitDailyReport")}
                 </Button>
               </CardContent>
             </Card>
@@ -743,7 +742,7 @@ export default function DelegateWorkLog() {
         <div className="grid lg:grid-cols-2 gap-6 mt-6">
           <Card className="blueprint-card">
             <CardHeader>
-              <CardTitle>Weekly plans</CardTitle>
+              <CardTitle>{t("weeklyPlans")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {weeklyPlans.isLoading ? (
@@ -805,7 +804,7 @@ export default function DelegateWorkLog() {
           </Card>
           <Card className="blueprint-card">
             <CardHeader>
-              <CardTitle>Daily reports</CardTitle>
+              <CardTitle>{t("dailyReports")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {dailyReports.isLoading ? (
