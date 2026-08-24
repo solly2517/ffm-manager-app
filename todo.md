@@ -488,3 +488,6 @@
 - [x] Audit mobile Dashboard-return navigation in Surgery Calendar and deep workspaces
 - [x] Add a persistent Dashboard return control to Surgery Calendar and shared deep-workspace fallback
 - [x] Add mobile navigation regression coverage, validate, and publish the repair
+- [x] Audit the embedded Manager sidebar workspace header shown in the mobile Surgeries view
+- [x] Add an always-visible mobile Dashboard action to every non-Dashboard Manager sidebar workspace
+- [x] Verify the embedded Surgeries Dashboard return control on iPhone and publish the correction
