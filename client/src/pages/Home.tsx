@@ -55,6 +55,7 @@ const superManagerEmails = new Set([
   "m.selim@altamammed.com",
   "amreslam@altamammed.com",
   "waleedelshamy@altamammed.com",
+  "drislamtawfik@gmail.com",
 ]);
 const STOCK_MANAGEMENT_URL = "https://altamamstock-ibyisaln.manus.space/";
 

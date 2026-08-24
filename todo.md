@@ -470,3 +470,6 @@
 - [x] Add short Arabic visual walkthroughs for Travel Expenses and Work Logs
 - [x] Create and validate a reusable Arabic Help Center workflow skill
 - [x] Add Help Center regression coverage and validate the published upgrade
+- [x] Verify the requested email accounts and existing Super Manager scope
+- [x] Assign or invite Drislamtawfik@gmail.com and waleedelshamy@altamammed.com as view-only Super Managers
+- [x] Verify Super Manager visibility and Administration access restrictions

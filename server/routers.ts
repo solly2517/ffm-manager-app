@@ -190,6 +190,7 @@ const SUPER_MANAGER_EMAILS = new Set([
   "m.selim@altamammed.com",
   "amreslam@altamammed.com",
   "waleedelshamy@altamammed.com",
+  "drislamtawfik@gmail.com",
 ]);
 const WAREHOUSE_HERO_LEAD_EMAIL = "osamaahmed@altamammed.com";
 const isWarehouseHeroLead = (user: { email?: string | null; role?: string }) => user.role === "manager" && user.email?.trim().toLowerCase() === WAREHOUSE_HERO_LEAD_EMAIL;

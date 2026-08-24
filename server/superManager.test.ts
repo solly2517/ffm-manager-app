@@ -28,6 +28,20 @@ describe("Super Manager roster oversight", () => {
     expect(assignedDelegates).not.toHaveBeenCalled();
   });
 
+  it("allows Drislamtawfik to view the full roster without Administrator privileges", async () => {
+    vi.spyOn(db, "listManagers").mockResolvedValue([{ id: 1, email: "manager@example.com", name: "Assigned Manager" }] as never);
+    vi.spyOn(db, "listDelegates").mockResolvedValue([{ id: 2, email: "delegate@example.com", name: "Delegate" }] as never);
+    vi.spyOn(db, "listWarehouseHeroes").mockResolvedValue([{ id: 3, email: "hero@example.com", name: "Warehouse Hero" }] as never);
+    vi.spyOn(db, "listManagerAssignments").mockResolvedValue([] as never);
+    vi.spyOn(db, "listAllWeeklyVisitPlans").mockResolvedValue([] as never);
+    vi.spyOn(db, "listAllDailyActivityReports").mockResolvedValue([] as never);
+    const requestedSuperManager = { ...superManager, id: 304, email: "Drislamtawfik@gmail.com", name: "Dr Islam Tawfik" };
+    const caller = appRouter.createCaller(contextFor(requestedSuperManager));
+
+    await expect(caller.operations.superManagerRoster()).resolves.toMatchObject({ managers: [{ id: 1 }], delegates: [{ id: 2 }], warehouseHeroes: [{ id: 3 }] });
+    await expect(caller.admin.addUser({ email: "new@example.com", role: "delegate" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
   it("filters read-only report activity and exports only the requested authorized roster scope as safe CSV", async () => {
     vi.spyOn(db, "listManagers").mockResolvedValue([{ id: 1, email: "manager@example.com", name: "Assigned Manager", department: "Operations" }] as never);
     vi.spyOn(db, "listDelegates").mockResolvedValue([{ id: 2, email: "delegate@example.com", name: "=Delegate", department: "Clinical" }] as never);
