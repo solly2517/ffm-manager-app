@@ -461,3 +461,7 @@
 - [x] Add Arabic labels and RTL-aware worksheet formatting to FFM Excel exports
 - [x] Translate remaining Administration and report-detail interfaces into Arabic
 - [x] Add bilingual export and profile-preference regression coverage
+- [x] Audit remaining English dashboard detail cards and the existing Help route
+- [x] Translate remaining dashboard detail cards and report controls into Arabic
+- [x] Add a printable Arabic user guide to the Help menu
+- [x] Add regression coverage and validate Arabic dashboard and guide printing behavior

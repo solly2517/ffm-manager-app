@@ -70,6 +70,30 @@ const stats: { labelKey: "activeDelegates" | "visitsToday" | "pendingTasks" | "c
 function initials(name: string) { return name.split(" ").map((part) => part[0]).join("").slice(0, 2); }
 function money(value: number, currency: string) { return new Intl.NumberFormat(undefined, { style: "currency", currency: currency || "SAR", maximumFractionDigits: 2 }).format(Number.isFinite(value) ? value : 0); }
 
+const dashboardDetailArabic: Array<[string, string]> = [
+  ["Department totals date range", "نطاق تاريخ إجماليات الأقسام"],
+  ["Filter task and Work Log metrics by activity date. Member-role counts remain the current department assignment.", "صفِّ مؤشرات المهام وسجل العمل حسب تاريخ النشاط. تبقى أعداد أدوار الأعضاء وفق تعيين القسم الحالي."],
+  ["From", "من"], ["To", "إلى"], ["Clear date range", "مسح نطاق التاريخ"],
+  ["Monthly department PDF", "ملف PDF الشهري للأقسام"],
+  ["Review an Administrator-only monthly summary before download. Member roles reflect current assignments; task and Work Log counts use the selected month.", "راجع ملخصًا شهريًا مخصصًا لمسؤول النظام قبل التنزيل. تعكس أدوار الأعضاء التعيينات الحالية، وتستخدم أعداد المهام وسجل العمل الشهر المحدد."],
+  ["Report month", "شهر التقرير"], ["Preparing preview…", "جارٍ إعداد المعاينة…"], ["Preview monthly PDF", "معاينة PDF الشهري"],
+  ["Department operational totals", "الإجماليات التشغيلية للأقسام"],
+  ["Administrator-only team, task, and Work Log counts calculated from the department structure and live records.", "أعداد الفريق والمهام وسجل العمل المخصصة لمسؤول النظام محسوبة من هيكل الأقسام والسجلات المباشرة."],
+  ["Calculating department totals…", "جارٍ حساب إجماليات الأقسام…"], ["Create a department and assign members to begin department-level metrics.", "أنشئ قسمًا وعيّن أعضاءً لبدء مؤشرات مستوى الأقسام."],
+  ["Active", "نشط"], ["Inactive", "غير نشط"], ["Members", "الأعضاء"], ["Tasks", "المهام"], ["Manager", "مدير"], ["Delegate", "مندوب"], ["Hero", "بطل"],
+  ["Monthly Travel Expense summary", "ملخص مصروفات السفر الشهري"],
+  ["Current-month claim totals grouped by department and currency. Each currency remains separate.", "إجماليات مطالبات الشهر الحالي مجمعة حسب القسم والعملة. تبقى كل عملة منفصلة."],
+  ["Open expenses", "فتح المصروفات"], ["Calculating monthly expense totals…", "جارٍ حساب إجماليات مصروفات الشهر…"],
+  ["Six-month expense trend", "اتجاه المصروفات لستة أشهر"], ["Each line shows one currency. Values are never combined across currencies.", "يمثل كل خط عملة واحدة. لا تُدمج القيم عبر العملات."],
+  ["No Travel Expense claims are available for the last six months.", "لا تتوفر مطالبات مصروفات سفر للأشهر الستة الماضية."],
+  ["Work Log attention", "تنبيهات سجل العمل"], ["Missing weekly plans and completed-day reports for your permitted Delegate team.", "خطط أسبوعية وتقارير أيام مكتملة مفقودة لفريق المندوبين المسموح لك به."],
+  ["Open Work Log", "فتح سجل العمل"], ["Checking Work Log submissions…", "جارٍ التحقق من إدخالات سجل العمل…"],
+  ["Live delegate positions", "مواقع المندوبين المباشرة"], ["Real-time field activity · updated every 30 seconds", "نشاط ميداني في الوقت الفعلي · يُحدّث كل 30 ثانية"], ["LIVE", "مباشر"],
+  ["Loading privacy-approved live positions…", "جارٍ تحميل المواقع المباشرة المعتمدة للخصوصية…"], ["No recent shared Delegate positions are available. Visit GPS records appear here only when the Delegate has enabled location sharing.", "لا تتوفر مواقع حديثة مشتركة للمندوبين. تظهر سجلات GPS للزيارات هنا فقط عند تفعيل المندوب لمشاركة الموقع."],
+  ["Today's activity", "نشاط اليوم"], ["Latest events from your team", "أحدث أحداث فريقك"], ["View all", "عرض الكل"], ["Loading live activity…", "جارٍ تحميل النشاط المباشر…"], ["No live task activity yet.", "لا يوجد نشاط مباشر للمهام حتى الآن."],
+  ["Unassigned Delegate", "مندوب غير معيّن"], ["No change", "لا تغيير"], ["this month", "هذا الشهر"], ["claim", "مطالبة"],
+];
+
 function ExpenseTrendChart({ trend }: { trend: { months: string[]; series: { currency: string; points: { month: string; totalAmount: number; claimCount: number }[] }[] } }) {
   if (!trend.series.length) return <div className="admin-feedback">No Travel Expense claims are available for the last six months.</div>;
   return <div className="grid gap-4 lg:grid-cols-2">{trend.series.map((series, index) => {
@@ -93,6 +117,39 @@ export default function Home() {
   }, [isAuthenticated, isSuperManager, user?.role]);
   const [active, setActive] = useState(() => { const requested = new URLSearchParams(window.location.search).get("workspace"); return nav.some((item) => item.id === requested) ? requested! : "dashboard"; });
   useEffect(() => { if (opensWorkLog(active)) window.location.assign(WORK_LOG_PATH); }, [active]);
+  useEffect(() => {
+    const root = document.querySelector(".manager-content");
+    if (!root) return;
+    const translations = language === "ar" ? dashboardDetailArabic : dashboardDetailArabic.map(([english, arabic]) => [arabic, english] as [string, string]);
+    const translate = () => {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      const nodes: Text[] = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode as Text);
+      nodes.forEach(node => {
+        const value = node.nodeValue || "";
+        const match = translations.find(([source]) => value.trim() === source);
+        if (match) { node.nodeValue = value.replace(match[0], match[1]); return; }
+        if (language !== "ar") return;
+        const trimmed = value.trim();
+        const dynamic =
+          trimmed.match(/^No Travel Expense claims have been recorded for (.+)\.$/) ? trimmed.replace(/^No Travel Expense claims have been recorded for (.+)\.$/, "لم تُسجل أي مطالبات مصروفات سفر لشهر $1.") :
+          trimmed.match(/^(\d+) missing weekly plan(s)?$/) ? trimmed.replace(/^(\d+) missing weekly plan(s)?$/, "$1 خطة أسبوعية مفقودة") :
+          trimmed.match(/^(\d+) overdue daily report(s)?$/) ? trimmed.replace(/^(\d+) overdue daily report(s)?$/, "$1 تقرير يومي متأخر") :
+          trimmed.match(/^Week of (.+)$/) ? trimmed.replace(/^Week of (.+)$/, "أسبوع $1") :
+          trimmed === "Filter assigned Delegate" ? "تصفية المندوب المعيّن" :
+          trimmed === "All Delegates with overdue work" ? "كل المندوبين ذوي العمل المتأخر" :
+          trimmed.match(/^Weekly plan missing · (\d+) overdue daily report(s)?$/) ? trimmed.replace(/^Weekly plan missing · (\d+) overdue daily report(s)?$/, "الخطة الأسبوعية مفقودة · $1 تقرير يومي متأخر") :
+          trimmed === "Weekly plan submitted" ? "تم تقديم الخطة الأسبوعية" :
+          trimmed === "in progress" ? "قيد التنفيذ" :
+          "";
+        if (dynamic) node.nodeValue = value.replace(trimmed, dynamic);
+      });
+    };
+    translate();
+    const observer = new MutationObserver(translate);
+    observer.observe(root, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [active, isAuthenticated, language, loading]);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState("");
