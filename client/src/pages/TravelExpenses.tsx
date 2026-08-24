@@ -12,6 +12,7 @@ import { ArrowLeft, CheckCircle2, ClipboardList, CircleDollarSign, Download, Fil
 import { calculateTravelExpenseClaimTotal, calculateTravelExpenseLineTotal } from "@/lib/travelExpenseCalculations";
 import { buildTravelExpensePrintDocument, type PrintableTravelExpenseClaim } from "@/lib/travelExpensePrint";
 import { downloadTravelExpenseAccountingWorkbook, downloadTravelExpenseClaimsCsv } from "@/lib/travelExpenseExport";
+import { dashboardHrefForWorkspaceRole } from "@/lib/workspaceDashboardReturn";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -116,7 +117,7 @@ export default function TravelExpenses() {
       <div className="sidebar-user"><div className="avatar">{(user?.name || user?.email || "F")[0].toUpperCase()}</div><div className="user-copy"><strong>{user?.name || user?.email || "FFM"}</strong><span>{user?.role?.replace("_", " ")}</span></div><button className="logout-icon" onClick={() => logout()} title={t("signOut")}>{t("signOut")}</button></div>
     </aside>
     <main className="manager-main">
-      <header className="manager-topbar"><div><p className="topbar-kicker">FFM / {t("financeWorkflow")}</p><h2>{t("travelExpenses")}</h2></div><div className="topbar-actions"><div className="live-indicator"><span /> {t("secureApprovalTrail")}</div><LanguageSwitcher compact/></div></header>
+      <header className="manager-topbar"><div><p className="topbar-kicker">FFM / {t("financeWorkflow")}</p><h2>{t("travelExpenses")}</h2></div><div className="topbar-actions workspace-topbar-actions"><div className="live-indicator"><span /> {t("secureApprovalTrail")}</div><LanguageSwitcher compact/><a className="header-dashboard-return" href={dashboardHrefForWorkspaceRole(user?.role)} aria-label={`${t("backToWorkspace")} ${t("dashboard")}`}><ArrowLeft size={16} aria-hidden="true"/><span>{t("dashboard")}</span></a></div></header>
       <section className="manager-content space-y-6">
         <div className="page-intro"><div><p className="eyebrow">{t("travelExpenseSheet")}</p><h1>{t("travelExpenseIntro")}</h1><p className="muted">{t("travelExpenseDescription")}</p></div></div>
         {notice && <div className={/submitted|recorded|released|downloaded/i.test(notice) ? "admin-feedback success" : "admin-feedback error"}>{notice}</div>}

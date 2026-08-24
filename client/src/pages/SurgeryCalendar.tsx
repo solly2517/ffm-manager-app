@@ -4,6 +4,7 @@ import { startLogin } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { getCatalogueSearchInput } from "@/lib/implantCatalogue";
 import { selectedSurgeryIdFromSearch } from "@/lib/surgeryWorkspace";
+import { dashboardHrefForWorkspaceRole } from "@/lib/workspaceDashboardReturn";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -401,7 +402,7 @@ export default function SurgeryCalendar() {
             <p className="topbar-kicker">FFM / {t("sharedPlanning")}</p>
             <h2>{t("surgeryCalendar")}</h2>
           </div>
-          <div className="topbar-actions"><div className="live-indicator"><span /> {t("allRolesCanView")}</div><LanguageSwitcher compact/></div>
+          <div className="topbar-actions workspace-topbar-actions"><div className="live-indicator"><span /> {t("allRolesCanView")}</div><LanguageSwitcher compact/><a className="header-dashboard-return" href={dashboardHrefForWorkspaceRole(user?.role)} aria-label={`${t("backToWorkspace")} ${t("dashboard")}`}><ArrowLeft size={16} aria-hidden="true"/><span>{t("dashboard")}</span></a></div>
         </header>
         <section className="manager-content">
           <div className="page-intro">

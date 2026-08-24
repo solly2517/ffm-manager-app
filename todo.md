@@ -491,3 +491,6 @@
 - [x] Audit the embedded Manager sidebar workspace header shown in the mobile Surgeries view
 - [x] Add an always-visible mobile Dashboard action to every non-Dashboard Manager sidebar workspace
 - [x] Verify the embedded Surgeries Dashboard return control on iPhone and publish the correction
+- [x] Audit deep-workspace header capacity for an always-visible Dashboard action
+- [x] Add a mobile top-header Dashboard control to Surgery Calendar and shared deep workspaces
+- [x] Verify the iPhone Safari header control, test navigation, and publish the correction
