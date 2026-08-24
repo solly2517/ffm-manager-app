@@ -455,3 +455,9 @@
 - [x] Add a persisted English/Arabic language switcher with document language metadata and RTL handling
 - [x] Translate the navigation, dashboard, and high-priority operational workflows into Arabic
 - [x] Add localization regression tests and validate responsive English/Arabic layouts
+- [x] Audit export generators, user preference persistence, and remaining specialist English interfaces
+- [x] Persist a profile-level default language preference and restore it at authenticated session start
+- [x] Add Arabic labels and RTL-aware formatting to FFM PDF exports
+- [x] Add Arabic labels and RTL-aware worksheet formatting to FFM Excel exports
+- [x] Translate remaining Administration and report-detail interfaces into Arabic
+- [x] Add bilingual export and profile-preference regression coverage

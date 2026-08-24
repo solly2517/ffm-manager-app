@@ -64,7 +64,7 @@ export default function TravelExpenses() {
     const printWindow = window.open("", "_blank", "noopener,noreferrer,width=900,height=900");
     if (!printWindow) { setNotice("Printing was blocked by the browser. Please allow pop-ups for FFM, then try again."); return; }
     printWindow.document.open();
-    printWindow.document.write(buildTravelExpensePrintDocument(claim));
+    printWindow.document.write(buildTravelExpensePrintDocument(claim, language));
     printWindow.document.close();
     printWindow.focus();
     window.setTimeout(() => printWindow.print(), 250);
@@ -75,8 +75,8 @@ export default function TravelExpenses() {
     if (!result.data) { setNotice("Unable to prepare the accounting export. Please retry."); return; }
     const departmentLabel = accountingDepartment ? `_${accountingDepartment.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "department"}` : "";
     const rangeLabel = `${accountingFrom}_to_${accountingTo}${departmentLabel}`;
-    if (format === "xlsx") downloadTravelExpenseAccountingWorkbook(result.data, rangeLabel);
-    else downloadTravelExpenseClaimsCsv(result.data, rangeLabel);
+    if (format === "xlsx") downloadTravelExpenseAccountingWorkbook(result.data, rangeLabel, language);
+    else downloadTravelExpenseClaimsCsv(result.data, rangeLabel, language);
     setNotice(`${format === "xlsx" ? "Excel" : "CSV"} accounting export downloaded for ${accountingFrom} to ${accountingTo}.`);
   };
   const refresh = async () => { await Promise.all([utils.travelExpenses.claims.invalidate(), utils.travelExpenses.managerApprovers.invalidate()]); };

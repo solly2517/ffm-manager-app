@@ -26,4 +26,18 @@ describe("buildReportWorkbook", () => {
     const implants = utils.sheet_to_json<Record<string, string>>(buildImplantReportWorkbook(surgeries).Sheets["Implants used"]!);
     expect(implants[0]).toMatchObject({ Hospital: "EMC", Doctor: "Dr. Eslam Fahmy", Delegate: "Solly", Manager: "Mohamed Selim", Implant: "ACL screw" });
   });
+
+  it("creates Arabic report sheets with Arabic headers and right-to-left workbook views", () => {
+    const workbook = buildReportWorkbook(
+      { clients: 1, tasks: 2, completedTasks: 1, pendingTasks: 1 },
+      [{ id: 3, scheduledAt: new Date("2026-08-20T08:00:00Z"), status: "completed", clientName: "EMC", delegateName: "Solly" }],
+      [{ surgeryId: 8, surgeryDate: new Date("2026-08-20T10:00:00Z"), status: "confirmed", procedureName: "ACL", hospital: "EMC", doctor: "Dr. Eslam Fahmy", delegateName: "Solly", managerName: "Mohamed Selim", totalImplantPrice: "SAR 500.00", implants: [] }],
+      "ar",
+    );
+    expect(workbook.SheetNames).toEqual(["ملخص العمليات", "المهام", "ملخص العمليات الجراحية", "الغرسات المستخدمة"]);
+    const tasksSheet = workbook.Sheets["المهام"] as typeof workbook.Sheets[string] & { "!views"?: Array<{ rightToLeft?: boolean }> };
+    expect(tasksSheet["!views"]?.[0]?.rightToLeft).toBe(true);
+    const taskRows = utils.sheet_to_json<Record<string, string>>(tasksSheet);
+    expect(taskRows[0]).toMatchObject({ "رقم المهمة": "3", "العميل": "EMC", "المندوب": "Solly" });
+  });
 });

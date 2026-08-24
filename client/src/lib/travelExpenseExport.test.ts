@@ -14,4 +14,15 @@ describe("monthly Travel Expense exports", () => {
     expect(csv).toContain("'=Formula claimant");
     expect(csv).toContain("Claim ID");
   });
+
+  it("builds Arabic accounting sheets with right-to-left metadata and a UTF-8 CSV marker", () => {
+    const workbook = buildTravelExpenseAccountingWorkbook(claims, "ar");
+    expect(workbook.SheetNames).toEqual(["مطالبات السفر", "بنود المصروفات"]);
+    const claimsSheet = workbook.Sheets["مطالبات السفر"] as typeof workbook.Sheets[string] & { "!views"?: Array<{ rightToLeft?: boolean }> };
+    expect(claimsSheet["!views"]?.[0]?.rightToLeft).toBe(true);
+    const csv = travelExpenseClaimsCsv(claims, "ar");
+    expect(csv.startsWith("\ufeff")).toBe(true);
+    expect(csv).toContain("رقم المطالبة");
+    expect(csv).toContain("'=Formula claimant");
+  });
 });

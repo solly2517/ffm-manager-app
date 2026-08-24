@@ -14,6 +14,7 @@ export const users = mysqlTable("users", {
   pushNotifications: boolean("pushNotifications").default(true).notNull(),
   emailNotifications: boolean("emailNotifications").default(true).notNull(),
   locationSharing: boolean("locationSharing").default(false).notNull(),
+  defaultLanguage: mysqlEnum("defaultLanguage", ["en", "ar"]).default("en").notNull(),
 }, (table) => ({ emailIdx: index("users_email_idx").on(table.email) }));
 
 export const departments = mysqlTable("departments", {

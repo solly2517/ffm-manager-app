@@ -211,6 +211,13 @@
       "when": 1787479775905,
       "tag": "0029_perfect_star_brand",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "5",
+      "when": 1787546845157,
+      "tag": "0030_bent_franklin_storm",
+      "breakpoints": true
     }
   ]
 }

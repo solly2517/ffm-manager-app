@@ -1,13 +1,13 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { trpc } from "./lib/trpc";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { NotificationCenter } from "./components/NotificationCenter";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import { LanguageProvider } from "./contexts/LanguageContext";
+import { LanguageProvider, useLanguage } from "./contexts/LanguageContext";
 import Home from "./pages/Home";
 import Delegate from "./pages/Delegate";
 import Help from "./pages/Help";
@@ -58,12 +58,29 @@ function ErrorReporter() {
   return null;
 }
 
+function SavedLanguagePreferenceHydrator() {
+  const { data: user } = trpc.auth.me.useQuery();
+  const { setLanguage } = useLanguage();
+  const hydratedIdentity = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.id || !user.defaultLanguage) return;
+    const identity = `${user.id}:${user.defaultLanguage}`;
+    if (hydratedIdentity.current === identity) return;
+    hydratedIdentity.current = identity;
+    setLanguage(user.defaultLanguage);
+  }, [setLanguage, user?.defaultLanguage, user?.id]);
+
+  return null;
+}
+
 function App() {
   return (
     <>
       <ErrorReporter />
     <ErrorBoundary>
       <LanguageProvider>
+        <SavedLanguagePreferenceHydrator />
         <ThemeProvider
           defaultTheme="light"
           // switchable

@@ -224,6 +224,16 @@ describe("expanded FFM permissions", () => {
     const caller = appRouter.createCaller(createContext("delegate"));
     await expect(caller.preferences.update({})).rejects.toMatchObject({ code: "BAD_REQUEST" });
   });
+  it("persists a member default language through the protected profile procedure", async () => {
+    const update = vi.spyOn(db, "updateUserDefaultLanguage").mockResolvedValue({ defaultLanguage: "ar" } as never);
+    const audit = vi.spyOn(db, "addAuditEvent").mockResolvedValue({ id: 1 } as never);
+    const caller = appRouter.createCaller(createContext("delegate"));
+
+    await expect(caller.auth.updateDefaultLanguage({ language: "ar" })).resolves.toEqual({ defaultLanguage: "ar" });
+    expect(update).toHaveBeenCalledWith(999999, "ar");
+    expect(audit).toHaveBeenCalledWith(expect.objectContaining({ action: "profile.language_updated", actorId: 999999, entityId: 999999 }));
+    await expect(caller.auth.updateDefaultLanguage({ language: "fr" as never })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
 
   it("records all five preoperative readiness checks, including Hospital delivery, only within the caller's surgery scope", async () => {
     const surgery = { id: 501, delegateId: 999999, surgeryDate: new Date("2026-08-27"), calendarStatus: "confirmed" };

@@ -101,6 +101,7 @@ import {
   updateSurgery,
   updateVisitPlan,
   updateNotificationPreferences,
+  updateUserDefaultLanguage,
   removeUser,
   removeManagerDelegateAssignment,
   createManagerDelegateAssignment,
@@ -410,6 +411,19 @@ export const appRouter = router({
           metadata: JSON.stringify({ name: input.name, department: input.department || null }),
         });
         return result;
+      }),
+    updateDefaultLanguage: protectedProcedure
+      .input(z.object({ language: z.enum(["en", "ar"]) }))
+      .mutation(async ({ input, ctx }) => {
+        const result = await updateUserDefaultLanguage(ctx.user.id, input.language);
+        await addAuditEvent({
+          actorId: ctx.user.id,
+          action: "profile.language_updated",
+          entityType: "user",
+          entityId: ctx.user.id,
+          metadata: JSON.stringify({ language: input.language }),
+        });
+        return { defaultLanguage: result?.defaultLanguage ?? input.language };
       }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);

@@ -76,6 +76,8 @@ const messages = {
     departmentAdministration: "Department structures and assignments are maintained by the Administrator.",
     saveProfile: "Save profile",
     saving: "Saving…",
+    defaultLanguage: "Default language",
+    defaultLanguageDescription: "Your selection is saved to your FFM profile and restored when you sign in on another device.",
     authenticationRequired: "Authentication is required for all app access.",
     loginDescription: "Secure control panel for delegates, visits, clients, and clinical operations.",
     fieldRepresentative: "Field Representative",
@@ -258,6 +260,8 @@ const messages = {
     departmentAdministration: "تتم إدارة هيكل الأقسام والتعيينات بواسطة مسؤول النظام.",
     saveProfile: "حفظ الملف الشخصي",
     saving: "جارٍ الحفظ…",
+    defaultLanguage: "اللغة الافتراضية",
+    defaultLanguageDescription: "يُحفظ اختيارك في ملف FFM ويُستعاد عند تسجيل الدخول من جهاز آخر.",
     authenticationRequired: "المصادقة مطلوبة للوصول إلى التطبيق.",
     loginDescription: "لوحة تحكم آمنة للمندوبين والزيارات والعملاء والعمليات السريرية.",
     fieldRepresentative: "ممثل ميداني",
@@ -412,4 +416,14 @@ export function useLanguage() {
   const context = useContext(LanguageContext);
   if (!context) throw new Error("useLanguage must be used within LanguageProvider");
   return context;
+}
+
+export function useOptionalLanguage(): LanguageContextValue {
+  const context = useContext(LanguageContext);
+  return context ?? {
+    language: "en",
+    isRtl: false,
+    setLanguage: () => undefined,
+    t: (key, values) => Object.entries(values ?? {}).reduce<string>((message, [name, value]) => message.replaceAll(`{${name}}`, String(value)), messages.en[key]),
+  };
 }
