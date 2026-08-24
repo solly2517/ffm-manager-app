@@ -465,3 +465,8 @@
 - [x] Translate remaining dashboard detail cards and report controls into Arabic
 - [x] Add a printable Arabic user guide to the Help menu
 - [x] Add regression coverage and validate Arabic dashboard and guide printing behavior
+- [x] Audit Help architecture, current media assets, and reusable FFM guidance for the Arabic Help Center
+- [x] Build a searchable Arabic Help Center with categorized operational topics
+- [x] Add short Arabic visual walkthroughs for Travel Expenses and Work Logs
+- [x] Create and validate a reusable Arabic Help Center workflow skill
+- [x] Add Help Center regression coverage and validate the published upgrade

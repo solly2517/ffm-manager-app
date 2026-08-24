@@ -21,10 +21,24 @@ describe("Arabic printable Help guide", () => {
 
     expect(screen.getByRole("button", { name: "Print Arabic user guide" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Print Arabic user guide" }));
-    expect(screen.getByText("المساعدة والخصوصية")).toBeTruthy();
+    expect(screen.getByText("كيف يمكننا مساعدتك؟")).toBeTruthy();
     vi.runAllTimers();
     expect(print).toHaveBeenCalledTimes(1);
     print.mockRestore();
     vi.useRealTimers();
+  });
+
+  it("finds an Arabic Travel Expenses topic and filters the Help Center by category", () => {
+    localStorage.setItem("ffm-language", "ar");
+    render(<LanguageProvider><Help /></LanguageProvider>);
+
+    fireEvent.change(screen.getByPlaceholderText("ابحث عن المصروفات أو خطة الزيارة أو التقرير…"), { target: { value: "مصروفات" } });
+    expect(screen.getByText("تقديم مصروفات السفر")).toBeTruthy();
+    expect(screen.queryByText("الزيارة والموقع")).toBeNull();
+
+    fireEvent.change(screen.getByPlaceholderText("ابحث عن المصروفات أو خطة الزيارة أو التقرير…"), { target: { value: "" } });
+    fireEvent.click(screen.getByRole("button", { name: "العمل الميداني" }));
+    expect(screen.getByText("خطة الزيارات والتقرير اليومي")).toBeTruthy();
+    expect(screen.queryByText("تقديم مصروفات السفر")).toBeNull();
   });
 });
