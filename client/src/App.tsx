@@ -3,7 +3,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useEffect, useRef } from "react";
 import { trpc } from "./lib/trpc";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
+import { ArrowLeft, LayoutDashboard } from "lucide-react";
+import { useAuth } from "@/_core/hooks/useAuth";
+import {
+  dashboardHrefForWorkspaceRole,
+  needsWorkspaceDashboardReturn,
+} from "@/lib/workspaceDashboardReturn";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { NotificationCenter } from "./components/NotificationCenter";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -80,6 +86,28 @@ function SavedLanguagePreferenceHydrator() {
   return null;
 }
 
+function WorkspaceDashboardReturn() {
+  const { user, isAuthenticated } = useAuth();
+  const { t } = useLanguage();
+  const [location] = useLocation();
+
+  if (!isAuthenticated || !needsWorkspaceDashboardReturn(location)) return null;
+
+  const dashboardHref = dashboardHrefForWorkspaceRole(user?.role);
+
+  return (
+    <a
+      className="workspace-dashboard-return"
+      href={dashboardHref}
+      aria-label={`${t("backToWorkspace")} ${t("dashboard")}`}
+    >
+      <ArrowLeft size={17} aria-hidden="true" />
+      <LayoutDashboard size={17} aria-hidden="true" />
+      <span>{t("dashboard")}</span>
+    </a>
+  );
+}
+
 function App() {
   return (
     <>
@@ -95,6 +123,7 @@ function App() {
             <Toaster />
             <NotificationCenter />
             <Router />
+            <WorkspaceDashboardReturn />
           </TooltipProvider>
         </ThemeProvider>
       </LanguageProvider>

@@ -485,3 +485,6 @@
 - [x] Enable assignment-scoped Manager surgery planning with hospital and doctor selection
 - [x] Improve the Manager surgery planning controls for mobile use
 - [x] Add regression coverage and validate the published Manager surgery-planning workflow
+- [x] Audit mobile Dashboard-return navigation in Surgery Calendar and deep workspaces
+- [x] Add a persistent Dashboard return control to Surgery Calendar and shared deep-workspace fallback
+- [x] Add mobile navigation regression coverage, validate, and publish the repair
