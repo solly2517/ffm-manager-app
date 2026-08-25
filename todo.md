@@ -504,3 +504,6 @@
 - [x] Add regression coverage, validate, and publish explicit Manager surgery assignment
 - [x] Ensure Top Manager and Administrator surgery planning accepts an assigned Manager, assigned Delegate, or both without requiring both
 - [x] Allow every Manager level and Delegate to create a surgery independently without mandatory cross-assignment
+- [x] Diagnose the reported surgery-save database insert failure in production
+- [x] Repair surgery persistence and replace raw database messages with safe user feedback
+- [x] Add regression coverage, validate mobile surgery saving, and publish the repair

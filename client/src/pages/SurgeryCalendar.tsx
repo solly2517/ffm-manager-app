@@ -225,7 +225,7 @@ export default function SurgeryCalendar() {
       if (surgery?.surgeryDate) setMonth(new Date(surgery.surgeryDate));
       await refresh("Surgery planned and added to the shared calendar.");
     },
-    onError: error => setNotice(error.message),
+    onError: () => setNotice("Surgery could not be saved. Please check the required details and try again."),
   });
   const updateSchedule = trpc.operations.updateSurgerySchedule.useMutation({
     onSuccess: () => refresh("Surgery appointment updated."),

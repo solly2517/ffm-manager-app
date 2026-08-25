@@ -38,7 +38,7 @@ export function SurgeryAssignmentPlanner() {
       setDelegateId(""); setManagerId(""); setClientId(""); setProcedureName(""); setSurgeryDate(""); setHospital(""); setSurgeon("");
       await Promise.all([utils.operations.surgeries.invalidate(), utils.operations.surgeryCalendar.invalidate()]);
     },
-    onError: error => setNotice(error.message),
+    onError: () => setNotice("Surgery could not be saved. Please check the required details and try again."),
   });
   const canSubmit = Boolean((effectiveManagerId || delegateId) && clientId && procedureName.trim() && surgeryDate);
 
