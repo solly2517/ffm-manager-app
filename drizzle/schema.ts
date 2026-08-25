@@ -245,7 +245,8 @@ export const userNotifications = mysqlTable("userNotifications", {
 export const surgeries = mysqlTable("surgeries", {
   id: int("id").autoincrement().primaryKey(),
   clientId: int("clientId").notNull(),
-  delegateId: int("delegateId").notNull(),
+  delegateId: int("delegateId"),
+  assignedManagerId: int("assignedManagerId"),
   surgeryDate: timestamp("surgeryDate").notNull(),
   notifiedAt: timestamp("notifiedAt").defaultNow().notNull(),
   calendarStatus: mysqlEnum("calendarStatus", ["notified", "confirmed", "postponed", "cancelled", "completed"]).default("notified").notNull(),
@@ -267,7 +268,7 @@ export const surgeries = mysqlTable("surgeries", {
   notes: text("notes"),
   createdBy: int("createdBy").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, (table) => ({ delegateIdx: index("surgeries_delegate_idx").on(table.delegateId), assignedManagerIdx: index("surgeries_assigned_manager_idx").on(table.assignedManagerId), surgeryDateIdx: index("surgeries_date_idx").on(table.surgeryDate), calendarStatusIdx: index("surgeries_calendar_status_idx").on(table.calendarStatus) }));
 
 export const implantCatalogue = mysqlTable("implantCatalogue", {
   id: int("id").autoincrement().primaryKey(),

@@ -64,6 +64,7 @@ import {
   listMessageRecipients,
   listSurgeriesForDelegate,
   listSurgeriesForManager,
+  listSurgeriesForTopManager,
   listTasksForDelegate,
   listTasksForManager,
   listDelegateIdsForManager,
@@ -274,12 +275,22 @@ const canOperateTask = async (
     (await listDelegateIdsForManager(user.id)).includes(task.delegateId));
 const canAccessSurgery = async (
   user: { id: number; role: string; email?: string | null },
-  surgery: { delegateId: number }
-) =>
-  isAdmin(user) ||
-  (user.role === "delegate" && surgery.delegateId === user.id) ||
-  (user.role === "manager" &&
-    (await listDelegateIdsForManager(user.id)).includes(surgery.delegateId));
+  surgery: { delegateId: number | null; assignedManagerId?: number | null }
+) => {
+  if (isAdmin(user)) return true;
+  if (user.role === "delegate") return surgery.delegateId === user.id;
+  if (user.role !== "manager") return false;
+  if (surgery.assignedManagerId === user.id) return true;
+  if (await isTopManager(user.id)) {
+    if (surgery.assignedManagerId != null && await isManagerDirectedByTopManager(user.id, surgery.assignedManagerId)) return true;
+    if (surgery.delegateId != null) {
+      const scopedManagers = await listManagersForTopManager(user.id);
+      return (await Promise.all(scopedManagers.map(manager => isDelegateAssignedToManager(manager.id, surgery.delegateId!)))).some(Boolean);
+    }
+    return false;
+  }
+  return surgery.delegateId != null && (await listDelegateIdsForManager(user.id)).includes(surgery.delegateId);
+};
 const tokenHash = (token: string) =>
   createHash("sha256").update(token).digest("hex");
 const deliveryProofDateRangeSchema = z
@@ -1822,6 +1833,19 @@ export const appRouter = router({
       }),
   }),
   operations: router({
+    surgeryAssignmentOptions: managerOnly.query(async ({ ctx }) => {
+      const [allManagers, allDelegates, assignments] = await Promise.all([listManagers(), listDelegates(), listManagerAssignments()]);
+      const topManager = !isAdmin(ctx.user) && await isTopManager(ctx.user.id);
+      const permittedManagers = isAdmin(ctx.user) ? allManagers : topManager ? await listManagersForTopManager(ctx.user.id) : allManagers.filter(manager => manager.id === ctx.user.id);
+      const managerIds = new Set(permittedManagers.map(manager => manager.id));
+      const permittedDelegateIds = new Set(assignments.filter(assignment => managerIds.has(assignment.managerId)).map(assignment => assignment.delegateId));
+      return {
+        canChooseManager: isAdmin(ctx.user) || topManager,
+        defaultManagerId: !isAdmin(ctx.user) ? ctx.user.id : null,
+        managers: permittedManagers.map(manager => ({ id: manager.id, name: manager.name || manager.email || "Manager", email: manager.email || null })),
+        delegates: allDelegates.filter(delegate => permittedDelegateIds.has(delegate.id)).map(delegate => ({ id: delegate.id, name: delegate.name || delegate.email || "Delegate", email: delegate.email || null, managerIds: assignments.filter(assignment => assignment.delegateId === delegate.id && managerIds.has(assignment.managerId)).map(assignment => assignment.managerId) })),
+      };
+    }),
     warehouseHeroLeadActivity: protectedProcedure.query(async ({ ctx }) => {
       const lead = isAdmin(ctx.user) ? (await listUsers()).find(user => user.email?.trim().toLowerCase() === WAREHOUSE_HERO_LEAD_EMAIL && user.role === "manager") : isWarehouseHeroLead(ctx.user) ? ctx.user : undefined;
       if (!lead) throw new TRPCError({ code: "FORBIDDEN", message: "Warehouse Hero lead activity is restricted to the designated lead and Administrators." });
@@ -1927,12 +1951,14 @@ export const appRouter = router({
     markMessagesRead: protectedProcedure.mutation(({ ctx }) =>
       markMessagesRead(ctx.user.id)
     ),
-    surgeries: fieldUserOnly.query(({ ctx }) =>
+    surgeries: fieldUserOnly.query(async ({ ctx }) =>
       isAdmin(ctx.user)
         ? listAllSurgeries()
         : ctx.user.role === "delegate"
           ? listSurgeriesForDelegate(ctx.user.id)
-          : listSurgeriesForManager(ctx.user.id)
+          : await isTopManager(ctx.user.id)
+            ? listSurgeriesForTopManager(ctx.user.id)
+            : listSurgeriesForManager(ctx.user.id)
     ),
     surgeryCalendar: protectedProcedure.query(() => listAllSurgeries()),
     implantCatalogue: fieldUserOnly
@@ -2199,7 +2225,8 @@ export const appRouter = router({
     createManagerSurgery: managerOnly
       .input(
         z.object({
-          delegateId: z.number().int().positive(),
+          delegateId: z.number().int().positive().optional(),
+          managerId: z.number().int().positive().optional(),
           clientId: z.number().int().positive(),
           surgeryDate: z.date(),
           hospital: z.string().max(220).optional(),
@@ -2209,27 +2236,41 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input, ctx }) => {
+        const callerIsTopManager = !isAdmin(ctx.user) && ctx.user.role === "manager" && await isTopManager(ctx.user.id);
+        if (!input.delegateId && !input.managerId && isAdmin(ctx.user)) throw new TRPCError({ code: "BAD_REQUEST", message: "Choose an assigned Manager, an assigned Delegate, or both." });
         const client = await getClientById(input.clientId);
         if (!client)
           throw new TRPCError({
             code: "BAD_REQUEST",
             message: "Client not found",
           });
-        const allowedDelegateIds = await listDelegateIdsForManager(ctx.user.id);
-        if (
-          !canManagerAccessDelegate(
-            ctx.user.role,
-            ctx.user.id,
-            input.delegateId,
-            allowedDelegateIds
-          )
-        )
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "This Delegate is outside the Manager assignment scope",
-          });
+        let assignedManagerId: number | null = input.managerId ?? null;
+        if (isAdmin(ctx.user)) {
+          if (assignedManagerId != null && (await getUserById(assignedManagerId))?.role !== "manager") throw new TRPCError({ code: "BAD_REQUEST", message: "Choose an active Manager." });
+          if (assignedManagerId != null && input.delegateId != null && !(await isDelegateAssignedToManager(assignedManagerId, input.delegateId))) throw new TRPCError({ code: "BAD_REQUEST", message: "The selected Delegate is not assigned to the selected Manager." });
+        } else if (callerIsTopManager) {
+          if (assignedManagerId == null && input.delegateId == null) {
+            assignedManagerId = ctx.user.id;
+          } else if (assignedManagerId != null) {
+            if (assignedManagerId !== ctx.user.id && !(await isManagerDirectedByTopManager(ctx.user.id, assignedManagerId))) throw new TRPCError({ code: "FORBIDDEN", message: "This Manager is outside your Top Manager direction scope." });
+            if (input.delegateId != null && !(await isDelegateAssignedToManager(assignedManagerId, input.delegateId))) throw new TRPCError({ code: "BAD_REQUEST", message: "The selected Delegate is not assigned to the selected Manager." });
+          } else if (input.delegateId != null) {
+            const scopedManagers = await listManagersForTopManager(ctx.user.id);
+            const isScopedDelegate = (await Promise.all(scopedManagers.map(manager => isDelegateAssignedToManager(manager.id, input.delegateId!)))).some(Boolean);
+            if (!isScopedDelegate) throw new TRPCError({ code: "FORBIDDEN", message: "This Delegate is outside your Top Manager direction scope." });
+          }
+        } else {
+          assignedManagerId = ctx.user.id;
+          if (input.managerId != null && input.managerId !== ctx.user.id) throw new TRPCError({ code: "FORBIDDEN", message: "Managers may assign surgery ownership only to themselves." });
+          if (input.delegateId != null) {
+            const allowedDelegateIds = await listDelegateIdsForManager(ctx.user.id);
+            if (!canManagerAccessDelegate(ctx.user.role, ctx.user.id, input.delegateId, allowedDelegateIds)) throw new TRPCError({ code: "FORBIDDEN", message: "This Delegate is outside the Manager assignment scope" });
+          }
+        }
+        const { managerId: _requestManagerId, ...surgeryInput } = input;
         const result = await createSurgery({
-          ...input,
+          ...surgeryInput,
+          assignedManagerId,
           notifiedAt: new Date(),
           calendarStatus: "notified",
           createdBy: ctx.user.id,
@@ -2240,7 +2281,8 @@ export const appRouter = router({
           entityType: "surgery",
           entityId: result?.id,
           metadata: JSON.stringify({
-            delegateId: input.delegateId,
+            managerId: assignedManagerId,
+            delegateId: input.delegateId ?? null,
             clientId: input.clientId,
             calendarStatus: "notified",
           }),
@@ -2484,17 +2526,7 @@ export const appRouter = router({
             message: "Surgery not found",
           });
         if (ctx.user.role === "manager") {
-          const allowedDelegateIds = await listDelegateIdsForManager(
-            ctx.user.id
-          );
-          if (
-            !canManagerAccessDelegate(
-              ctx.user.role,
-              ctx.user.id,
-              existing.delegateId,
-              allowedDelegateIds
-            )
-          )
+          if (!(await canAccessSurgery(ctx.user, existing)))
             throw new TRPCError({
               code: "FORBIDDEN",
               message: "This surgery is outside the Manager assignment scope",

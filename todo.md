@@ -498,3 +498,9 @@
 - [x] Add administrator-only Manager and Top Manager seniority administration
 - [x] Enable authorized Top Manager direction of Managers while hiding seniority from non-administrators
 - [x] Add authorization/privacy regression coverage, validate, and publish the seniority workflow
+- [x] Audit surgery ownership and current Manager/Delegate creation scope for explicit Manager assignment
+- [x] Add an assigned Manager field and scoped authorization to Administrator and Top Manager surgery planning
+- [x] Add mobile Manager-then-Delegate planning controls and report visibility
+- [x] Add regression coverage, validate, and publish explicit Manager surgery assignment
+- [x] Ensure Top Manager and Administrator surgery planning accepts an assigned Manager, assigned Delegate, or both without requiring both
+- [x] Allow every Manager level and Delegate to create a surgery independently without mandatory cross-assignment

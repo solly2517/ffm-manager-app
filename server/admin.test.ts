@@ -312,6 +312,27 @@ describe("admin access control", () => {
     expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ actorId: 74, action: "manager_surgery.created", entityType: "surgery", entityId: 102, metadata: expect.stringContaining('"delegateId":75') }));
   });
 
+  it("lets every ordinary Manager create a self-owned surgery without assigning a Delegate", async () => {
+    const manager = { ...baseUser, id: 79, role: "manager" as const, email: "manager@example.com" };
+    vi.spyOn(db, "isTopManager").mockResolvedValue(false);
+    vi.spyOn(db, "getClientById").mockResolvedValue({ id: 5, name: "City Hospital" } as never);
+    vi.spyOn(db, "createSurgery").mockResolvedValue({ id: 131, assignedManagerId: 79, delegateId: null, clientId: 5 } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const caller = appRouter.createCaller(contextFor(manager));
+    await expect(caller.operations.createManagerSurgery({ clientId: 5, surgeryDate: new Date("2026-09-04"), procedureName: "Independent surgery" })).resolves.toMatchObject({ id: 131, assignedManagerId: 79 });
+    expect(db.createSurgery).toHaveBeenCalledWith(expect.objectContaining({ assignedManagerId: 79, createdBy: 79 }));
+    expect((db.createSurgery as unknown as { mock: { calls: Array<[Record<string, unknown>]> } }).mock.calls[0][0]).not.toHaveProperty("delegateId");
+  });
+
+  it("lets a Delegate create an independently owned surgery", async () => {
+    const delegate = { ...baseUser, id: 80, role: "delegate" as const, email: "delegate@example.com" };
+    vi.spyOn(db, "createSurgery").mockResolvedValue({ id: 132, delegateId: 80, assignedManagerId: null, clientId: 5 } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const caller = appRouter.createCaller(contextFor(delegate));
+    await expect(caller.operations.addSurgery({ clientId: 5, surgeryDate: new Date("2026-09-05"), procedureName: "Delegate surgery" })).resolves.toMatchObject({ id: 132, delegateId: 80 });
+    expect(db.createSurgery).toHaveBeenCalledWith(expect.objectContaining({ delegateId: 80, createdBy: 80 }));
+  });
+
   it("rejects Manager surgery creation for an unassigned Delegate", async () => {
     const manager = { ...baseUser, id: 76, role: "manager" as const, email: "manager@example.com" };
     vi.spyOn(db, "getClientById").mockResolvedValue({ id: 5, name: "City Hospital" } as never);
