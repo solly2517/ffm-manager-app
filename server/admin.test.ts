@@ -201,6 +201,44 @@ describe("admin access control", () => {
     await expect(caller.admin.unassignWarehouseHero({ id: 78 })).resolves.toEqual({ success: true });
   });
 
+  it("keeps Manager seniority and Top Manager scopes Administrator-only", async () => {
+    const managerCaller = appRouter.createCaller(contextFor({ ...baseUser, id: 40, role: "manager", email: "manager@example.com" }));
+    await expect(managerCaller.admin.setManagerSeniority({ managerId: 40, level: "top_manager" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(managerCaller.admin.assignManagerToTopManager({ topManagerId: 40, managerId: 41 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    vi.spyOn(db, "getUserById").mockResolvedValue({ ...baseUser, id: 40, role: "manager", email: "top@example.com" } as never);
+    vi.spyOn(db, "setManagerSeniority").mockResolvedValue({ id: 1, managerId: 40, level: "top_manager", setBy: 1, setAt: new Date() } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const adminCaller = appRouter.createCaller(contextFor({ ...baseUser, role: "admin", email: "dr.seleam@gmail.com" }));
+    await expect(adminCaller.admin.setManagerSeniority({ managerId: 40, level: "top_manager" })).resolves.toMatchObject({ managerId: 40, level: "top_manager" });
+    expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "manager_seniority.updated", entityId: 40 }));
+  });
+
+  it("allows a designated Top Manager to direct only Managers assigned to their scope", async () => {
+    const topManager = { ...baseUser, id: 40, role: "manager" as const, email: "top@example.com" };
+    const caller = appRouter.createCaller(contextFor(topManager));
+    vi.spyOn(db, "isTopManager").mockResolvedValue(true);
+    vi.spyOn(db, "isManagerDirectedByTopManager").mockResolvedValue(false);
+    await expect(caller.operations.createManagerDirection({ managerId: 41, title: "Confirm theatre schedule" })).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    vi.spyOn(db, "isManagerDirectedByTopManager").mockResolvedValue(true);
+    vi.spyOn(db, "createManagerDirection").mockResolvedValue({ id: 91, topManagerId: 40, managerId: 41, title: "Confirm theatre schedule", status: "open", createdAt: new Date() } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    await expect(caller.operations.createManagerDirection({ managerId: 41, title: "Confirm theatre schedule", dueDate: "2026-09-01" })).resolves.toMatchObject({ id: 91, managerId: 41 });
+    expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "top_manager.direction_created", entityId: 91 }));
+  });
+
+  it("does not expose seniority fields to an ordinary Manager direction workspace", async () => {
+    const manager = { ...baseUser, id: 41, role: "manager" as const, email: "manager@example.com" };
+    vi.spyOn(db, "isTopManager").mockResolvedValue(false);
+    vi.spyOn(db, "listManagerDirectionsForManager").mockResolvedValue([{ id: 91, topManagerId: 40, managerId: 41, title: "Confirm theatre schedule", status: "open", topManagerName: "Lead Manager" }] as never);
+    const caller = appRouter.createCaller(contextFor(manager));
+    const result = await caller.operations.managerDirectionWorkspace();
+    expect(result).toMatchObject({ canDirectManagers: false, managers: [], issuedDirections: [], receivedDirections: [{ id: 91, title: "Confirm theatre schedule" }] });
+    expect(JSON.stringify(result)).not.toContain("top_manager");
+    expect(JSON.stringify(result)).not.toContain("seniority");
+  });
+
   it("allows a Warehouse Hero with location consent to publish the latest GPS point", async () => {
     const warehouseHero = { ...baseUser, id: 52, openId: "warehouse-hero-52", role: "warehouse_hero" as const, locationSharing: true };
     vi.spyOn(db, "getUserById").mockResolvedValue(warehouseHero);

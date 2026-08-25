@@ -70,6 +70,18 @@ import {
   listWarehouseHeroIdsForManager,
   listUsers,
   listManagers,
+  listManagerSenioritiesForAdmin,
+  setManagerSeniority,
+  isTopManager,
+  listManagerDirectionScopes,
+  createTopManagerManagerAssignment,
+  removeTopManagerManagerAssignment,
+  isManagerDirectedByTopManager,
+  listManagersForTopManager,
+  createManagerDirection,
+  listManagerDirectionsForTopManager,
+  listManagerDirectionsForManager,
+  completeManagerDirection,
   listDepartments,
   getDepartmentById,
   createDepartment,
@@ -1393,6 +1405,35 @@ export const appRouter = router({
     managerWarehouseHeroAssignments: adminOnly.query(async () =>
       listManagerWarehouseHeroAssignments()
     ),
+    managerSeniorities: adminOnly.query(async () => listManagerSenioritiesForAdmin()),
+    topManagerScopes: adminOnly.query(async () => listManagerDirectionScopes()),
+    setManagerSeniority: adminOnly
+      .input(z.object({ managerId: z.number().int().positive(), level: z.enum(["manager", "top_manager"]) }))
+      .mutation(async ({ ctx, input }) => {
+        const manager = await getUserById(input.managerId);
+        if (manager?.role !== "manager") throw new TRPCError({ code: "BAD_REQUEST", message: "Choose an active Manager." });
+        const result = await setManagerSeniority({ managerId: input.managerId, level: input.level, setBy: ctx.user.id });
+        await addAuditEvent({ actorId: ctx.user.id, action: "manager_seniority.updated", entityType: "user", entityId: input.managerId, metadata: JSON.stringify({ level: input.level }) });
+        return result;
+      }),
+    assignManagerToTopManager: adminOnly
+      .input(z.object({ topManagerId: z.number().int().positive(), managerId: z.number().int().positive() }))
+      .mutation(async ({ ctx, input }) => {
+        if (input.topManagerId === input.managerId) throw new TRPCError({ code: "BAD_REQUEST", message: "A Top Manager cannot direct themselves." });
+        const manager = await getUserById(input.managerId);
+        if (manager?.role !== "manager" || !(await isTopManager(input.topManagerId))) throw new TRPCError({ code: "BAD_REQUEST", message: "Choose a Top Manager and a Manager." });
+        if (await isManagerDirectedByTopManager(input.topManagerId, input.managerId)) throw new TRPCError({ code: "CONFLICT", message: "This Manager is already assigned to that Top Manager." });
+        const result = await createTopManagerManagerAssignment({ ...input, assignedBy: ctx.user.id });
+        await addAuditEvent({ actorId: ctx.user.id, action: "top_manager.manager_assigned", entityType: "topManagerManagerAssignment", entityId: result?.id, metadata: JSON.stringify(input) });
+        return result;
+      }),
+    unassignManagerFromTopManager: adminOnly
+      .input(z.object({ id: z.number().int().positive() }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await removeTopManagerManagerAssignment(input.id);
+        await addAuditEvent({ actorId: ctx.user.id, action: "top_manager.manager_unassigned", entityType: "topManagerManagerAssignment", entityId: input.id });
+        return result;
+      }),
     assignDelegate: adminOnly
       .input(
         z.object({
@@ -1793,6 +1834,34 @@ export const appRouter = router({
       await addAuditEvent({ actorId: ctx.user.id, action: "warehouse_hero.lead_activity_exported", entityType: "user", entityId: lead.id, metadata: JSON.stringify({ leadEmail: WAREHOUSE_HERO_LEAD_EMAIL, rowCount: rows.length }) });
       return warehouseHeroLeadActivityCsv(rows);
     }),
+    managerDirectionWorkspace: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== "manager") throw new TRPCError({ code: "FORBIDDEN", message: "Manager direction access is restricted to Managers." });
+      const topManager = await isTopManager(ctx.user.id);
+      if (topManager) {
+        const [managers, issuedDirections] = await Promise.all([listManagersForTopManager(ctx.user.id), listManagerDirectionsForTopManager(ctx.user.id)]);
+        return { canDirectManagers: true, managers: managers.map(manager => ({ id: manager.id, name: manager.name || manager.email || "Manager", email: manager.email || null })), issuedDirections, receivedDirections: [] };
+      }
+      const receivedDirections = await listManagerDirectionsForManager(ctx.user.id);
+      return { canDirectManagers: false, managers: [], issuedDirections: [], receivedDirections };
+    }),
+    createManagerDirection: protectedProcedure
+      .input(z.object({ managerId: z.number().int().positive(), title: z.string().trim().min(3).max(220), details: z.string().trim().max(3000).optional(), dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "manager" || !(await isTopManager(ctx.user.id))) throw new TRPCError({ code: "FORBIDDEN", message: "Only an Administrator-designated Top Manager can direct Managers." });
+        if (!(await isManagerDirectedByTopManager(ctx.user.id, input.managerId))) throw new TRPCError({ code: "FORBIDDEN", message: "This Manager is not assigned to your direction scope." });
+        const result = await createManagerDirection({ topManagerId: ctx.user.id, managerId: input.managerId, title: input.title, details: input.details || null, dueDate: input.dueDate ? new Date(`${input.dueDate}T23:59:59.999Z`) : null, status: "open" });
+        await addAuditEvent({ actorId: ctx.user.id, action: "top_manager.direction_created", entityType: "managerDirection", entityId: result?.id, metadata: JSON.stringify({ managerId: input.managerId, dueDate: input.dueDate ?? null }) });
+        return result;
+      }),
+    completeManagerDirection: protectedProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "manager") throw new TRPCError({ code: "FORBIDDEN", message: "Only the directed Manager can complete a direction." });
+        const result = await completeManagerDirection(input.id, ctx.user.id);
+        if (!result) throw new TRPCError({ code: "NOT_FOUND", message: "This direction is not available to your Manager account." });
+        await addAuditEvent({ actorId: ctx.user.id, action: "top_manager.direction_completed", entityType: "managerDirection", entityId: input.id });
+        return result;
+      }),
     clients: fieldUserOnly.query(() => listClients()),
     delegates: fieldUserOnly.query(({ ctx }) =>
       ctx.user.role === "manager" && !isSuperManager(ctx.user)

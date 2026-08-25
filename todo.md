@@ -494,3 +494,7 @@
 - [x] Audit deep-workspace header capacity for an always-visible Dashboard action
 - [x] Add a mobile top-header Dashboard control to Surgery Calendar and shared deep workspaces
 - [x] Verify the iPhone Safari header control, test navigation, and publish the correction
+- [x] Audit the existing Manager assignment, leadership, and privacy boundaries for seniority support
+- [x] Add administrator-only Manager and Top Manager seniority administration
+- [x] Enable authorized Top Manager direction of Managers while hiding seniority from non-administrators
+- [x] Add authorization/privacy regression coverage, validate, and publish the seniority workflow

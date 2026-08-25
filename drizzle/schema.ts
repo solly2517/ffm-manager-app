@@ -72,6 +72,35 @@ export const managerDelegateAssignments = mysqlTable("manager_delegate_assignmen
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, (table) => ({ managerIdx: index("manager_delegate_manager_idx").on(table.managerId), delegateIdx: index("manager_delegate_delegate_idx").on(table.delegateId), pairUnique: uniqueIndex("manager_delegate_pair_unique").on(table.managerId, table.delegateId) }));
 
+export const managerSeniorities = mysqlTable("manager_seniorities", {
+  id: int("id").autoincrement().primaryKey(),
+  managerId: int("managerId").notNull(),
+  level: mysqlEnum("level", ["manager", "top_manager"]).default("manager").notNull(),
+  setBy: int("setBy").notNull(),
+  setAt: timestamp("setAt").defaultNow().notNull(),
+}, (table) => ({ managerUnique: uniqueIndex("manager_seniority_manager_unique").on(table.managerId), levelIdx: index("manager_seniority_level_idx").on(table.level) }));
+
+export const topManagerManagerAssignments = mysqlTable("top_manager_manager_assignments", {
+  id: int("id").autoincrement().primaryKey(),
+  topManagerId: int("topManagerId").notNull(),
+  managerId: int("managerId").notNull(),
+  assignedBy: int("assignedBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, (table) => ({ topManagerIdx: index("top_manager_manager_top_idx").on(table.topManagerId), managerIdx: index("top_manager_manager_manager_idx").on(table.managerId), pairUnique: uniqueIndex("top_manager_manager_pair_unique").on(table.topManagerId, table.managerId) }));
+
+export const managerDirections = mysqlTable("manager_directions", {
+  id: int("id").autoincrement().primaryKey(),
+  topManagerId: int("topManagerId").notNull(),
+  managerId: int("managerId").notNull(),
+  title: varchar("title", { length: 220 }).notNull(),
+  details: text("details"),
+  dueDate: timestamp("dueDate"),
+  status: mysqlEnum("status", ["open", "completed"]).default("open").notNull(),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, (table) => ({ topManagerIdx: index("manager_direction_top_manager_idx").on(table.topManagerId), managerIdx: index("manager_direction_manager_idx").on(table.managerId), statusIdx: index("manager_direction_status_idx").on(table.status) }));
+
 export const managerWarehouseHeroAssignments = mysqlTable("manager_warehouse_hero_assignments", {
   id: int("id").autoincrement().primaryKey(),
   managerId: int("managerId").notNull(),
