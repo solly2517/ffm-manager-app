@@ -11,10 +11,13 @@ import {
   ClipboardCheck,
   FileText,
   ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  RotateCcw,
   Plus,
   Trash2,
 } from "lucide-react";
-import { saturdayForDate } from "@/lib/workLogValidation";
+import { saturdayForDate, shiftIsoDate } from "@/lib/workLogValidation";
 import {
   formatPlan,
   MAX_HOSPITALS_PER_DAY,
@@ -386,6 +389,22 @@ export default function DelegateWorkLog() {
   useEffect(() => {
     setWeekEntries(sixDayHospitalPlan(weekOf));
   }, [weekOf]);
+  const hasUnsavedWeeklyDraft = weekEntries.some(day =>
+    day.hospitals.some(hospital =>
+      Boolean(hospital.clientId || hospital.doctorIds.some(Boolean))
+    )
+  );
+  const chooseWeek = (value: string) => {
+    const nextWeek = saturdayForDate(value);
+    if (nextWeek === weekOf) return;
+    if (
+      hasUnsavedWeeklyDraft &&
+      !window.confirm("Changing the week clears the current unsaved hospital and doctor selections. Continue?")
+    )
+      return;
+    setWeekOf(nextWeek);
+  };
+  const selectedWeekEnd = shiftIsoDate(weekOf, 5);
   const plannedHospitalIds = useMemo(
     () =>
       Array.from(
@@ -629,17 +648,14 @@ export default function DelegateWorkLog() {
                 </p>
               </CardHeader>
               <CardContent className="form-stack">
-                <label>{t("weekStartingSaturday")}</label>
-                <Input
-                  type="date"
-                  className="ffm-date-input"
-                  dir="ltr"
-                  inputMode="numeric"
-                  value={weekOf}
-                  onChange={event =>
-                    setWeekOf(saturdayForDate(event.target.value))
-                  }
-                />
+                <div className="week-range-summary" aria-live="polite"><span>Selected workweek</span><strong>{formatFfmDate(weekOf)} — {formatFfmDate(selectedWeekEnd)}</strong><small>Saturday through Thursday</small></div>
+                <label htmlFor="weekly-plan-week-start">{t("weekStartingSaturday")}</label>
+                <div className="week-selector-controls">
+                  <Button type="button" variant="outline" size="icon" aria-label="Previous workweek" onClick={() => chooseWeek(shiftIsoDate(weekOf, -7))}><ChevronLeft size={17}/></Button>
+                  <Input id="weekly-plan-week-start" type="date" className="ffm-date-input" dir="ltr" inputMode="numeric" value={weekOf} onChange={event => chooseWeek(event.target.value)} />
+                  <Button type="button" variant="outline" size="icon" aria-label="Current workweek" onClick={() => chooseWeek(localDate())}><RotateCcw size={16}/></Button>
+                  <Button type="button" variant="outline" size="icon" aria-label="Next workweek" onClick={() => chooseWeek(shiftIsoDate(weekOf, 7))}><ChevronRight size={17}/></Button>
+                </div>
                 <div className="space-y-4">
                   {weekEntries.map((day, index) => (
                     <HospitalPlanDay

@@ -513,3 +513,7 @@
 - [x] Audit the malformed mobile weekly-plan date value and input formatting path
 - [x] Correct weekly-plan date display and preserve valid date submission on mobile
 - [x] Add regression coverage, validate the mobile date field, and publish the repair
+- [x] Define and create a reusable FFM mobile RTL date-input workflow skill
+- [x] Add clear previous, current, and next week selector controls to weekly planning
+- [x] Show the selected Saturday-through-Thursday date range prominently in the weekly plan
+- [x] Validate the skill and weekly-plan workflow, publish the app update, and deliver the reusable skill

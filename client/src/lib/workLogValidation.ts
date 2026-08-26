@@ -5,6 +5,12 @@ export function saturdayForDate(value: string) {
   return date.toISOString().slice(0, 10);
 }
 
+export function shiftIsoDate(value: string, days: number) {
+  const date = new Date(`${value}T12:00:00`);
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
 export function canSubmitWorkLog(summary: string, outcomes: string) {
   return summary.trim().length >= 10 && outcomes.trim().length >= 10;
 }
