@@ -507,3 +507,9 @@
 - [x] Diagnose the reported surgery-save database insert failure in production
 - [x] Repair surgery persistence and replace raw database messages with safe user feedback
 - [x] Add regression coverage, validate mobile surgery saving, and publish the repair
+- [x] Verify the requested Delegate, Manager, department, and prior invitation records
+- [x] Create a fresh Delegate invitation for a.osama@altamammed.com and assign the user to m.selim@altamammed.com
+- [x] Place the Delegate in Trauma and Arthroplasty, verify the assignment, and deliver the activation link
+- [x] Audit the malformed mobile weekly-plan date value and input formatting path
+- [x] Correct weekly-plan date display and preserve valid date submission on mobile
+- [x] Add regression coverage, validate the mobile date field, and publish the repair

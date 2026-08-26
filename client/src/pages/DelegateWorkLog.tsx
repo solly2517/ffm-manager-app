@@ -632,6 +632,9 @@ export default function DelegateWorkLog() {
                 <label>{t("weekStartingSaturday")}</label>
                 <Input
                   type="date"
+                  className="ffm-date-input"
+                  dir="ltr"
+                  inputMode="numeric"
                   value={weekOf}
                   onChange={event =>
                     setWeekOf(saturdayForDate(event.target.value))
@@ -675,6 +678,9 @@ export default function DelegateWorkLog() {
                 <label>{t("reportDate")}</label>
                 <Input
                   type="date"
+                  className="ffm-date-input"
+                  dir="ltr"
+                  inputMode="numeric"
                   value={reportDate}
                   onChange={event => changeReportDate(event.target.value)}
                 />
