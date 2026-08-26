@@ -517,3 +517,7 @@
 - [x] Add clear previous, current, and next week selector controls to weekly planning
 - [x] Show the selected Saturday-through-Thursday date range prominently in the weekly plan
 - [x] Validate the skill and weekly-plan workflow, publish the app update, and deliver the reusable skill
+- [x] Audit weekly-plan state and official Saudi public holiday sources
+- [x] Add automatic local draft saving and recovery for weekly plan entries
+- [x] Highlight official Saudi public holidays in the selected planning week
+- [x] Add regression coverage, validate mobile planning, and publish the enhancements

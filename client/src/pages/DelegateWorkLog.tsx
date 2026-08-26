@@ -18,6 +18,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { saturdayForDate, shiftIsoDate } from "@/lib/workLogValidation";
+import { clearWeeklyPlanDraft, loadWeeklyPlanDraft, saveWeeklyPlanDraft } from "@/lib/weeklyPlanDraft";
+import { saudiHolidaysForRange, type SaudiHoliday } from "@/lib/saudiHolidays";
 import {
   formatPlan,
   MAX_HOSPITALS_PER_DAY,
@@ -185,12 +187,14 @@ function HospitalPlanDay({
   onChange,
   clients,
   doctors,
+  holiday,
 }: {
   day: ScheduledPlanDay;
   index: number;
   onChange: (next: ScheduledPlanDay) => void;
   clients: Client[];
   doctors: Doctor[];
+  holiday?: SaudiHoliday;
 }) {
   const updateHospital = (hospitalIndex: number, next: ScheduledHospital) =>
     onChange({
@@ -214,6 +218,7 @@ function HospitalPlanDay({
           {day.date} · {day.hospitals.length}/{MAX_HOSPITALS_PER_DAY} hospitals
         </span>
       </div>
+      {holiday && <div className="saudi-holiday-badge" role="note">Saudi public holiday · {holiday.name}</div>}
       {day.hospitals.map((hospital, hospitalIndex) => (
         <HospitalDoctorGroup
           key={`${day.date}-${hospitalIndex}`}
@@ -346,6 +351,8 @@ export default function DelegateWorkLog() {
   const [newDoctorSpecialty, setNewDoctorSpecialty] = useState("");
   const [directoryNotice, setDirectoryNotice] = useState("");
   const [directoryNoticeError, setDirectoryNoticeError] = useState(false);
+  const [draftLoadedWeek, setDraftLoadedWeek] = useState("");
+  const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
   const addClient = trpc.operations.addClient.useMutation({
     onSuccess: client => {
       setNewClientName("");
@@ -387,8 +394,26 @@ export default function DelegateWorkLog() {
   const doctorName = (id: string | number) =>
     doctors.find(doctor => doctor.id === Number(id))?.name || "Doctor";
   useEffect(() => {
-    setWeekEntries(sixDayHospitalPlan(weekOf));
-  }, [weekOf]);
+    setDraftLoadedWeek("");
+    const draft = loadWeeklyPlanDraft(user?.id, weekOf);
+    setWeekEntries(draft?.entries ?? sixDayHospitalPlan(weekOf));
+    setDraftSavedAt(draft?.savedAt ?? null);
+    setDraftLoadedWeek(weekOf);
+  }, [user?.id, weekOf]);
+  useEffect(() => {
+    if (draftLoadedWeek !== weekOf || !user?.id) return;
+    const hasPlanEntries = weekEntries.some(day => day.hospitals.some(hospital => hospital.clientId || hospital.doctorIds.some(Boolean)));
+    const timeout = window.setTimeout(() => {
+      if (!hasPlanEntries) {
+        clearWeeklyPlanDraft(user.id, weekOf);
+        setDraftSavedAt(null);
+        return;
+      }
+      const draft = saveWeeklyPlanDraft(user.id, weekOf, weekEntries);
+      setDraftSavedAt(draft?.savedAt ?? null);
+    }, 500);
+    return () => window.clearTimeout(timeout);
+  }, [draftLoadedWeek, user?.id, weekEntries, weekOf]);
   const hasUnsavedWeeklyDraft = weekEntries.some(day =>
     day.hospitals.some(hospital =>
       Boolean(hospital.clientId || hospital.doctorIds.some(Boolean))
@@ -399,12 +424,14 @@ export default function DelegateWorkLog() {
     if (nextWeek === weekOf) return;
     if (
       hasUnsavedWeeklyDraft &&
-      !window.confirm("Changing the week clears the current unsaved hospital and doctor selections. Continue?")
+      !window.confirm("Changing the week opens another saved plan. Your current hospital and doctor selections have been saved automatically. Continue?")
     )
       return;
     setWeekOf(nextWeek);
   };
   const selectedWeekEnd = shiftIsoDate(weekOf, 5);
+  const selectedWeekHolidays = useMemo(() => saudiHolidaysForRange(weekOf, selectedWeekEnd), [selectedWeekEnd, weekOf]);
+  const holidayByDate = useMemo(() => new Map(selectedWeekHolidays.map(holiday => [holiday.date, holiday])), [selectedWeekHolidays]);
   const plannedHospitalIds = useMemo(
     () =>
       Array.from(
@@ -451,6 +478,8 @@ export default function DelegateWorkLog() {
       },
       {
         onSuccess: () => {
+          clearWeeklyPlanDraft(user?.id, weekOf);
+          setDraftSavedAt(null);
           setNoticeError(false);
           setNotice(
             `Six-day ${authorRoleLabel} plan submitted. Daily reports can now use the planned hospitals and their registered doctors on matching dates.`
@@ -648,7 +677,7 @@ export default function DelegateWorkLog() {
                 </p>
               </CardHeader>
               <CardContent className="form-stack">
-                <div className="week-range-summary" aria-live="polite"><span>Selected workweek</span><strong>{formatFfmDate(weekOf)} — {formatFfmDate(selectedWeekEnd)}</strong><small>Saturday through Thursday</small></div>
+                <div className="week-range-summary" aria-live="polite"><span>Selected workweek</span><strong>{formatFfmDate(weekOf)} — {formatFfmDate(selectedWeekEnd)}</strong><small>Saturday through Thursday</small>{draftSavedAt && <em>Draft saved automatically</em>}{selectedWeekHolidays.length > 0 && <div className="week-holiday-summary"><strong>Saudi public holiday{selectedWeekHolidays.length > 1 ? "s" : ""} in this week</strong><span>{Array.from(new Set(selectedWeekHolidays.map(holiday => holiday.name))).join(" · ")}</span></div>}</div>
                 <label htmlFor="weekly-plan-week-start">{t("weekStartingSaturday")}</label>
                 <div className="week-selector-controls">
                   <Button type="button" variant="outline" size="icon" aria-label="Previous workweek" onClick={() => chooseWeek(shiftIsoDate(weekOf, -7))}><ChevronLeft size={17}/></Button>
@@ -665,6 +694,7 @@ export default function DelegateWorkLog() {
                       onChange={next => changePlanDay(index, next)}
                       clients={clients}
                       doctors={doctors}
+                      holiday={holidayByDate.get(day.date)}
                     />
                   ))}
                 </div>
