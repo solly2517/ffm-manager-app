@@ -1,0 +1,21 @@
+{
+  "sourceLabel": "AL-Tamam Stock Management embedded catalogue — implant-only verified v2",
+  "candidateReferences": 12535,
+  "validRecords": 7387,
+  "exclusions": {
+    "nonImplant": 784,
+    "unsupportedProduct": 1804,
+    "invalidReference": 0,
+    "duplicateReference": 2560
+  },
+  "manufacturerCounts": {
+    "AAP": 864,
+    "Bipolar": 8,
+    "Hipokrat": 255,
+    "Madison": 3857,
+    "MedGal": 217,
+    "Naton": 4,
+    "Pitkar": 2182
+  },
+  "inputFile": "AL_Tamam_Stock_Management_standalone_2.html"
+}

@@ -1,0 +1,15 @@
+<design>
+  <size width="1280" height="720"></size>
+  <color name="bg-navy" value="#0B132B"/>
+  <color name="text-main" value="#FFFFFF"/>
+  <color name="text-muted" value="#94A3B8"/>
+  <color name="accent-cyan" value="#00E5FF"/>
+  <color name="accent-royal" value="#2563EB"/>
+  <color name="grid-line" value="#1E293B"/>
+  <color name="alert" value="#F43F5E"/>
+  <font name="title" family="Inter" size="48"/>
+  <font name="heading" family="Inter" size="32"/>
+  <font name="body" family="Inter" size="18"/>
+  <font name="caption" family="Inter" size="14"/>
+  <font name="mono" family="Roboto Mono" size="16"/>
+</design>

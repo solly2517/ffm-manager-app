@@ -1,0 +1,106 @@
+/* iPhone-safe containment for dense Manager and Administration workspaces. */
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.manager-main,
+.manager-content,
+.blueprint-card,
+.section-card,
+.admin-add-row,
+.invite-link-row,
+.data-table,
+.activity-row,
+.admin-feedback,
+.audit-strip {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.admin-feedback,
+.audit-strip,
+.activity-row > div,
+.table-row > * {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.invite-link-row input {
+  min-width: 0;
+}
+
+/* Stored transient gateway details are useful to server diagnostics, but not to a mobile user. */
+.admin-activity-list .activity-row strong {
+  font-size: 0;
+}
+
+.admin-activity-list .activity-row strong::after {
+  content: "A temporary service response was recorded. Please retry the action.";
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+@media (max-width: 620px) {
+  .manager-topbar {
+    gap: 8px;
+    padding-inline: 12px;
+    overflow: hidden;
+  }
+
+  .manager-topbar > div:first-of-type {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .manager-topbar > div:first-of-type h2,
+  .manager-topbar > div:first-of-type .topbar-kicker {
+    max-width: 96px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .manager-topbar > div:first-of-type h2 {
+    font-size: 20px;
+  }
+
+  .topbar-actions {
+    flex: 0 0 auto;
+    gap: 5px;
+  }
+
+  .topbar-actions > button:last-child {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    font-size: 0;
+  }
+
+  .topbar-actions > button:last-child svg {
+    margin: 0;
+  }
+
+  .manager-content {
+    min-width: 0;
+    overflow-x: clip;
+  }
+
+  .data-table {
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+  }
+
+  .table-row {
+    min-width: 0;
+  }
+
+  .admin-add-row,
+  .invite-link-row {
+    align-items: stretch;
+  }
+}

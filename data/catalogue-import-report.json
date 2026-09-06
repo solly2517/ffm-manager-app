@@ -1,0 +1,31 @@
+{
+  "total": 5887,
+  "bySource": {
+    "aapRevisionKneeCatalog-04Jul2021_NSh_05Jul2021.pdf": 239,
+    "aapPrimaryHipCatalog-04Jul2021_NSh_05Jul2021.pdf": 468,
+    "aapRevisionHipCatalog-04Jul2021_NSh_05Jul2021.pdf": 192,
+    "aapPrimaryKneeCatalog-04Jul2021_NSh_05Jul2021.pdf": 334,
+    "Altamamproductsforuploading.xlsx / Baipolar": 52,
+    "Altamamproductsforuploading.xlsx / Medgal": 298,
+    "Altamamproductsforuploading.xlsx / Naton Sport Medicine ": 11,
+    "Altamamproductsforuploading.xlsx / PITKAR ILIZAROVE": 169,
+    "Altamamproductsforuploading.xlsx / pitkar Spine ": 17,
+    "Main-catalogue-2024.pdf": 1021,
+    "ExternalFixationSystem-FEB-2025.pdf": 325,
+    "SpineCatalogue-draft.pdf": 238,
+    "TraumaMasterCatalogue.pdf": 2523
+  },
+  "byManufacturer": {
+    "AAP": 1233,
+    "Altamam Excel — Baipolar": 52,
+    "Altamam Excel — Medgal": 298,
+    "Altamam Excel — Naton Sport Medicine": 11,
+    "Altamam Excel — PITKAR ILIZAROVE": 169,
+    "Altamam Excel — pitkar Spine": 17,
+    "MEDGAL": 1021,
+    "S.H. Pitkar Orthotools": 325,
+    "Spine catalogue": 238,
+    "Trauma catalogue": 2523
+  },
+  "withoutProductCode": 71
+}
