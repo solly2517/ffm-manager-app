@@ -1,0 +1,20 @@
+<slide id="roles">
+  <background color="bg-navy"/>
+  <shape id="top-line" type="line" x="60" y="92" width="1160" height="0" stroke="grid-line" stroke-width="1"/>
+  <text id="section-label" x="80" y="48" width="300" height="22" font="mono" size="14" color="accent-cyan" wrap="false">01 / ROLE BOUNDARIES</text>
+  <text id="slide-title" x="80" y="118" width="900" height="52" font="heading" size="38" color="text-main" wrap="false">Two roles, one operational record</text>
+  <text id="slide-intro" x="82" y="174" width="910" height="30" font="body" size="18" color="text-muted">Managers coordinate accountable work. Delegates execute assigned work and document the field reality.</text>
+  <shape id="mid-divider" type="line" x="640" y="225" width="0" height="332" stroke="accent-royal" stroke-width="3"/>
+  <icon id="manager-icon" name="briefcase" x="82" y="234" width="34" height="34" color="accent-cyan"/>
+  <text id="manager-label" x="132" y="238" width="360" height="26" font="mono" size="15" color="accent-cyan" wrap="false">MANAGER / COORDINATE</text>
+  <text id="manager-body" x="82" y="292" width="500" height="222" font="body" size="21" color="text-main" line-height="1.35"><ul bullet="•"><li>Manage assigned Delegates, clients, tasks, visit-plan review, and team follow-through.</li><li>Create and monitor clinical records; coordinate readiness, implants, and delivery actions.</li><li>Use reports and private Messages to decide, hand over, and escalate early.</li></ul></text>
+  <text id="manager-boundary" x="82" y="530" width="500" height="38" font="body" size="16" color="text-muted">Boundary: do not manage users, assignments, backups, or recovery controls.</text>
+  <icon id="delegate-icon" name="map-pin" x="688" y="234" width="34" height="34" color="accent-cyan"/>
+  <text id="delegate-label" x="738" y="238" width="390" height="26" font="mono" size="15" color="accent-cyan" wrap="false">DELEGATE / EXECUTE</text>
+  <text id="delegate-body" x="688" y="292" width="500" height="222" font="body" size="21" color="text-main" line-height="1.35"><ul bullet="•"><li>Complete assigned visits with accurate status, GPS timestamps, reports, and permitted evidence.</li><li>Maintain own surgery and visit-plan information within the assigned operational scope.</li><li>Message the Manager early when timing, client data, delivery, or clinical readiness changes.</li></ul></text>
+  <text id="delegate-boundary" x="688" y="530" width="500" height="38" font="body" size="16" color="text-muted">Boundary: do not change other users, assignments, or delete operational records.</text>
+  <shape id="boundary-line" type="line" x="80" y="610" width="1120" height="0" stroke="alert" stroke-width="2" opacity="0.8"/>
+  <text id="boundary-note" x="80" y="622" width="1040" height="26" font="body" size="16" color="text-muted">Administrator-only procedures are intentionally excluded from this manual.</text>
+  <icon id="registration-icon" name="crosshair" x="1168" y="44" width="38" height="38" color="accent-cyan"/>
+  <text id="slide-number" x="80" y="670" width="70" height="20" font="mono" size="14" color="accent-cyan">02</text>
+</slide>

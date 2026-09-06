@@ -1,0 +1,100 @@
+import { trpc } from "@/lib/trpc";
+import { UNAUTHED_ERR_MSG } from '@shared/const';
+import { responseDiagnostic } from "@/lib/apiResponse";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { httpBatchLink, TRPCClientError } from "@trpc/client";
+import { createRoot } from "react-dom/client";
+import superjson from "superjson";
+import App from "./App";
+import { startLogin } from "./const";
+import "./index.css";
+
+const queryClient = new QueryClient();
+const diagnosticCooldowns = new Map<string, number>();
+
+const isMonitoringTransportFailure = (message: string) =>
+  /monitoring\.captureClientError|Unexpected token .*not valid JSON|Failed to execute 'json' on 'Response'|non-JSON response/i.test(message);
+
+const dispatchApiDiagnostic = (kind: "query" | "mutation", error: unknown) => {
+  if (typeof window === "undefined") return;
+  const message = error instanceof Error ? error.message : String(error);
+  if (isMonitoringTransportFailure(message)) return;
+  const key = `${kind}:${message.slice(0, 180)}`;
+  const now = Date.now();
+  if ((diagnosticCooldowns.get(key) ?? 0) > now - 30_000) return;
+  diagnosticCooldowns.set(key, now);
+  window.dispatchEvent(new CustomEvent("ffm:client-error", { detail: { message: `[API ${kind} Error] ${message}`, stack: error instanceof Error ? error.stack : undefined, route: window.location.pathname } }));
+};
+
+const shouldCaptureApiDiagnostic = (error: unknown) => {
+  if (error instanceof TRPCClientError) {
+    if (error.data?.code === "UNAUTHORIZED") return false;
+    const path = typeof error.data?.path === "string" ? error.data.path : "";
+    if (path.includes("monitoring.captureClientError")) return false;
+  }
+  return true;
+};
+
+const redirectToLoginIfUnauthorized = (error: unknown) => {
+  if (!(error instanceof TRPCClientError)) return;
+  if (typeof window === "undefined") return;
+
+    const isUnauthorized = error.message === UNAUTHED_ERR_MSG || error.data?.code === "UNAUTHORIZED";
+  if (!isUnauthorized) return;
+
+  startLogin();
+};
+
+queryClient.getQueryCache().subscribe(event => {
+  if (event.type === "updated" && event.action.type === "error") {
+    const error = event.query.state.error;
+    redirectToLoginIfUnauthorized(error);
+    console.error("[API Query Error]", error);
+    if (shouldCaptureApiDiagnostic(error)) dispatchApiDiagnostic("query", error);
+  }
+});
+
+queryClient.getMutationCache().subscribe(event => {
+  if (event.type === "updated" && event.action.type === "error") {
+    const error = event.mutation.state.error;
+    redirectToLoginIfUnauthorized(error);
+    console.error("[API Mutation Error]", error);
+    if (shouldCaptureApiDiagnostic(error)) dispatchApiDiagnostic("mutation", error);
+  }
+});
+
+const trpcClient = trpc.createClient({
+  links: [
+    httpBatchLink({
+      url: "/api/trpc",
+      transformer: superjson,
+      headers() {
+        return { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" };
+      },
+      async fetch(input, init) {
+        const response = await globalThis.fetch(input, {
+          ...(init ?? {}),
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+            "X-Requested-With": "XMLHttpRequest",
+            ...(init?.headers ?? {}),
+          },
+        });
+        const diagnostic = await responseDiagnostic(response);
+        if (diagnostic.message && !String(input).includes("monitoring.captureClientError")) {
+          window.dispatchEvent(new CustomEvent("ffm:client-error", { detail: { message: diagnostic.message, route: String(input) } }));
+        }
+        return response;
+      },
+    }),
+  ],
+});
+
+createRoot(document.getElementById("root")!).render(
+  <trpc.Provider client={trpcClient} queryClient={queryClient}>
+    <QueryClientProvider client={queryClient}>
+      <App />
+    </QueryClientProvider>
+  </trpc.Provider>
+);

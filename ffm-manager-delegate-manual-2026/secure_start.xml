@@ -1,0 +1,31 @@
+<slide id="secure_start">
+  <background color="bg-navy"/>
+  <shape id="top-line" type="line" x="60" y="92" width="1160" height="0" stroke="grid-line" stroke-width="1"/>
+  <text id="section-label" x="80" y="48" width="330" height="22" font="mono" size="14" color="accent-cyan" wrap="false">02 / SHARED OPERATING HABITS</text>
+  <text id="slide-title" x="80" y="118" width="950" height="52" font="heading" size="38" color="text-main" wrap="false">Start securely and stay aligned</text>
+  <text id="slide-intro" x="82" y="174" width="950" height="30" font="body" size="18" color="text-muted">Use the same short sequence at the start of every working day.</text>
+  <shape id="connector-1" type="line" x="316" y="323" width="82" height="0" stroke="accent-royal" stroke-width="3" arrow-end="arrow"/>
+  <shape id="connector-2" type="line" x="610" y="323" width="82" height="0" stroke="accent-royal" stroke-width="3" arrow-end="arrow"/>
+  <shape id="connector-3" type="line" x="904" y="323" width="82" height="0" stroke="accent-royal" stroke-width="3" arrow-end="arrow"/>
+  <shape id="step-one-marker" type="ellipse" x="80" y="290" width="66" height="66" fill="accent-cyan"/>
+  <text id="step-one-num" x="80" y="302" width="66" height="40" font="mono" size="25" color="bg-navy" align="center" anchor="middle">01</text>
+  <text id="step-one-title" x="80" y="384" width="230" height="30" font="body" size="22" color="text-main">Sign in</text>
+  <text id="step-one-body" x="80" y="425" width="230" height="84" font="body" size="17" color="text-muted">Use your approved account or invitation link. Never share an active session.</text>
+  <shape id="step-two-marker" type="ellipse" x="374" y="290" width="66" height="66" fill="accent-cyan"/>
+  <text id="step-two-num" x="374" y="302" width="66" height="40" font="mono" size="25" color="bg-navy" align="center" anchor="middle">02</text>
+  <text id="step-two-title" x="374" y="384" width="230" height="30" font="body" size="22" color="text-main">Confirm identity</text>
+  <text id="step-two-body" x="374" y="425" width="230" height="84" font="body" size="17" color="text-muted">Save a clear display name so colleagues see the right person in workspaces.</text>
+  <shape id="step-three-marker" type="ellipse" x="668" y="290" width="66" height="66" fill="accent-cyan"/>
+  <text id="step-three-num" x="668" y="302" width="66" height="40" font="mono" size="25" color="bg-navy" align="center" anchor="middle">03</text>
+  <text id="step-three-title" x="668" y="384" width="230" height="30" font="body" size="22" color="text-main">Read alerts</text>
+  <text id="step-three-body" x="668" y="425" width="230" height="84" font="body" size="17" color="text-muted">Check the notification bell and open Messages to acknowledge items addressed to you.</text>
+  <shape id="step-four-marker" type="ellipse" x="962" y="290" width="66" height="66" fill="accent-cyan"/>
+  <text id="step-four-num" x="962" y="302" width="66" height="40" font="mono" size="25" color="bg-navy" align="center" anchor="middle">04</text>
+  <text id="step-four-title" x="962" y="384" width="230" height="30" font="body" size="22" color="text-main">Work by role</text>
+  <text id="step-four-body" x="962" y="425" width="230" height="84" font="body" size="17" color="text-muted">Use only your role workspace and update the live record as activity happens.</text>
+  <shape id="safety-frame" type="rect" x="150" y="575" width="980" height="54" fill="none" stroke="grid-line" stroke-width="1"/>
+  <icon id="safety-icon" name="shield-check" x="174" y="588" width="28" height="28" color="accent-cyan"/>
+  <text id="safety-text" x="220" y="590" width="860" height="28" font="body" size="18" color="text-main" align="center">Sign out when you finish or use a shared computer.</text>
+  <icon id="registration-icon" name="crosshair" x="1168" y="44" width="38" height="38" color="accent-cyan"/>
+  <text id="slide-number" x="80" y="670" width="70" height="20" font="mono" size="14" color="accent-cyan">03</text>
+</slide>

@@ -1,0 +1,21 @@
+<slide id="delegate_clinical">
+  <background color="bg-navy"/>
+  <shape id="top-line" type="line" x="60" y="92" width="1160" height="0" stroke="grid-line" stroke-width="1"/>
+  <text id="section-label" x="80" y="48" width="310" height="22" font="mono" size="14" color="accent-cyan">09 / CLINICAL RECORDS</text>
+  <text id="slide-title" x="80" y="118" width="960" height="52" font="heading" size="38" color="text-main">Keep clinical records current</text>
+  <text id="slide-intro" x="82" y="174" width="1020" height="30" font="body" size="18" color="text-muted">Keep the surgery record, calendar, readiness status, implant detail, and proof aligned with the actual clinical event.</text>
+  <shape id="arrow-one" type="line" x="270" y="310" width="100" height="0" stroke="accent-royal" stroke-width="3" arrow-end="arrow"/>
+  <shape id="arrow-two" type="line" x="550" y="310" width="100" height="0" stroke="accent-royal" stroke-width="3" arrow-end="arrow"/>
+  <shape id="arrow-three" type="line" x="830" y="310" width="100" height="0" stroke="accent-royal" stroke-width="3" arrow-end="arrow"/>
+  <shape id="node-one" type="ellipse" x="90" y="274" width="72" height="72" fill="accent-cyan"/><icon id="node-one-icon" name="calendar" x="106" y="290" width="40" height="40" color="bg-navy"/><text id="node-one-title" x="80" y="370" width="180" height="28" font="body" size="21" color="text-main" align="center">Create / update</text><text id="node-one-body" x="80" y="405" width="180" height="44" font="body" size="16" color="text-muted" align="center">Client, procedure, hospital, date.</text>
+  <shape id="node-two" type="ellipse" x="370" y="274" width="72" height="72" fill="accent-cyan"/><icon id="node-two-icon" name="clipboard-list" x="386" y="290" width="40" height="40" color="bg-navy"/><text id="node-two-title" x="360" y="370" width="180" height="28" font="body" size="21" color="text-main" align="center">Readiness</text><text id="node-two-body" x="360" y="405" width="180" height="44" font="body" size="16" color="text-muted" align="center">Help close the five controls.</text>
+  <shape id="node-three" type="ellipse" x="650" y="274" width="72" height="72" fill="accent-cyan"/><icon id="node-three-icon" name="package" x="666" y="290" width="40" height="40" color="bg-navy"/><text id="node-three-title" x="640" y="370" width="180" height="28" font="body" size="21" color="text-main" align="center">Implants</text><text id="node-three-body" x="640" y="405" width="180" height="44" font="body" size="16" color="text-muted" align="center">Select catalog item; enter quantity, price, currency.</text>
+  <shape id="node-four" type="ellipse" x="930" y="274" width="72" height="72" fill="accent-cyan"/><icon id="node-four-icon" name="circle-check" x="946" y="290" width="40" height="40" color="bg-navy"/><text id="node-four-title" x="920" y="370" width="180" height="28" font="body" size="21" color="text-main" align="center">Resolve day</text><text id="node-four-body" x="920" y="405" width="180" height="44" font="body" size="16" color="text-muted" align="center">Postponed, cancelled, or surgery done.</text>
+  <shape id="completion-frame" type="rect" x="80" y="500" width="1100" height="112" fill="none" stroke="accent-royal" stroke-width="2"/>
+  <text id="completion-label" x="112" y="524" width="260" height="22" font="mono" size="14" color="accent-cyan">COMPLETION CONTROL</text>
+  <text id="completion-title" x="112" y="558" width="390" height="30" font="body" size="24" color="text-main">Mark “Surgery done” only when:</text>
+  <text id="completion-rule" x="540" y="554" width="570" height="36" font="body" size="22" color="alert">Used implants are registered and the patient-sheet proof is present.</text>
+  <text id="footer-note" x="80" y="630" width="1050" height="24" font="body" size="17" color="text-muted">If any clinical date or requirement changes, update the record and message the Manager without delay.</text>
+  <icon id="registration-icon" name="crosshair" x="1168" y="44" width="38" height="38" color="accent-cyan"/>
+  <text id="slide-number" x="80" y="670" width="70" height="20" font="mono" size="14" color="accent-cyan">10</text>
+</slide>

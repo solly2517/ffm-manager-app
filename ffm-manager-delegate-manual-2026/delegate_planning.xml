@@ -1,0 +1,24 @@
+<slide id="delegate_planning">
+  <background color="bg-navy"/>
+  <shape id="top-line" type="line" x="60" y="92" width="1160" height="0" stroke="grid-line" stroke-width="1"/>
+  <text id="section-label" x="80" y="48" width="340" height="22" font="mono" size="14" color="accent-cyan">10 / PLANNING &amp; COMMUNICATION</text>
+  <text id="slide-title" x="80" y="118" width="980" height="52" font="heading" size="38" color="text-main">Plan ahead and communicate early</text>
+  <text id="slide-intro" x="82" y="174" width="1000" height="30" font="body" size="18" color="text-muted">Use plans for future work, Messages for immediate coordination, and Profile settings for responsible field visibility.</text>
+  <shape id="mid-divider" type="line" x="630" y="250" width="0" height="326" stroke="accent-royal" stroke-width="3"/>
+  <icon id="plan-icon" name="calendar-plus" x="80" y="258" width="36" height="36" color="accent-cyan"/>
+  <text id="left-label" x="132" y="264" width="260" height="22" font="mono" size="14" color="accent-cyan">PLAN &amp; MESSAGE</text>
+  <text id="plan-title" x="80" y="322" width="440" height="28" font="body" size="24" color="text-main">Submit future visit plans</text>
+  <text id="plan-body" x="80" y="362" width="470" height="82" font="body" size="18" color="text-muted">Choose the client, date, and purpose. Track whether the Manager has approved, rejected, or is still reviewing the proposal.</text>
+  <text id="message-title" x="80" y="480" width="440" height="28" font="body" size="24" color="text-main">Write actionable messages</text>
+  <text id="message-body" x="80" y="520" width="470" height="56" font="body" size="18" color="text-muted">For a change, state the client or hospital, date, issue, revised timing, and action needed.</text>
+  <icon id="profile-icon" name="user-round" x="694" y="258" width="36" height="36" color="accent-cyan"/>
+  <text id="right-label" x="746" y="264" width="260" height="22" font="mono" size="14" color="accent-cyan">PROFILE &amp; CLOSE-OUT</text>
+  <text id="profile-title" x="694" y="322" width="440" height="28" font="body" size="24" color="text-main">Use preferences responsibly</text>
+  <text id="profile-body" x="694" y="362" width="470" height="82" font="body" size="18" color="text-muted">Manage push and email preferences. Live-location sharing is optional; leave it off when field coordination does not require it.</text>
+  <text id="close-title" x="694" y="480" width="440" height="28" font="body" size="24" color="text-main">Close the day accurately</text>
+  <text id="close-body" x="694" y="520" width="470" height="56" font="body" size="18" color="text-muted">Complete visit reports, check out, set true task status, answer messages, and submit future plans.</text>
+  <shape id="bottom-rule" type="line" x="80" y="608" width="1100" height="0" stroke="grid-line" stroke-width="1"/>
+  <text id="escalation-note" x="80" y="630" width="1070" height="24" font="body" size="18" color="text-main">Escalate early when delivery, clinical date, client data, timing, or safety cannot wait for the next review.</text>
+  <icon id="registration-icon" name="crosshair" x="1168" y="44" width="38" height="38" color="accent-cyan"/>
+  <text id="slide-number" x="80" y="670" width="70" height="20" font="mono" size="14" color="accent-cyan">11</text>
+</slide>

@@ -1,0 +1,23 @@
+<slide id="closing">
+  <background color="bg-navy"/>
+  <shape id="grid-v1" type="line" x="160" y="0" width="0" height="720" stroke="grid-line" stroke-width="1" opacity="0.5"/>
+  <shape id="grid-v2" type="line" x="320" y="0" width="0" height="720" stroke="grid-line" stroke-width="1" opacity="0.35"/>
+  <shape id="grid-v3" type="line" x="480" y="0" width="0" height="720" stroke="grid-line" stroke-width="1" opacity="0.35"/>
+  <shape id="grid-v4" type="line" x="640" y="0" width="0" height="720" stroke="grid-line" stroke-width="1" opacity="0.35"/>
+  <shape id="grid-v5" type="line" x="800" y="0" width="0" height="720" stroke="grid-line" stroke-width="1" opacity="0.35"/>
+  <shape id="grid-v6" type="line" x="960" y="0" width="0" height="720" stroke="grid-line" stroke-width="1" opacity="0.35"/>
+  <shape id="grid-v7" type="line" x="1120" y="0" width="0" height="720" stroke="grid-line" stroke-width="1" opacity="0.5"/>
+  <shape id="grid-h1" type="line" x="0" y="160" width="1280" height="0" stroke="grid-line" stroke-width="1" opacity="0.4"/>
+  <shape id="grid-h2" type="line" x="0" y="320" width="1280" height="0" stroke="grid-line" stroke-width="1" opacity="0.4"/>
+  <shape id="grid-h3" type="line" x="0" y="480" width="1280" height="0" stroke="grid-line" stroke-width="1" opacity="0.4"/>
+  <shape id="grid-h4" type="line" x="0" y="640" width="1280" height="0" stroke="grid-line" stroke-width="1" opacity="0.4"/>
+  <text id="closing-kicker" x="80" y="130" width="350" height="22" font="mono" size="14" color="accent-cyan">FFM / OPERATING STANDARD</text>
+  <shape id="closing-rule" type="line" x="160" y="250" width="210" height="0" stroke="accent-cyan" stroke-width="5"/>
+  <text id="closing-title" x="160" y="286" width="940" height="120" font="title" size="54" color="text-main" align="center" anchor="middle"><p>Accurate records.</p><p>Early escalation.</p></text>
+  <text id="closing-subtitle" x="190" y="438" width="880" height="28" font="body" size="21" color="text-muted" align="center">That is how Managers and Delegates keep field work and clinical coordination accountable.</text>
+  <shape id="url-frame" type="rect" x="220" y="502" width="840" height="54" fill="none" stroke="accent-royal" stroke-width="2"/>
+  <text id="live-url" x="220" y="517" width="840" height="24" font="mono" size="18" color="accent-cyan" align="center" wrap="false">ffmmanager-9wxfbeae.manus.space</text>
+  <text id="closing-role-note" x="210" y="600" width="860" height="25" font="body" size="18" color="text-main" align="center">Use your role workspace. Update the live record. Communicate the next action.</text>
+  <icon id="registration-icon" name="crosshair" x="1168" y="44" width="38" height="38" color="accent-cyan"/>
+  <text id="slide-number" x="80" y="670" width="70" height="20" font="mono" size="14" color="accent-cyan">12</text>
+</slide>

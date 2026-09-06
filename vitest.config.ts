@@ -1,0 +1,23 @@
+import { defineConfig } from "vitest/config";
+import path from "path";
+
+const templateRoot = path.resolve(import.meta.dirname);
+
+export default defineConfig({
+  root: templateRoot,
+  resolve: {
+    alias: {
+      "@": path.resolve(templateRoot, "client", "src"),
+      "@shared": path.resolve(templateRoot, "shared"),
+      "@assets": path.resolve(templateRoot, "attached_assets"),
+    },
+  },
+  test: {
+    environment: "node",
+    env: {
+      JWT_SECRET: "test-secret-do-not-use-in-production",
+    },
+    include: ["server/**/*.test.ts", "server/**/*.spec.ts", "client/**/*.test.{ts,tsx}"],
+    environmentMatchGlobs: [["client/**/*.test.{ts,tsx}", "jsdom"]],
+  },
+});

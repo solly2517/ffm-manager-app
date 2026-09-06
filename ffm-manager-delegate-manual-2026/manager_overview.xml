@@ -1,0 +1,27 @@
+<slide id="manager_overview">
+  <background color="bg-navy"/>
+  <shape id="top-line" type="line" x="60" y="92" width="1160" height="0" stroke="grid-line" stroke-width="1"/>
+  <text id="section-label" x="80" y="48" width="320" height="22" font="mono" size="14" color="accent-cyan">03 / MANAGER WORKSPACE</text>
+  <text id="slide-title" x="80" y="118" width="980" height="52" font="heading" size="38" color="text-main">Managers coordinate the field picture</text>
+  <text id="slide-intro" x="82" y="174" width="950" height="30" font="body" size="18" color="text-muted">Review people, assigned work, and clinical readiness before decisions become urgent.</text>
+  <shape id="zone-one-frame" type="rect" x="80" y="248" width="320" height="294" fill="none" stroke="accent-royal" stroke-width="2"/>
+  <icon id="zone-one-icon" name="users" x="106" y="274" width="36" height="36" color="accent-cyan"/>
+  <text id="zone-one-label" x="160" y="280" width="180" height="22" font="mono" size="14" color="accent-cyan">PEOPLE</text>
+  <text id="zone-one-title" x="106" y="338" width="250" height="34" font="body" size="24" color="text-main">Assigned Delegates</text>
+  <text id="zone-one-body" x="106" y="392" width="254" height="112" font="body" size="18" color="text-muted" line-height="1.35"><ul bullet="•"><li>Check active tasks and status.</li><li>Review available live location.</li><li>Clear questions in Messages.</li></ul></text>
+  <shape id="zone-two-frame" type="rect" x="460" y="248" width="320" height="294" fill="none" stroke="accent-royal" stroke-width="2"/>
+  <icon id="zone-two-icon" name="clipboard-list" x="486" y="274" width="36" height="36" color="accent-cyan"/>
+  <text id="zone-two-label" x="540" y="280" width="180" height="22" font="mono" size="14" color="accent-cyan">WORK</text>
+  <text id="zone-two-title" x="486" y="338" width="250" height="34" font="body" size="24" color="text-main">Tasks &amp; Plans</text>
+  <text id="zone-two-body" x="486" y="392" width="254" height="112" font="body" size="18" color="text-muted" line-height="1.35"><ul bullet="•"><li>Create accurate task assignments.</li><li>Review visit-plan proposals.</li><li>Resolve overdue follow-up.</li></ul></text>
+  <shape id="zone-three-frame" type="rect" x="840" y="248" width="320" height="294" fill="none" stroke="accent-royal" stroke-width="2"/>
+  <icon id="zone-three-icon" name="calendar" x="866" y="274" width="36" height="36" color="accent-cyan"/>
+  <text id="zone-three-label" x="920" y="280" width="180" height="22" font="mono" size="14" color="accent-cyan">CLINICAL</text>
+  <text id="zone-three-title" x="866" y="338" width="250" height="34" font="body" size="24" color="text-main">Surgery readiness</text>
+  <text id="zone-three-body" x="866" y="392" width="254" height="112" font="body" size="18" color="text-muted" line-height="1.35"><ul bullet="•"><li>Review calendar dates.</li><li>Close readiness gaps.</li><li>Coordinate delivery early.</li></ul></text>
+  <shape id="cadence-line" type="line" x="80" y="586" width="1120" height="0" stroke="grid-line" stroke-width="1"/>
+  <text id="cadence-label" x="80" y="608" width="200" height="22" font="mono" size="14" color="accent-cyan">DAILY CADENCE</text>
+  <text id="cadence-text" x="280" y="606" width="880" height="28" font="body" size="18" color="text-main">Dashboard → Tasks → Visit Plans → Messages → Surgeries &amp; Readiness → Reports</text>
+  <icon id="registration-icon" name="crosshair" x="1168" y="44" width="38" height="38" color="accent-cyan"/>
+  <text id="slide-number" x="80" y="670" width="70" height="20" font="mono" size="14" color="accent-cyan">04</text>
+</slide>

@@ -1,0 +1,1 @@
+ALTER TABLE `surgeries` ADD `hospitalDelivered` boolean DEFAULT false NOT NULL;

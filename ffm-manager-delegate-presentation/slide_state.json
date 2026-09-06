@@ -1,0 +1,132 @@
+{
+  "project_info": {
+    "title": "FFM User Guide",
+    "created": 1787173721.358,
+    "last_updated": 1787173853.83,
+    "total_slides": 12
+  },
+  "slides": [
+    {
+      "id": "cover",
+      "state": "edited",
+      "pageNum": 1
+    },
+    {
+      "id": "roles",
+      "state": "edited",
+      "pageNum": 2
+    },
+    {
+      "id": "secure-start",
+      "state": "edited",
+      "pageNum": 3
+    },
+    {
+      "id": "manager-dashboard",
+      "state": "edited",
+      "pageNum": 4
+    },
+    {
+      "id": "manager-work",
+      "state": "edited",
+      "pageNum": 5
+    },
+    {
+      "id": "manager-reports",
+      "state": "edited",
+      "pageNum": 6
+    },
+    {
+      "id": "delegate-visit",
+      "state": "edited",
+      "pageNum": 7
+    },
+    {
+      "id": "gps-evidence",
+      "state": "edited",
+      "pageNum": 8
+    },
+    {
+      "id": "messages-plan",
+      "state": "edited",
+      "pageNum": 9
+    },
+    {
+      "id": "stock-review",
+      "state": "edited",
+      "pageNum": 10
+    },
+    {
+      "id": "daily-routine",
+      "state": "edited",
+      "pageNum": 11
+    },
+    {
+      "id": "closing",
+      "state": "edited",
+      "pageNum": 12
+    }
+  ],
+  "outline": [
+    {
+      "id": "cover",
+      "title": "FFM User Guide",
+      "summary": "Manager and Delegate Operations. A concise visual guide to secure field-force work."
+    },
+    {
+      "id": "roles",
+      "title": "FFM has two operational workspaces",
+      "summary": "Clarify the Manager and Delegate roles, their main responsibilities, and the administrator exclusion."
+    },
+    {
+      "id": "secure-start",
+      "title": "Start securely, then work from your role",
+      "summary": "Explain sign-in, role-specific routes, and safe session handling."
+    },
+    {
+      "id": "manager-dashboard",
+      "title": "Managers control the operational picture",
+      "summary": "Show the Manager dashboard, sidebar workspaces, and assignment-scoped access."
+    },
+    {
+      "id": "manager-work",
+      "title": "Managers turn plans into assigned work",
+      "summary": "Cover clients, doctors, tasks, delegate assignment boundaries, and status updates."
+    },
+    {
+      "id": "manager-reports",
+      "title": "Reports make decisions traceable",
+      "summary": "Explain date filters, operational summaries, CSV export, and secure handling."
+    },
+    {
+      "id": "delegate-visit",
+      "title": "Delegates follow a visit to closure",
+      "summary": "Show the Delegate flow from My Tasks through GPS start, report, evidence, and completion."
+    },
+    {
+      "id": "gps-evidence",
+      "title": "GPS and evidence create a reliable record",
+      "summary": "Explain GPS timestamps, authorized photo/audio/signature evidence, consent, and save confirmation."
+    },
+    {
+      "id": "messages-plan",
+      "title": "Delegates stay aligned through Messages and Plan",
+      "summary": "Cover messages, plan review statuses, surgeries, and accurate recordkeeping."
+    },
+    {
+      "id": "stock-review",
+      "title": "Stock Review is view-only",
+      "summary": "Explain the read-only Stock Review workspace and safe handling when external authentication is required."
+    },
+    {
+      "id": "daily-routine",
+      "title": "Use a safe daily routine",
+      "summary": "Provide Manager and Delegate daily checklists and escalation principles."
+    },
+    {
+      "id": "closing",
+      "title": "Work accurately. Escalate early.",
+      "summary": "Close with the FFM operating standard and support guidance."
+    }
+  ]
+}

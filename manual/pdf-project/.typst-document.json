@@ -1,0 +1,10 @@
+{
+  "entry": "main.typ",
+  "metadata": {
+    "author": "FFM Operations",
+    "subtitle": "Manager and Delegate Operations",
+    "title": "FFM User Manual"
+  },
+  "mode": "report",
+  "theme": "report-theme.typ"
+}
