@@ -147,19 +147,19 @@ async function main() {
       ["id", "clientId", "name", "specialty", "department", "phone", "email", "relationship", "notes", "createdBy", "createdAt"],
       { dateFields: dateFieldsCommon, idFields, idMap });
 
-    await insertRows(conn, "managerDelegateAssignments", data.managerDelegateAssignments,
+    await insertRows(conn, "manager_delegate_assignments", data.managerDelegateAssignments,
       ["id", "managerId", "delegateId", "assignedBy", "createdAt"],
       { dateFields: dateFieldsCommon, idFields, idMap });
 
-    await insertRows(conn, "managerWarehouseHeroAssignments", data.managerWarehouseHeroAssignments,
+    await insertRows(conn, "manager_warehouse_hero_assignments", data.managerWarehouseHeroAssignments,
       ["id", "managerId", "warehouseHeroId", "assignedBy", "createdAt"],
       { dateFields: dateFieldsCommon, idFields, idMap });
 
-    await insertRows(conn, "warehouseHeroLocations", data.warehouseHeroLocations,
+    await insertRows(conn, "warehouse_hero_locations", data.warehouseHeroLocations,
       ["id", "warehouseHeroId", "latitude", "longitude", "capturedAt", "updatedAt"],
       { dateFields: dateFieldsCommon, idFields, idMap });
 
-    await insertRows(conn, "warehouseDeliveryProofs", data.warehouseDeliveryProofs,
+    await insertRows(conn, "warehouse_delivery_proofs", data.warehouseDeliveryProofs,
       ["id", "warehouseHeroId", "handoverId", "note", "captureSource", "storageKey", "mimeType", "sizeBytes", "capturedAt", "createdAt"],
       { dateFields: dateFieldsCommon, idFields, idMap });
 
