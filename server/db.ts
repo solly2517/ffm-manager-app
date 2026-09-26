@@ -388,6 +388,86 @@ export async function removeGeography(id: number) { const db = await getDb(); if
 export async function listClients() { const db = await getDb(); if (!db) return []; return db.select().from(clients).orderBy(clients.name); }
 export async function createClient(input: typeof clients.$inferInsert) { const db = await getDb(); if (!db) throw new Error("Database is not available"); const result = await db.insert(clients).values(input); return getClientById(Number(result[0].insertId)); }
 export async function updateClient(id: number, input: Partial<typeof clients.$inferInsert>) { const db = await getDb(); if (!db) throw new Error("Database is not available"); await db.update(clients).set(input).where(eq(clients.id, id)); return getClientById(id); }
+
+export type BulkClientDoctorRow = {
+  hospitalName: string;
+  city?: string;
+  province?: string;
+  address?: string;
+  contactPerson?: string;
+  contactPhone?: string;
+  doctorName?: string;
+  specialty?: string;
+  doctorPhone?: string;
+  doctorEmail?: string;
+};
+
+export async function bulkImportClientsAndDoctors(rows: BulkClientDoctorRow[], createdBy: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
+  const existingClients = await db.select().from(clients);
+  const clientByName = new Map(existingClients.map((c) => [c.name.trim().toLowerCase(), c]));
+  const existingDoctors = await db.select().from(doctors);
+  const doctorKeyOf = (clientId: number, name: string) => `${clientId}::${name.trim().toLowerCase()}`;
+  const doctorKeys = new Set(existingDoctors.map((d) => doctorKeyOf(d.clientId, d.name)));
+
+  let clientsCreated = 0;
+  let clientsMatched = 0;
+  let doctorsCreated = 0;
+  let doctorsSkipped = 0;
+  const errors: { row: number; message: string }[] = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    try {
+      const hospitalName = row.hospitalName?.trim();
+      if (!hospitalName) throw new Error("Hospital name is required");
+      const key = hospitalName.toLowerCase();
+      let client = clientByName.get(key);
+      if (!client) {
+        const result = await db.insert(clients).values({
+          name: hospitalName,
+          city: row.city?.trim() || null,
+          province: row.province?.trim() || null,
+          address: row.address?.trim() || null,
+          contactPerson: row.contactPerson?.trim() || null,
+          phone: row.contactPhone?.trim() || null,
+          createdBy,
+        });
+        client = await getClientById(Number(result[0].insertId));
+        if (!client) throw new Error("Failed to create hospital record");
+        clientByName.set(key, client);
+        clientsCreated++;
+      } else {
+        clientsMatched++;
+      }
+
+      const doctorName = row.doctorName?.trim();
+      if (doctorName) {
+        const dKey = doctorKeyOf(client.id, doctorName);
+        if (doctorKeys.has(dKey)) {
+          doctorsSkipped++;
+        } else {
+          await db.insert(doctors).values({
+            clientId: client.id,
+            name: doctorName,
+            specialty: row.specialty?.trim() || null,
+            phone: row.doctorPhone?.trim() || null,
+            email: row.doctorEmail?.trim() || null,
+            createdBy,
+          });
+          doctorKeys.add(dKey);
+          doctorsCreated++;
+        }
+      }
+    } catch (err) {
+      errors.push({ row: i + 1, message: err instanceof Error ? err.message : String(err) });
+    }
+  }
+
+  return { clientsCreated, clientsMatched, doctorsCreated, doctorsSkipped, errors };
+}
 export async function getClientDeletionDependencies(id: number) { const db = await getDb(); if (!db) throw new Error("Database is not available"); const [doctorRows, taskRows, surgeryRows, visitPlanRows] = await Promise.all([db.select({ total: count() }).from(doctors).where(eq(doctors.clientId, id)), db.select({ total: count() }).from(tasks).where(eq(tasks.clientId, id)), db.select({ total: count() }).from(surgeries).where(eq(surgeries.clientId, id)), db.select({ total: count() }).from(visitPlans).where(eq(visitPlans.clientId, id))]); return { doctors: Number(doctorRows[0]?.total ?? 0), tasks: Number(taskRows[0]?.total ?? 0), surgeries: Number(surgeryRows[0]?.total ?? 0), visitPlans: Number(visitPlanRows[0]?.total ?? 0) }; }
 export async function removeClient(id: number) { const db = await getDb(); if (!db) throw new Error("Database is not available"); await db.delete(clients).where(eq(clients.id, id)); return { success: true } as const; }
 export async function getClientById(id: number) { const db = await getDb(); if (!db) return undefined; const rows = await db.select().from(clients).where(eq(clients.id, id)).limit(1); return rows[0]; }

@@ -13,6 +13,7 @@ import {
   addAuditEvent,
   addEvidence,
   createClient,
+  bulkImportClientsAndDoctors,
   updateClient,
   removeClient,
   createDoctor,
@@ -3051,6 +3052,45 @@ export const appRouter = router({
           action: "client.created",
           entityType: "client",
           entityId: result?.id,
+        });
+        return result;
+      }),
+    bulkImportClients: adminOnly
+      .input(
+        z.object({
+          rows: z
+            .array(
+              z.object({
+                hospitalName: z.string().min(1),
+                city: z.string().optional(),
+                province: z.string().optional(),
+                address: z.string().optional(),
+                contactPerson: z.string().optional(),
+                contactPhone: z.string().optional(),
+                doctorName: z.string().optional(),
+                specialty: z.string().optional(),
+                doctorPhone: z.string().optional(),
+                doctorEmail: z.string().optional(),
+              })
+            )
+            .min(1)
+            .max(5000),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const result = await bulkImportClientsAndDoctors(input.rows, ctx.user.id);
+        await addAuditEvent({
+          actorId: ctx.user.id,
+          action: "client.bulkImported",
+          entityType: "client",
+          entityId: null,
+          metadata: JSON.stringify({
+            clientsCreated: result.clientsCreated,
+            clientsMatched: result.clientsMatched,
+            doctorsCreated: result.doctorsCreated,
+            doctorsSkipped: result.doctorsSkipped,
+            errorCount: result.errors.length,
+          }),
         });
         return result;
       }),
