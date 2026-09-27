@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
@@ -344,6 +344,10 @@ export default function DelegateWorkLog() {
   const [nextActions, setNextActions] = useState("");
   const [notice, setNotice] = useState("");
   const [noticeError, setNoticeError] = useState(false);
+  const noticeRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (notice) noticeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [notice]);
   const [newClientName, setNewClientName] = useState("");
   const [newClientCity, setNewClientCity] = useState("");
   const [newDoctorClientId, setNewDoctorClientId] = useState("");
@@ -616,6 +620,7 @@ export default function DelegateWorkLog() {
         </div>
         {notice && (
           <div
+            ref={noticeRef}
             className={`admin-feedback mb-5 ${noticeError ? "error" : "success"}`}
           >
             {notice}
