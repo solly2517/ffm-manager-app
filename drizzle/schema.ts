@@ -14,7 +14,7 @@ export const users = mysqlTable("users", {
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
   pushNotifications: boolean("pushNotifications").default(true).notNull(),
   emailNotifications: boolean("emailNotifications").default(true).notNull(),
-  locationSharing: boolean("locationSharing").default(false).notNull(),
+  locationSharing: boolean("locationSharing").default(true).notNull(),
   defaultLanguage: mysqlEnum("defaultLanguage", ["en", "ar"]).default("en").notNull(),
 }, (table) => ({ emailIdx: index("users_email_idx").on(table.email) }));
 

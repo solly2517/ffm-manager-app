@@ -62,6 +62,20 @@ export default function WarehouseHero() {
   const logout = () => requestLeave(performLogout);
 
   useEffect(() => { setLocationEnabled(preferences.data?.locationSharing ?? false); }, [preferences.data?.locationSharing]);
+  const autoEnableRequested = useRef(false);
+  useEffect(() => {
+    if (!isAuthenticated || !isWarehouseHero || !isAssignedToManager) return;
+    if (locationEnabled || autoEnableRequested.current) return;
+    autoEnableRequested.current = true;
+    toggleLocationSharing(true);
+  }, [isAuthenticated, isWarehouseHero, isAssignedToManager, locationEnabled]);
+  const autoTrackRequested = useRef(false);
+  useEffect(() => {
+    if (!isAuthenticated || !isWarehouseHero || !isAssignedToManager) return;
+    if (!locationEnabled || tracking || autoTrackRequested.current) return;
+    autoTrackRequested.current = true;
+    startTracking();
+  }, [isAuthenticated, isWarehouseHero, isAssignedToManager, locationEnabled, tracking]);
   useEffect(() => {
     if (activeTab !== "messages") { messagesReadWorkspaceRef.current = false; return; }
     if (isAuthenticated && isWarehouseHero && !messagesReadWorkspaceRef.current && !markMessagesRead.isPending) {

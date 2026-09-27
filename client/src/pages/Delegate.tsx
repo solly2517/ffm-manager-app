@@ -251,6 +251,13 @@ export default function Delegate() {
       setLocationSharing(preferencesQuery.data.locationSharing);
     }
   }, [preferencesQuery.data]);
+  const autoGpsRequested = useRef(false);
+  useEffect(() => {
+    if (!isAuthenticated || !preferencesQuery.data) return;
+    if (locationSharing || autoGpsRequested.current) return;
+    autoGpsRequested.current = true;
+    activateDelegateGps();
+  }, [isAuthenticated, preferencesQuery.data, locationSharing]);
   useEffect(() => {
     if (!isAuthenticated) return;
     const existing = document.getElementById("ffm-direct-gps");
