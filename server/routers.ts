@@ -3094,6 +3094,32 @@ export const appRouter = router({
         });
         return result;
       }),
+    captureClientLocation: fieldUserOnly
+      .input(
+        z.object({
+          id: z.number().int().positive(),
+          latitude: z.string().min(1),
+          longitude: z.string().min(1),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        const existing = await getClientById(input.id);
+        if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "Hospital not found" });
+        if (existing.latitude != null && existing.longitude != null) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "This hospital's location was already saved on-site and can't be changed here.",
+          });
+        }
+        const result = await updateClient(input.id, { latitude: input.latitude, longitude: input.longitude });
+        await addAuditEvent({
+          actorId: ctx.user.id,
+          action: "client.locationCaptured",
+          entityType: "client",
+          entityId: input.id,
+        });
+        return result;
+      }),
     updateClient: managerOnly
       .input(
         z.object({

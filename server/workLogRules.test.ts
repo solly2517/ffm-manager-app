@@ -36,7 +36,7 @@ describe("Delegate Work Log rules", () => {
     expect(weeklyPlanValidationError(maximumPlan, weekOf)).toContain("3 to 6 hospitals");
   });
 
-  it("allows many registered doctor visits at planned hospitals while requiring at least three", () => {
+  it("allows many registered doctor visits at planned hospitals", () => {
     const reportDate = new Date("2026-08-19T12:00:00");
     const visits = [
       { date: "2026-08-19", clientId: 1, doctorId: 11 },
@@ -45,6 +45,13 @@ describe("Delegate Work Log rules", () => {
       { date: "2026-08-19", clientId: 3, doctorId: 31 },
     ];
     expect(dailyReportValidationError(visits, reportDate, [1, 2, 3])).toBeNull();
+  });
+
+  it("allows a daily report for a single visit", () => {
+    const reportDate = new Date("2026-08-19T12:00:00");
+    const visits = [{ date: "2026-08-19", clientId: 1, doctorId: 11 }];
+    expect(dailyReportValidationError(visits, reportDate, [1])).toBeNull();
+    expect(dailyReportValidationError([], reportDate, [1])).toContain("at least 1 doctor visit");
   });
 
   it("rejects daily reports with an unplanned hospital or a duplicate doctor visit", () => {

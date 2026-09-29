@@ -1,7 +1,7 @@
 export const WEEKLY_PLAN_DAYS = 6;
 export const MIN_HOSPITALS_PER_DAY = 3;
 export const MAX_HOSPITALS_PER_DAY = 6;
-export const MIN_DAILY_DOCTOR_VISITS = 3;
+export const MIN_DAILY_DOCTOR_VISITS = 1;
 
 export type WorkLogVisit = { date: string; clientId: number; doctorId: number };
 export type WorkLogPlanDay = { date: string; visits: WorkLogVisit[] };
@@ -45,7 +45,7 @@ export function weeklyPlanValidationError(days: WorkLogPlanDay[], weekOf: Date) 
 export function dailyReportValidationError(visits: WorkLogVisit[], reportDate: Date, plannedHospitalIds: number[]) {
   const reportDateText = dateText(reportDate);
   if (reportDate.getDay() === 5) return "Friday is the Delegate weekend day; daily reports are available Saturday through Thursday.";
-  if (visits.length < MIN_DAILY_DOCTOR_VISITS) return `Record at least ${MIN_DAILY_DOCTOR_VISITS} doctor visits in the daily report.`;
+  if (visits.length < MIN_DAILY_DOCTOR_VISITS) return `Record at least ${MIN_DAILY_DOCTOR_VISITS} doctor visit${MIN_DAILY_DOCTOR_VISITS === 1 ? "" : "s"} in the daily report.`;
   if (!plannedHospitalIds.length) return "No submitted weekly plan covers this report date. Submit the plan first.";
   const allowedHospitals = new Set(plannedHospitalIds);
   const seenDoctorVisits = new Set<string>();

@@ -16,6 +16,7 @@ import {
   RotateCcw,
   Plus,
   Trash2,
+  MapPin,
 } from "lucide-react";
 import { saturdayForDate, shiftIsoDate } from "@/lib/workLogValidation";
 import { clearWeeklyPlanDraft, loadWeeklyPlanDraft, saveWeeklyPlanDraft } from "@/lib/weeklyPlanDraft";
@@ -44,13 +45,82 @@ const blankHospital = (doctorSlots = 1): ScheduledHospital => ({
   clientId: "",
   doctorIds: Array.from({ length: doctorSlots }, () => ""),
 });
-type Client = { id: number; name: string };
+type Client = { id: number; name: string; latitude?: string | null; longitude?: string | null };
 type Doctor = {
   id: number;
   clientId: number;
   name: string;
   specialty?: string | null;
 };
+
+function HospitalLocationCapture({ client }: { client: Client | null }) {
+  const utils = trpc.useUtils();
+  const [error, setError] = useState("");
+  const [capturing, setCapturing] = useState(false);
+  const captureLocation = trpc.operations.captureClientLocation.useMutation({
+    onSuccess: () => {
+      setError("");
+      utils.operations.clients.invalidate();
+    },
+    onError: err => setError(err.message),
+  });
+
+  if (!client) return null;
+
+  const hasLocation = client.latitude != null && client.longitude != null;
+  if (hasLocation) {
+    return (
+      <p className="text-xs text-emerald-300 flex items-center gap-1">
+        <MapPin size={13} /> Hospital GPS location saved on-site
+      </p>
+    );
+  }
+
+  const capture = () => {
+    if (!navigator.geolocation) {
+      setError("This device does not support location capture.");
+      return;
+    }
+    setCapturing(true);
+    setError("");
+    navigator.geolocation.getCurrentPosition(
+      position => {
+        setCapturing(false);
+        captureLocation.mutate({
+          id: client.id,
+          latitude: position.coords.latitude.toFixed(7),
+          longitude: position.coords.longitude.toFixed(7),
+        });
+      },
+      geoError => {
+        setCapturing(false);
+        setError(geoError.message || "Could not read your current location.");
+      },
+      { enableHighAccuracy: true, timeout: 15000 }
+    );
+  };
+
+  return (
+    <div className="space-y-1">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={capturing || captureLocation.isPending}
+        onClick={capture}
+      >
+        <MapPin size={14} />{" "}
+        {capturing || captureLocation.isPending
+          ? "Saving location…"
+          : "Save this hospital's GPS (first time only)"}
+      </Button>
+      <p className="text-xs text-slate-400">
+        Only works the first time — once saved, this hospital's location is locked and can't be changed here.
+      </p>
+      {error && <p className="text-xs text-amber-300">{error}</p>}
+    </div>
+  );
+}
 
 function HospitalDoctorGroup({
   entry,
@@ -62,6 +132,7 @@ function HospitalDoctorGroup({
   canRemove,
   usedHospitalIds,
   minimumDoctors,
+  showLocationCapture,
 }: {
   entry: ScheduledHospital;
   title: string;
@@ -72,6 +143,7 @@ function HospitalDoctorGroup({
   canRemove: boolean;
   usedHospitalIds: string[];
   minimumDoctors: number;
+  showLocationCapture?: boolean;
 }) {
   const hospitalDoctors = doctors.filter(
     doctor => doctor.clientId === Number(entry.clientId)
@@ -126,6 +198,9 @@ function HospitalDoctorGroup({
             </option>
           ))}
       </select>
+      {showLocationCapture && entry.clientId && (
+        <HospitalLocationCapture client={clients.find(c => String(c.id) === entry.clientId) ?? null} />
+      )}
       {entry.doctorIds.map((doctorId, doctorIndex) => (
         <div
           className="grid gap-2 md:grid-cols-[1fr_auto]"
@@ -261,10 +336,6 @@ function DailyHospitalGroups({
   plannedClients: Client[];
   doctors: Doctor[];
 }) {
-  const totalDoctorVisits = entries.reduce(
-    (total, entry) => total + entry.doctorIds.length,
-    0
-  );
   const updateHospital = (index: number, next: ScheduledHospital) =>
     onChange(
       entries.map((entry, position) => (position === index ? next : entry))
@@ -286,7 +357,8 @@ function DailyHospitalGroups({
           usedHospitalIds={entries
             .filter((_, position) => position !== index)
             .map(hospital => hospital.clientId)}
-          minimumDoctors={totalDoctorVisits <= 3 ? entry.doctorIds.length : 1}
+          minimumDoctors={1}
+          showLocationCapture
         />
       ))}
       <Button
@@ -336,7 +408,7 @@ export default function DelegateWorkLog() {
   );
   const [reportDate, setReportDate] = useState(localDate());
   const [dailyHospitals, setDailyHospitals] = useState<ScheduledHospital[]>(
-    () => [blankHospital(3)]
+    () => [blankHospital(1)]
   );
   const [summary, setSummary] = useState("");
   const [outcomes, setOutcomes] = useState("");
@@ -458,7 +530,7 @@ export default function DelegateWorkLog() {
   );
   const changeReportDate = (value: string) => {
     setReportDate(value);
-    setDailyHospitals([blankHospital(3)]);
+    setDailyHospitals([blankHospital(1)]);
   };
   const changePlanDay = (index: number, next: ScheduledPlanDay) =>
     setWeekEntries(entries =>
@@ -512,7 +584,7 @@ export default function DelegateWorkLog() {
       return;
     }
     if (
-      dailyVisits.length < 3 ||
+      dailyVisits.length < 1 ||
       dailyHospitals.some(
         hospital =>
           !hospital.clientId || hospital.doctorIds.some(doctorId => !doctorId)
@@ -520,7 +592,7 @@ export default function DelegateWorkLog() {
     ) {
       setNoticeError(true);
       setNotice(
-        "Record at least three doctor visits. Each hospital can include multiple registered doctors."
+        "Record at least one doctor visit before submitting."
       );
       return;
     }
