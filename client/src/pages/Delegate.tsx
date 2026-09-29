@@ -80,7 +80,6 @@ export default function Delegate() {
   const [messageRecipientId, setMessageRecipientId] = useState("");
   const [messageBody, setMessageBody] = useState("");
   const [messageNotice, setMessageNotice] = useState("");
-  const signatureCanvas = useRef<HTMLCanvasElement>(null);
   const messagesReadWorkspaceRef = useRef(false);
   const tasksQuery = trpc.operations.tasks.useQuery();
   const messagesQuery = trpc.operations.messages.useQuery(undefined, {
@@ -377,36 +376,6 @@ export default function Delegate() {
       });
     };
     reader.readAsDataURL(file);
-  };
-  const saveSignature = () => {
-    if (guardOffline()) return;
-    const visitId = visitQuery.data?.id;
-    const canvas = signatureCanvas.current;
-    if (!visitId || !canvas) {
-      setGpsStatus("Check in before saving a signature.");
-      return;
-    }
-    uploadEvidence.mutate({
-      visitId,
-      kind: "signature",
-      fileName: "client-signature.png",
-      mimeType: "image/png",
-      base64: canvas.toDataURL("image/png"),
-    });
-  };
-  const drawSignature = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    const canvas = signatureCanvas.current;
-    if (!canvas || event.buttons !== 1) return;
-    const rect = canvas.getBoundingClientRect();
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 2;
-    ctx.lineCap = "round";
-    ctx.lineTo(event.clientX - rect.left, event.clientY - rect.top);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(event.clientX - rect.left, event.clientY - rect.top);
   };
   const captureGps = (action: "in" | "out") => {
     if (guardOffline()) return;
@@ -810,30 +779,6 @@ export default function Delegate() {
                     }
                   />
                 </label>
-                <div className="evidence-upload signature-capture">
-                  <span>{t("signature")}</span>
-                  <canvas
-                    ref={signatureCanvas}
-                    width={260}
-                    height={90}
-                    onPointerDown={event => {
-                      const canvas = signatureCanvas.current;
-                      const rect = canvas?.getBoundingClientRect();
-                      const ctx = canvas?.getContext("2d");
-                      if (ctx && rect) {
-                        ctx.beginPath();
-                        ctx.moveTo(
-                          event.clientX - rect.left,
-                          event.clientY - rect.top
-                        );
-                      }
-                    }}
-                    onPointerMove={drawSignature}
-                  />
-                  <Button size="sm" variant="outline" onClick={saveSignature}>
-                    {t("saveSignature")}
-                  </Button>
-                </div>
               </div>
               {uploadEvidence.isPending && (
                 <div className="admin-feedback">{t("uploadingEvidence")}</div>
