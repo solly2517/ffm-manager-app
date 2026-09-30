@@ -67,6 +67,23 @@ describe("Manager Work Log authoring", () => {
     expect(db.addAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ action: "daily_activity_report.manager_recorded" }));
   });
 
+  it("accepts a daily report for a single visit, without requiring three", async () => {
+    directories();
+    vi.spyOn(db, "listWeeklyVisitPlansForAuthor").mockResolvedValue([{ id: 81, authorId: delegate.id, delegateId: delegate.id, status: "pending", scheduleJson: JSON.stringify(schedule) }] as never);
+    vi.spyOn(db, "createDailyActivityReport").mockResolvedValue({ id: 92, authorId: delegate.id, delegateId: delegate.id, status: "pending" } as never);
+    vi.spyOn(db, "addAuditEvent").mockResolvedValue(undefined as never);
+    const caller = appRouter.createCaller(contextFor(delegate));
+    await expect(
+      caller.delegatePlanning.submitDailyReport({
+        reportDate: new Date("2026-08-22T12:00:00.000Z"),
+        visits: [schedule[0]!.visits[0]!],
+        summary: "Met with one doctor at the first planned hospital.",
+        outcomes: "Discussed the new product line.",
+      })
+    ).resolves.toMatchObject({ id: 92, status: "pending" });
+    expect(db.createDailyActivityReport).toHaveBeenCalledOnce();
+  });
+
   it("blocks a Manager from reviewing their own recorded plan or report", async () => {
     vi.spyOn(db, "getWeeklyVisitPlanById").mockResolvedValue({ id: 81, authorId: manager.id, delegateId: null } as never);
     vi.spyOn(db, "getDailyActivityReportById").mockResolvedValue({ id: 91, authorId: manager.id, delegateId: null } as never);

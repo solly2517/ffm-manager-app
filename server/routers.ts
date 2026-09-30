@@ -197,6 +197,7 @@ import {
 } from "./db";
 import {
   dailyReportValidationError,
+  MIN_DAILY_DOCTOR_VISITS,
   parseWeeklySchedule,
   weeklyPlanValidationError,
 } from "../shared/workLogRules";
@@ -800,7 +801,7 @@ export const appRouter = router({
       .input(
         z.object({
           reportDate: z.date(),
-          visits: z.array(workLogVisitInput).min(3).max(100),
+          visits: z.array(workLogVisitInput).min(MIN_DAILY_DOCTOR_VISITS).max(100),
           summary: z.string().trim().min(3).max(5000),
           outcomes: z.string().trim().min(3).max(5000),
           challenges: z.string().trim().max(3000).optional(),
